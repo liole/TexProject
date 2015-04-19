@@ -52,7 +52,7 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 і як єдиним чином всіх їх підключати.
 */
 #include <string>
-//#include <HalfFloat/half.hpp>	//Поки що недоступно через проблеми з сумісністю з студією
+#include <HalfFloat/half.hpp>	//Поки що недоступно через проблеми з сумісністю з студією
 
 
 namespace TexProject
@@ -99,7 +99,7 @@ namespace TexProject
 	*/
 	// Float
 	/*16-бітне число з плаваючою комою*/
-	//typedef half_float::half				float16;	//Поки що недоступно через проблеми з сумісністю з студією
+	typedef half_float::half				float16;	//Поки що недоступно через проблеми з сумісністю з студією
 	/*32-бітне число з плаваючою комою*/
 	typedef float							float32;
 	/*64-бітне число з плаваючою комою*/
