@@ -15,7 +15,10 @@ void TexProject::Main()
 
 	while(a.IsRunning() || b.IsRunning())
 	{
-		Window::Process();
+		Window::Process();		
+
+		if(KeyState(Keys::A)) a.Delete();
+		if(KeyState(Keys::B)) b.Delete();
 	}
 
 }
