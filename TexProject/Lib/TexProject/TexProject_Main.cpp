@@ -2,11 +2,36 @@
 using namespace TexProject;
 
 
+
+
+
 #ifdef __TEXPROJECT_WIN__
 
-int WINAPI			WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nShowCmd)
+
+// EntryPointData
+bool					TexProject::EntryPointData::init = false;
+HINSTANCE				TexProject::EntryPointData::hInstance = 0;
+HINSTANCE				TexProject::EntryPointData::hPrevInstance = 0;
+LPSTR					TexProject::EntryPointData::lpCmdLine = "";
+int						TexProject::EntryPointData::nShowCmd = 0;
+
+
+int WINAPI				WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nShowCmd)
 {
+
+	{	// «бер≥гаЇмо дан≥ точки входу
+		EntryPointData::init = true;
+		EntryPointData::hInstance = hInstance;
+		EntryPointData::hPrevInstance = hPrevInstance;
+		EntryPointData::lpCmdLine = lpCmdLine;
+		EntryPointData::nShowCmd = nShowCmd;
+	}
+
+	Window::Init();
+
 	Main();
+
+	Window::Free();
 
 	return 0;
 }
@@ -22,7 +47,7 @@ int WINAPI			WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #endif
 
 
-void				TexProject::Message(const string& text)
+void					TexProject::Message(const string& text)
 {
 #ifdef __TEXPROJECT_WIN__
 
@@ -38,7 +63,7 @@ void				TexProject::Message(const string& text)
 #endif
 #endif
 }
-void				TexProject::Error(const string& text)
+void					TexProject::Error(const string& text)
 {
 #ifdef __TEXPROJECT_WIN__
 
@@ -55,7 +80,7 @@ void				TexProject::Error(const string& text)
 #endif
 #endif
 }
-bool				TexProject::Question(const string& text)
+bool					TexProject::Question(const string& text)
 {
 #ifdef __TEXPROJECT_WIN__
 

@@ -36,10 +36,26 @@ namespace TexProject
 	struct ivec2
 	{
 		int32			x, y;
+
+		inline			ivec2();
+		inline			ivec2(int32 a_);
+		inline			ivec2(int32 x_, int32 y_);
+
+		inline ivec2&	operator = (const int32 source);
+		inline ivec2&	operator = (const vec2 source);
+		inline ivec2&	operator = (const uvec2 source);
 	};
 	struct uvec2
 	{
 		uint32			x, y;
+
+		inline			uvec2();
+		inline			uvec2(uint32 a_);
+		inline			uvec2(uint32 x_, uint32 y_);
+
+		inline uvec2&	operator = (const uint32 source);
+		inline uvec2&	operator = (const vec2 source);
+		inline uvec2&	operator = (const ivec2 source);
 	};
 	struct vec3
 	{
@@ -118,6 +134,65 @@ namespace TexProject
 }
 
 
+// ivec2
+TexProject::ivec2::ivec2()
+{
+}
+TexProject::ivec2::ivec2(int32 a_):
+	x(a_), y(a_)
+{
+}
+TexProject::ivec2::ivec2(int32 x_, int32 y_):
+	x(x_), y(y_)
+{
+}
+
+TexProject::ivec2&		TexProject::ivec2::operator = (const int32 source)
+{
+	x = source;
+	y = source;
+}
+TexProject::ivec2&		TexProject::ivec2::operator = (const vec2 source)
+{
+	x = int32(source.x);
+	y = int32(source.y);
+}
+TexProject::ivec2&		TexProject::ivec2::operator = (const uvec2 source)
+{
+	x = int32(source.x);
+	y = int32(source.y);
+}
+
+
+// uvec2
+TexProject::uvec2::uvec2()
+{
+}
+TexProject::uvec2::uvec2(uint32 a_):
+x(a_),y(a_)
+{
+}
+TexProject::uvec2::uvec2(uint32 x_, uint32 y_):
+x(x_),y(y_)
+{
+}
+
+TexProject::uvec2&		TexProject::uvec2::operator = (const uint32 source)
+{
+	x = source;
+	y = source;
+}
+TexProject::uvec2&		TexProject::uvec2::operator = (const vec2 source)
+{
+	x = uint32(source.x);
+	y = uint32(source.y);
+}
+TexProject::uvec2&		TexProject::uvec2::operator = (const ivec2 source)
+{
+	x = uint32(source.x);
+	y = uint32(source.y);
+}
+
 // vec3
 TexProject::vec3::vec3()
 {
@@ -126,7 +201,7 @@ TexProject::vec3::vec3(float32 a_):
 	x(a_), y(a_), z(a_)
 {
 }
-TexProject::vec3::vec3(float32 x_,float32 y_,float32 z_):
+TexProject::vec3::vec3(float32 x_, float32 y_, float32 z_):
 	x(x_), y(y_), z(z_)
 {
 }
@@ -167,20 +242,20 @@ inline TexProject::float32					TexProject::atanDg(float32 in)
 }
 
 
-inline TexProject::float32					TexProject::dot(const vec2& a,const vec2& b)
+inline TexProject::float32					TexProject::dot(const vec2& a, const vec2& b)
 {
 	return a.x*b.x + a.y*b.y;
 }
-inline TexProject::float32					TexProject::dot(const vec3& a,const vec3& b)
+inline TexProject::float32					TexProject::dot(const vec3& a, const vec3& b)
 {
 	return a.x*b.x + a.y*b.y + a.z*b.z;
 }
-inline TexProject::float32					TexProject::dot(const vec4& a,const vec4& b)
+inline TexProject::float32					TexProject::dot(const vec4& a, const vec4& b)
 {
 	return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
 }
 
-inline TexProject::vec3						TexProject::cross(const vec3& a,const vec3& b)
+inline TexProject::vec3						TexProject::cross(const vec3& a, const vec3& b)
 {
 	return vec3	(
 					a.y*b.z - a.z*b.y,

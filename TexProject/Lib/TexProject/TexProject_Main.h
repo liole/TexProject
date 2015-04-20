@@ -32,6 +32,31 @@ namespace TexProject
 	*/
 
 	// Entry Point
+	/*Структура для зберігання даних точки входу*/
+	struct EntryPointData
+	{
+#ifdef __TEXPROJECT_WIN__
+	public:
+
+		static bool							init;
+		static HINSTANCE					hInstance;
+		static HINSTANCE					hPrevInstance;
+		static LPSTR						lpCmdLine;
+		static int							nShowCmd;
+
+		EntryPointData() = delete;
+
+#else
+#ifdef __TEXPROJECT_LIN__
+		// Linux variant
+#else
+#ifdef __TEXPROJECT_MAC__
+		// MacOS variant
+#endif
+#endif
+#endif
+	};
+
 	/*
 	Точка входу для кінцевого користувача.
 	Цю функцію визначає користувач.
