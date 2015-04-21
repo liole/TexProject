@@ -6,6 +6,7 @@
 
 #include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Math.h>
+#include <TexProject/TexProject_OpenGL.h>
 #include <TexProject/TexProject_Helpers.h>
 
 
@@ -178,6 +179,122 @@ namespace TexProject
 			void							Flush();
 		}
 
+		/*Контексти виводу*/
+		namespace RenderContext
+		{
+			struct Types
+			{
+				enum Enum
+				{
+					OpenGL
+				};
+			};
+			typedef Types::Enum				Type;
+
+			/*Базовий контекст виводу*/
+			struct Basic
+			{
+			protected:
+
+				Window::Render*	const		window;
+				bool						init = false;
+
+			public:
+											Basic(Window::Render* window_);
+											Basic(const Basic& source) = delete;
+											Basic(Basic&& source) = delete;
+				virtual						~Basic();
+
+				Basic&						operator = (const Basic& source) = delete;
+				Basic&						operator = (Basic&& source) = delete;
+
+				virtual void				Create();
+				virtual void				Delete();
+				virtual bool				Use();
+			};
+			/*Контекст OpenGL*/
+			struct OpenGL:
+				public Basic
+			{
+			protected:
+
+				static PFNWGLCREATECONTEXTATTRIBSARBPROC		wglCreateContextAttribsARB;
+
+#ifdef __TEXPROJECT_WIN__
+
+				HGLRC											wndRenderContextHandle;
+
+#else
+#ifdef __TEXPROJECT_LIN__
+				// Linux variant
+#else
+#ifdef __TEXPROJECT_MAC__
+				// MacOS variant
+#endif
+#endif
+#endif
+
+			public:
+
+				static void					Init();
+				static void					Free();
+
+											OpenGL(Window::Render* window_);
+											OpenGL(const OpenGL& source) = delete;
+											OpenGL(OpenGL&& source) = delete;
+				virtual						~OpenGL();
+
+				OpenGL&						operator = (const OpenGL& source) = delete;
+				OpenGL&						operator = (OpenGL&& source) = delete;
+
+				virtual void				Create();
+				virtual void				Delete();
+				virtual bool				Use();
+			};
+
+			void							Init();
+			void							Free();
+		};
+
+		template <typename T>
+		struct WindowStructures
+		{
+#ifdef __TEXPROJECT_WIN__
+		protected:
+
+			static string					wndClassName;
+			static WNDCLASSEX				wndClassEx;
+			static DWORD					wndStyle;
+			static DWORD					wndExStyle;
+			static RECT						wndRect;
+			static LRESULT CALLBACK			callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+
+
+			HWND							wndHandle = 0;
+
+		public:
+
+			static void						Init();
+			static void						Free();
+
+											WindowStructures() = default;
+											WindowStructures(const WindowStructures& source) = delete;
+											WindowStructures(WindowStructures&& source) = delete;
+			virtual							~WindowStructures() = default;
+
+			Main&							operator = (const WindowStructures& source) = delete;
+			Main&							operator = (WindowStructures&& source) = delete;
+#else
+#ifdef __TEXPROJECT_LIN__
+			// Linux variant
+#else
+#ifdef __TEXPROJECT_MAC__
+			// MacOS variant
+#endif
+#endif
+#endif
+		};
+
 		/*Базовий клас для усіх вікон*/
 		struct Basic:
 			public Helper::Structure::IndirectClassArray<Basic,true,true>
@@ -186,6 +303,7 @@ namespace TexProject
 
 			bool							init		= false;
 			bool							running		= false;
+			bool							active		= false;
 			ivec2							pos			= ivec2(0);
 			uvec2							size		= uvec2(100);
 			string							title		= "window";
@@ -209,21 +327,15 @@ namespace TexProject
 			inline bool						IsRunning() const;
 		};
 		/*Клас звичайного вікна*/
-		struct Main: public Basic
+		struct Main:
+			public Basic,
+			public WindowStructures<Main>
 		{
-#ifdef __TEXPROJECT_WIN__
-
 		protected:
 
-			static string					wndClassName;
-			static WNDCLASSEX				wndClassEx;
-			static LRESULT CALLBACK			callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
-
-
-			HWND							wndHandle = 0;
-			DWORD							wndStyle = 0;
-			DWORD							wndExStyle = 0;
-			RECT							wndRect;
+#ifdef __TEXPROJECT_WIN__
+			static LRESULT CALLBACK		callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+#endif
 
 		public:
 
@@ -233,7 +345,7 @@ namespace TexProject
 											Main() = default;
 											Main(const Main& source) = delete;
 											Main(Main&& source) = delete;
-											~Main() = default;
+			virtual							~Main() = default;
 
 			Main&							operator = (const Main& source) = delete;
 			Main&							operator = (Main&& source) = delete;
@@ -241,20 +353,52 @@ namespace TexProject
 			virtual void					Create();
 			virtual void					Delete();
 			virtual void					Loop();
+		};
+		/*Вікно з підтримкою виводу*/
+		struct Render:
+			public Basic,
+			public WindowStructures<Render>
+		{
+			friend RenderContext::Basic;
+			friend RenderContext::OpenGL;
 
-#else
-#ifdef __TEXPROJECT_LIN__
-			// Linux variant
-#else
-#ifdef __TEXPROJECT_MAC__
-			// MacOS variant
+		protected:
+
+#ifdef __TEXPROJECT_WIN__
+
+			static PIXELFORMATDESCRIPTOR	wndPixelFormatDescriptor;
+			static LRESULT CALLBACK			callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+
+			HDC								wndDeviceContextHandle = 0;
+
 #endif
-#endif
-#endif
+
+			RenderContext::Basic*			renderContext = nullptr;
+
+		public:
+
+			static void						Init();
+			static void						Free();
+
+											Render() = default;
+											Render(const Render& source) = delete;
+											Render(Render&& source) = delete;
+			virtual							~Render() = default;
+
+			Render&							operator = (const Render& source) = delete;
+			Render&							operator = (Render&& source) = delete;
+
+			virtual void					Create();
+			virtual void					Delete();
+			virtual void					Loop();
+
+			void							SetRenderContext(const RenderContext::Type& type_);
 		};
 
-		void			Init();
-		void			Free();
+		void								Init();
+		void								Free();
+
+		inline uvec2						GetDesktopSize();
 	}
 
 	//Keyboard Input
@@ -271,17 +415,27 @@ namespace TexProject
 
 
 // TexProject
-bool	TexProject::KeyState(const Window::Input::Keyboard::KeyCode& key)
+bool										TexProject::KeyState(const Window::Input::Keyboard::KeyCode& key)
 {
 	return Window::Input::Keyboard::keys[key].state;
 }
-bool	TexProject::KeyPress(const Window::Input::Keyboard::KeyCode& key)
+bool										TexProject::KeyPress(const Window::Input::Keyboard::KeyCode& key)
 {
 	return Window::Input::Keyboard::keys[key].press;
 }
-void	TexProject::PressKey(const Window::Input::Keyboard::KeyCode& key)
+void										TexProject::PressKey(const Window::Input::Keyboard::KeyCode& key)
 {
 	Window::Input::Keyboard::keys[key].press = true;
+}
+
+
+// Window
+inline TexProject::uvec2					TexProject::Window::GetDesktopSize()
+{
+	return uvec2(
+					GetSystemMetrics(SM_CXSCREEN),
+					GetSystemMetrics(SM_CYSCREEN)
+				);
 }
 
 
@@ -290,19 +444,44 @@ TexProject::Window::Input::Key::Key():
 	press(false), state(false)
 {
 }
-void					TexProject::Window::Input::Key::Loop()
+void										TexProject::Window::Input::Key::Loop()
 {
 	if(!state) press = false;
 }
-void					TexProject::Window::Input::Key::Flush()
+void										TexProject::Window::Input::Key::Flush()
 {
 	state = false;
 	press = false;
 }
-void					TexProject::Window::Input::Key::Press()
+void										TexProject::Window::Input::Key::Press()
 {
 	press = true;
 }
+
+
+// WindowStructures
+#ifdef __TEXPROJECT_WIN__
+
+template <typename T>
+TexProject::string							TexProject::Window::WindowStructures<T>::wndClassName;
+template <typename T>
+WNDCLASSEX									TexProject::Window::WindowStructures<T>::wndClassEx;
+template <typename T>
+DWORD										TexProject::Window::WindowStructures<T>::wndStyle = 0;
+template <typename T>
+DWORD										TexProject::Window::WindowStructures<T>::wndExStyle = 0;
+template <typename T>
+RECT										TexProject::Window::WindowStructures<T>::wndRect;
+
+#else
+#ifdef __TEXPROJECT_LIN__
+// Linux variant
+#else
+#ifdef __TEXPROJECT_MAC__
+// MacOS variant
+#endif
+#endif
+#endif
 
 
 // Window::Basic

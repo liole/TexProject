@@ -5,13 +5,21 @@ using namespace TexProject;
 // Window
 void					TexProject::Window::Init()
 {
+	Window::RenderContext::Init();
+
 	Window::Main::Init();
+	Window::Render::Init();
+
 	Window::Input::Init();
 }
 void					TexProject::Window::Free()
 {
 	Window::Input::Free();
+
+	Window::Render::Free();
 	Window::Main::Free();
+
+	Window::RenderContext::Free();
 }
 void					TexProject::Window::Process()
 {
@@ -26,33 +34,33 @@ void					TexProject::Window::Process()
 
 
 // Window::Input
-bool					Window::Input::Init()
+bool					TexProject::Window::Input::Init()
 {
 	if( !Keyboard::Init() ) return false;
 	return true;
 }
-void					Window::Input::Loop()
+void					TexProject::Window::Input::Loop()
 {
 	Keyboard::Loop();
 }
-void					Window::Input::Free()
+void					TexProject::Window::Input::Free()
 {
 	Keyboard::Free();
 }
-void					Window::Input::Flush()
+void					TexProject::Window::Input::Flush()
 {
 	Keyboard::Flush();
 }
 
 
 // Window::Input::Keyboard
-Window::Input::Key		Window::Input::Keyboard::keys[KeyCodes::count];
+Window::Input::Key		TexProject::Window::Input::Keyboard::keys[KeyCodes::count];
 
-bool					Window::Input::Keyboard::Init()
+bool					TexProject::Window::Input::Keyboard::Init()
 {
 	return true;
 }
-void					Window::Input::Keyboard::Loop()
+void					TexProject::Window::Input::Keyboard::Loop()
 {
 	{
 		keys[Keys::ESC].state									= GetAsyncKeyState(VK_ESCAPE) != 0;
@@ -175,19 +183,228 @@ void					Window::Input::Keyboard::Loop()
 	}
 	for(uint32 i = 0; i < Keys::count; ++i) keys[i].Loop();
 }
-void					Window::Input::Keyboard::Free()
+void					TexProject::Window::Input::Keyboard::Free()
 {
 }
-void					Window::Input::Keyboard::Flush()
+void					TexProject::Window::Input::Keyboard::Flush()
 {
 	for(uint32 i = 0; i < Keys::count; ++i) keys[i].Flush();
 }
 
 
+// Window::RenderContext
+void					TexProject::Window::RenderContext::Init()
+{
+#ifdef __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_DEBUG__
+	if(!EntryPointData::init)
+	{
+		Error("Initing a RenderContext before entry point.");
+	}
+#endif
+#endif
+
+	OpenGL::Init();
+}
+void					TexProject::Window::RenderContext::Free()
+{
+	OpenGL::Free();
+}
+
+
+// Window::RenderContext::Basic
+TexProject::Window::RenderContext::Basic::Basic(Window::Render* window_):
+window(window_)
+{
+}
+TexProject::Window::RenderContext::Basic::~Basic()
+{
+	Delete();
+}
+
+void					TexProject::Window::RenderContext::Basic::Create()
+{
+}
+void					TexProject::Window::RenderContext::Basic::Delete()
+{
+}
+bool					TexProject::Window::RenderContext::Basic::Use()
+{
+	return false;
+}
+
+
+// Window::RenderContext::OpenGL
+PFNWGLCREATECONTEXTATTRIBSARBPROC			TexProject::Window::RenderContext::OpenGL::wglCreateContextAttribsARB = nullptr;
+
+void					TexProject::Window::RenderContext::OpenGL::Init()
+{
+#ifdef __TEXPROJECT_WIN__
+	{
+		WNDCLASS tempWinClass;
+
+		DWORD style =	WS_DISABLED;
+		DWORD exStyle =	WS_EX_APPWINDOW;
+
+		tempWinClass.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		tempWinClass.lpfnWndProc	= DefWindowProc;
+		tempWinClass.cbClsExtra		= 0;
+		tempWinClass.cbWndExtra		= 0;
+		tempWinClass.hInstance		= EntryPointData::hInstance;
+		tempWinClass.hIcon			= LoadIcon(NULL,IDI_APPLICATION);
+		tempWinClass.hCursor		= LoadCursor(NULL,IDC_ARROW);
+		tempWinClass.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
+		tempWinClass.lpszMenuName	= NULL;
+		tempWinClass.lpszClassName	= "Temp Window Class";
+
+		if(!RegisterClass(&tempWinClass))
+		{
+			Message("Cannot register temp class.");
+			return;
+		}
+
+		HWND tempWin = CreateWindow
+			(
+				"Temp Window Class",
+				"Temp Window",
+				WS_DISABLED,
+				0,0,0,0,
+				NULL,NULL,
+				EntryPointData::hInstance,
+				NULL
+			);
+
+		if(!tempWin)
+		{
+			Message("Cannot create window.");
+			return;
+		}
+
+		{
+			HDC tempDC = GetDC(tempWin);
+			if(!tempDC)
+			{
+				Message("Cannot create Temp Device Context.");
+				return;
+			}
+
+			PIXELFORMATDESCRIPTOR pfd;
+			memset(&pfd,0,sizeof(pfd));
+			pfd.nSize      = sizeof(pfd);
+			pfd.nVersion   = 1;
+			pfd.dwFlags    = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+			pfd.iPixelType = PFD_TYPE_RGBA;
+			pfd.cColorBits = 32;
+			pfd.cStencilBits = 32;
+			pfd.cDepthBits = 32;
+
+			int PixelFormat = ChoosePixelFormat(tempDC,&pfd);
+			if(!PixelFormat)
+			{
+				Message("Can't Chose A Pixel Format.\nChoosePixelFormat");
+				return;
+			}
+
+			if(!SetPixelFormat(tempDC,PixelFormat,&pfd))
+			{
+				Message("Can't Set A Pixel Format.\nSetPixelFormat");
+				return;
+			}
+
+			HGLRC tempRC = wglCreateContext(tempDC);
+			if(!tempRC)
+			{
+				Message("Can't Create Temp GL Render Context.\nwglCreateContext");
+				return;
+			}
+
+			if(!wglMakeCurrent(tempDC,tempRC))
+			{
+				Message("Can't Activate Temp GL Render Context.\nwglMakeCurrent");
+				return;
+			}
+
+			wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
+
+			if(!wglMakeCurrent(NULL,NULL))
+			{
+				Message("Can't Release Render Context.\nwglMakeCurrent(NULL, NULL)");
+				return;
+			}
+
+			if(!wglDeleteContext(tempRC))
+			{
+				Message("Can't Delete Temp GL Render Context.\nwglDeleteContext(Temp_hRC)");
+				return;
+			}
+
+			//if(!wglCreateContextAttribsARB) Error("GL Context Creation Failed.\nwglCreateContextAttribsARB");
+		}
+		
+		DestroyWindow(tempWin);
+		UnregisterClass("Temp Window Class", EntryPointData::hInstance);
+	}
+#endif
+}
+void					TexProject::Window::RenderContext::OpenGL::Free()
+{
+}
+
+TexProject::Window::RenderContext::OpenGL::OpenGL(Window::Render* window_):
+	Basic(window_)
+{
+}
+TexProject::Window::RenderContext::OpenGL::~OpenGL()
+{
+	Delete();
+}
+void					TexProject::Window::RenderContext::OpenGL::Create()
+{
+	Delete();
+
+	static const int32 attribs[] =
+	{
+		WGL_CONTEXT_MAJOR_VERSION_ARB,3,
+		WGL_CONTEXT_MINOR_VERSION_ARB,3,
+		WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+		WGL_CONTEXT_PROFILE_MASK_ARB,WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, //WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		0,0
+	};
+
+	wndRenderContextHandle = wglCreateContextAttribsARB(window->wndDeviceContextHandle,0,attribs);
+
+	if(!wndRenderContextHandle)
+	{
+		Message("Can't create OpenGL render context.");
+		return;
+	}
+
+	init = true;
+}
+void					TexProject::Window::RenderContext::OpenGL::Delete()
+{
+	if( init )
+	{
+		init = false;
+	}
+}
+bool					TexProject::Window::RenderContext::OpenGL::Use()
+{
+	if( init && window->init )
+	{
+		if(!wglMakeCurrent(window->wndDeviceContextHandle,wndRenderContextHandle))
+		{
+			Message("Fail to use OpenGL render context.");
+			return false;
+		}
+		return true;
+	}
+}
+
+
 // Window::Window::Default
-string					TexProject::Window::Main::wndClassName = "[Window::Main] Class";
-WNDCLASSEX				TexProject::Window::Main::wndClassEx;
-LRESULT CALLBACK		TexProject::Window::Main::callbackDefault(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+#ifdef __TEXPROJECT_WIN__
+LRESULT CALLBACK		TexProject::Window::Main::callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	auto window = (Main*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
@@ -217,12 +434,16 @@ LRESULT CALLBACK		TexProject::Window::Main::callbackDefault(HWND hWnd, UINT msg,
 
 	return 0;
 }
+#endif
 
 void					TexProject::Window::Main::Init()
 {
+#ifdef __TEXPROJECT_WIN__
 	{
+		wndClassName = "[Window::Main] Class";
+
 		wndClassEx.cbSize			= sizeof(wndClassEx);
-		wndClassEx.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wndClassEx.style			= CS_HREDRAW | CS_VREDRAW | CS_DROPSHADOW;
 		/*
 		CS_BYTEALIGNCLIENT
 		CS_BYTEALIGNWINDOW
@@ -248,38 +469,14 @@ void					TexProject::Window::Main::Init()
 		wndClassEx.lpszClassName	= wndClassName.c_str();	//wndClassName.c_str(),
 		wndClassEx.hIconSm			= LoadIcon(NULL,IDI_APPLICATION);
 	}
-
 	if(!RegisterClassEx(&wndClassEx))
 	{
 		Message("Failed To register window class.");
 		return;
 	}
-}
-void					TexProject::Window::Main::Free()
-{
-	UnregisterClass(wndClassName.c_str(), EntryPointData::hInstance);
-}
-
-
-void					TexProject::Window::Main::Create()
-{
-#ifdef __TEXPROJECT_DEBUG__
-	if(!EntryPointData::init)
-	{
-		Error("Creating a window before entry point.");
-	}
-#endif
-
-	Delete();
 
 	{
-		pos = ivec2(500, 200);
-		size = uvec2(400, 300);
-		title = "window";
-	}
-
-	{
-		wndStyle	= WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU;
+		wndStyle	= WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU | WS_VISIBLE;
 		/*
 		WS_BORDER
 		WS_CAPTION
@@ -309,7 +506,266 @@ void					TexProject::Window::Main::Create()
 		WS_VISIBLE
 		WS_VSCROLL
 		*/
-		wndExStyle	= WS_EX_APPWINDOW | WS_EX_TOOLWINDOW;
+		wndExStyle	= WS_EX_APPWINDOW;
+		/*
+		WS_EX_ACCEPTFILES
+		WS_EX_APPWINDOW
+		WS_EX_CLIENTEDGE
+		WS_EX_COMPOSITED
+		WS_EX_CONTEXTHELP			// WS_EX_CONTEXTHELP cannot be used with the WS_MAXIMIZEBOX or WS_MINIMIZEBOX styles.
+		WS_EX_CONTROLPARENT
+		WS_EX_DLGMODALFRAME
+		WS_EX_LAYERED
+		WS_EX_LAYOUTRTL
+		WS_EX_LEFT
+		WS_EX_LEFTSCROLLBAR
+		WS_EX_LTRREADING
+		WS_EX_MDICHILD
+		WS_EX_NOACTIVATE
+		WS_EX_NOINHERITLAYOUT
+		WS_EX_NOPARENTNOTIFY
+		WS_EX_NOREDIRECTIONBITMAP
+		WS_EX_OVERLAPPEDWINDOW		// (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE)
+		WS_EX_PALETTEWINDOW			// (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST)
+		WS_EX_RIGHT
+		WS_EX_RIGHTSCROLLBAR
+		WS_EX_RTLREADING
+		WS_EX_STATICEDGE
+		WS_EX_TOOLWINDOW
+		WS_EX_TOPMOST
+		WS_EX_TRANSPARENT
+		WS_EX_WINDOWEDGE
+		*/
+	}
+#endif
+}
+void					TexProject::Window::Main::Free()
+{
+#ifdef __TEXPROJECT_WIN__
+	UnregisterClass(wndClassName.c_str(),EntryPointData::hInstance);
+#endif
+}
+
+
+void					TexProject::Window::Main::Create()
+{
+#ifdef __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_DEBUG__
+	if(!EntryPointData::init)
+	{
+		Error("Creating a window before entry point.");
+	}
+#endif
+
+	Delete();
+
+	{
+		size = uvec2(400, 300);
+		pos = GetDesktopSize()/2 - size/2;
+		title = "window";
+	}
+
+	{
+		wndRect.left	= (LONG)(pos.x);
+		wndRect.right	= (LONG)(pos.x + size.x);
+		wndRect.top		= (LONG)(pos.y);
+		wndRect.bottom	= (LONG)(pos.y + size.y);
+	}
+	AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
+
+	wndHandle =	CreateWindowEx
+	(
+		wndExStyle,
+		wndClassName.c_str(),
+		title.c_str(),
+		wndStyle,
+		wndRect.left,
+		wndRect.top,
+		wndRect.right - wndRect.left,
+		wndRect.bottom - wndRect.top,
+		(HWND)NULL,
+		(HMENU)NULL,
+		wndClassEx.hInstance,
+		NULL
+	);
+	if(!wndHandle)
+	{
+		Message("Can't create window.");
+		return;
+	}
+
+	SetWindowLongPtr(wndHandle, GWLP_USERDATA, (LONG)this);
+	/*
+	GWL_EXSTYLE
+	GWLP_HINSTANCE
+	GWLP_ID
+	GWL_STYLE
+	GWLP_USERDATA
+	GWLP_WNDPROC
+	*/
+
+	ShowWindow(wndHandle, SW_SHOW);
+	SetFocus(wndHandle);
+#endif
+
+	init = true;
+	running = true;
+
+}
+void					TexProject::Window::Main::Delete()
+{
+#ifdef __TEXPROJECT_WIN__
+	if(wndHandle)
+	{
+		DestroyWindow(wndHandle);
+		wndHandle = 0;
+	}
+#endif
+
+	if(init)
+	{
+		init = false;
+	}
+}
+void					TexProject::Window::Main::Loop()
+{
+#ifdef __TEXPROJECT_WIN__
+	{
+		static MSG msg;
+		while(running && PeekMessage(&msg,NULL,0,0,PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+#endif
+
+	if(init)
+	{
+		if(GetFocus() == wndHandle)
+		{
+			active = true;
+		}
+		else
+		{
+			active = false;
+		}
+
+		if(!running)
+		{
+			Delete();
+		}
+	}
+}
+
+
+// Window::Window::Render
+#ifdef __TEXPROJECT_WIN__
+PIXELFORMATDESCRIPTOR	TexProject::Window::Render::wndPixelFormatDescriptor;
+LRESULT CALLBACK		TexProject::Window::Render::callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
+{
+	auto window = (Render*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
+
+	switch(msg)
+	{
+	case WM_CLOSE:
+	{
+					 window->running = false;
+					 return 0;
+	}
+	case WM_QUIT:
+	{
+					window->running = false;
+					return 0;
+	}
+	case WM_DESTROY:
+	{
+					   window->running = false;
+					   //PostQuitMessage(0);
+					   return 0;
+	}
+	default:
+	{
+			   return DefWindowProc(hWnd,msg,wParam,lParam);
+	}
+	}
+
+	return 0;
+}
+#endif
+
+void					TexProject::Window::Render::Init()
+{
+#ifdef __TEXPROJECT_WIN__
+	{
+		wndClassName = "[Window::Render] Class";
+
+		wndClassEx.cbSize			= sizeof(wndClassEx);
+		wndClassEx.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		/*
+		CS_BYTEALIGNCLIENT
+		CS_BYTEALIGNWINDOW
+		CS_CLASSDC
+		CS_DBLCLKS
+		CS_DROPSHADOW
+		CS_GLOBALCLASS
+		CS_HREDRAW
+		CS_NOCLOSE
+		CS_OWNDC
+		CS_PARENTDC
+		CS_SAVEBITS
+		CS_VREDRAW
+		*/
+		wndClassEx.lpfnWndProc		= callbackDefault;//WndProc_Default;
+		wndClassEx.cbClsExtra		= 0;
+		wndClassEx.cbWndExtra		= 0;
+		wndClassEx.hInstance		= EntryPointData::hInstance;
+		wndClassEx.hIcon			= LoadIcon(NULL,IDI_APPLICATION);
+		wndClassEx.hCursor			= LoadCursor(NULL,IDC_ARROW);
+		wndClassEx.hbrBackground	= (HBRUSH)GetStockObject(GRAY_BRUSH);
+		wndClassEx.lpszMenuName		= NULL;
+		wndClassEx.lpszClassName	= wndClassName.c_str();
+		wndClassEx.hIconSm			= LoadIcon(NULL,IDI_APPLICATION);
+	}
+
+	if(!RegisterClassEx(&wndClassEx))
+	{
+		Message("Failed To register window class.");
+		return;
+	}
+
+	{
+		wndStyle	=  WS_CAPTION | WS_SYSMENU | WS_VISIBLE;	//WS_POPUP;
+		/*
+		WS_BORDER
+		WS_CAPTION
+		WS_CHILD
+		WS_CHILDWINDOW
+		WS_CLIPCHILDREN
+		WS_CLIPSIBLINGS
+		WS_DISABLED
+		WS_DLGFRAME
+		WS_GROUP
+		WS_HSCROLL
+		WS_ICONIC
+		WS_MAXIMIZE
+		WS_MAXIMIZEBOX
+		WS_MINIMIZE
+		WS_MINIMIZEBOX
+		WS_OVERLAPPED
+		WS_OVERLAPPEDWINDOW		// (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+		WS_POPUP				// Без рамки
+		WS_POPUPWINDOW			// (WS_POPUP | WS_BORDER | WS_SYSMENU)
+		WS_SIZEBOX
+		WS_SYSMENU
+		WS_TABSTOP
+		WS_THICKFRAME
+		WS_TILED
+		WS_TILEDWINDOW			// (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+		WS_VISIBLE
+		WS_VSCROLL
+		*/
+		wndExStyle	= WS_EX_APPWINDOW ;//| WS_EX_TOOLWINDOW;
 		/*
 		WS_EX_ACCEPTFILES
 		WS_EX_APPWINDOW
@@ -342,16 +798,76 @@ void					TexProject::Window::Main::Create()
 	}
 
 	{
-		wndRect.left	= (long)(pos.x);
-		wndRect.right	= (long)(pos.x + size.x);
-		wndRect.top		= (long)(pos.y);
-		wndRect.bottom	= (long)(pos.y + size.y);
+		memset(&wndPixelFormatDescriptor,0,sizeof(wndPixelFormatDescriptor));
+		wndPixelFormatDescriptor.nSize			= sizeof(wndPixelFormatDescriptor);
+		wndPixelFormatDescriptor.nVersion		= 1;
+		wndPixelFormatDescriptor.dwFlags		= PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+		/*
+		PFD_DOUBLEBUFFER
+		PFD_STEREO
+		PFD_DRAW_TO_WINDOW
+		PFD_DRAW_TO_BITMAP
+		PFD_SUPPORT_GDI
+		PFD_SUPPORT_OPENGL
+		PFD_GENERIC_FORMAT
+		PFD_NEED_PALETTE
+		PFD_NEED_SYSTEM_PALETTE
+		PFD_SWAP_EXCHANGE
+		PFD_SWAP_COPY
+		PFD_SWAP_LAYER_BUFFERS
+		PFD_GENERIC_ACCELERATED
+		PFD_SUPPORT_DIRECTDRAW
+		PFD_DIRECT3D_ACCELERATED
+		PFD_SUPPORT_COMPOSITION
+		*/
+		wndPixelFormatDescriptor.iPixelType		= PFD_TYPE_RGBA;
+		/*
+		PFD_TYPE_RGBA
+		PFD_TYPE_COLORINDEX
+		*/
+		wndPixelFormatDescriptor.cColorBits		= 32;
+		wndPixelFormatDescriptor.cStencilBits	= 32;
+		wndPixelFormatDescriptor.cDepthBits		= 32;
 	}
-	
+#endif
+}
+void					TexProject::Window::Render::Free()
+{
+#ifdef __TEXPROJECT_WIN__
+	UnregisterClass(wndClassName.c_str(),EntryPointData::hInstance);
+#endif
+}
+
+
+void					TexProject::Window::Render::Create()
+{
+#ifdef __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_DEBUG__
+	if(!EntryPointData::init)
+	{
+		Error("Creating a window before entry point.");
+	}
+#endif
+
+	Delete();
+
+	{
+		size = uvec2(512,512);
+		pos = GetDesktopSize()/2 - size/2;
+		title = "window";
+	}
+
+	{
+		wndRect.left	= (LONG)(pos.x);
+		wndRect.right	= (LONG)(pos.x + size.x);
+		wndRect.top		= (LONG)(pos.y);
+		wndRect.bottom	= (LONG)(pos.y + size.y);
+	}
+
 	AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
 
 	wndHandle =	CreateWindowEx
-	(
+		(
 		wndExStyle,
 		wndClassName.c_str(),
 		title.c_str(),
@@ -364,15 +880,39 @@ void					TexProject::Window::Main::Create()
 		(HMENU)NULL,
 		wndClassEx.hInstance,
 		NULL
-	);
-
+		);
 	if(!wndHandle)
 	{
 		Message("Can't create window.");
 		return;
 	}
 
-	SetWindowLongPtr(wndHandle, GWLP_USERDATA, (LONG)this);
+	{
+		wndDeviceContextHandle = GetDC(wndHandle);		
+	}
+	if(!wndDeviceContextHandle)
+	{
+		Message("Cannot create device context.");
+		return;
+	}
+
+	{
+		auto pixelFormat = ChoosePixelFormat(wndDeviceContextHandle,&wndPixelFormatDescriptor);
+		if(!pixelFormat)
+		{
+			Message("Can't chose pixel format.");
+			return;
+		}
+		if(!SetPixelFormat(wndDeviceContextHandle,pixelFormat,&wndPixelFormatDescriptor))
+		{
+			Message("Can't set pixel format.");
+			return;
+		}
+	}
+
+	if(renderContext) renderContext->Create();
+
+	SetWindowLongPtr(wndHandle,GWLP_USERDATA,(LONG)this);
 	/*
 	GWL_EXSTYLE
 	GWLP_HINSTANCE
@@ -382,28 +922,44 @@ void					TexProject::Window::Main::Create()
 	GWLP_WNDPROC
 	*/
 
-	ShowWindow(wndHandle, SW_SHOW);
+	ShowWindow(wndHandle,SW_SHOW);
 	SetFocus(wndHandle);
+#endif
 
 	init = true;
 	running = true;
 
 }
-void					TexProject::Window::Main::Delete()
+void					TexProject::Window::Render::Delete()
 {
-	if(init)
+#ifdef __TEXPROJECT_WIN__
+
+	if(wndHandle)
 	{
-		if(wndHandle)
+		if(wndDeviceContextHandle)
 		{
-			DestroyWindow(wndHandle);
-			wndHandle = 0;
+			if(!ReleaseDC(wndHandle,wndDeviceContextHandle))
+			{
+				Error("Can't Release hDC.");
+			}
+			wndDeviceContextHandle = 0;
 		}
 
+		DestroyWindow(wndHandle);
+		wndHandle = 0;
+	}
+
+	if(init)
+	{
 		init = false;
 	}
+
+	if(renderContext) renderContext->Delete();
+#endif
 }
-void					TexProject::Window::Main::Loop()
+void					TexProject::Window::Render::Loop()
 {
+#ifdef __TEXPROJECT_WIN__
 	{
 		static MSG msg;
 		while(running && PeekMessage(&msg,NULL,0,0,PM_REMOVE))
@@ -412,15 +968,59 @@ void					TexProject::Window::Main::Loop()
 			DispatchMessage(&msg);
 		}
 	}
+#endif
 
-	if(!running)
+	if(init)
 	{
-		Delete();
+		if(running)
+		{
+			if(GetFocus() == wndHandle)
+			{
+				active = true;
+			}
+			else
+			{
+				active = false;
+			}
+
+			if(renderContext && renderContext->Use())
+			{
+				SwapBuffers(wndDeviceContextHandle);
+			}
+		}
+		else
+		{
+			Delete();
+		}
 	}
 }
 
+void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type& type_)
+{
+	if(renderContext)
+	{
+		delete renderContext; renderContext = nullptr;
+	}
 
+	switch(type_)
+	{
+		case RenderContext::Types::OpenGL:
+		{
+			renderContext = new RenderContext::OpenGL(this);
+			break;
+		}
+		default:
+		{
+			return;
+		}
+	}
 
+	if( init && renderContext )
+	{
+		renderContext->Create();
+		renderContext->Use();
+	}
+}
 
 
 

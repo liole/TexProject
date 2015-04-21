@@ -9,9 +9,13 @@ using namespace TexProject;
 
 void TexProject::Main()
 {
-	Window::Main a, b;
-	a.Create();
+	Window::Main a;
+	Window::Render b;
+
 	b.Create();
+	b.SetRenderContext(Window::RenderContext::Types::OpenGL);
+
+	a.Create();
 
 	while(a.IsRunning() || b.IsRunning())
 	{
@@ -19,7 +23,11 @@ void TexProject::Main()
 
 		if(KeyState(Keys::A)) a.Delete();
 		if(KeyState(Keys::B)) b.Delete();
+		if(KeyState(Keys::ESC)) break;
 	}
+
+	a.Delete();
+	b.Delete();
 
 }
 

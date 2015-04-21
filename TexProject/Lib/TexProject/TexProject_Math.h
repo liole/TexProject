@@ -35,27 +35,64 @@ namespace TexProject
 	};
 	struct ivec2
 	{
-		int32			x, y;
+		int32								x, y;
 
-		inline			ivec2();
-		inline			ivec2(int32 a_);
-		inline			ivec2(int32 x_, int32 y_);
+		inline								ivec2();
+		explicit inline						ivec2(int32 a_);
+		inline								ivec2(int32 x_, int32 y_);
 
-		inline ivec2&	operator = (const int32 source);
-		inline ivec2&	operator = (const vec2 source);
-		inline ivec2&	operator = (const uvec2 source);
+		inline ivec2&						operator = (const int32& source);
+		inline ivec2&						operator = (const vec2& source);
+		inline ivec2&						operator = (const uvec2& source);
+
+		inline ivec2						operator + (const ivec2& a) const;
+		inline ivec2						operator - (const ivec2& a) const;
+		inline ivec2						operator * (const ivec2& a) const;
+		inline ivec2						operator / (const ivec2& a) const;
+
+		friend inline ivec2					operator + (const ivec2& a,const int32& b);
+		friend inline ivec2					operator - (const ivec2& a,const int32& b);
+		friend inline ivec2					operator * (const ivec2& a,const int32& b);
+		friend inline ivec2					operator / (const ivec2& a,const int32& b);
+
+		friend inline ivec2					operator + (const ivec2& a,const uvec2& b);
+		friend inline ivec2					operator - (const ivec2& a,const uvec2& b);
+		friend inline ivec2					operator * (const ivec2& a,const uvec2& b);
+		friend inline ivec2					operator / (const ivec2& a,const uvec2& b);
+
+		friend inline ivec2					operator + (const int32& a,const ivec2& b);
+		friend inline ivec2					operator - (const int32& a,const ivec2& b);
+		friend inline ivec2					operator * (const int32& a,const ivec2& b);
+		friend inline ivec2					operator / (const int32& a,const ivec2& b);
+
+		friend inline ivec2					operator + (const uvec2& a,const ivec2& b);
+		friend inline ivec2					operator - (const uvec2& a,const ivec2& b);
+		friend inline ivec2					operator * (const uvec2& a,const ivec2& b);
+		friend inline ivec2					operator / (const uvec2& a,const ivec2& b);
+
 	};
 	struct uvec2
 	{
-		uint32			x, y;
+		uint32								x, y;
 
-		inline			uvec2();
-		inline			uvec2(uint32 a_);
-		inline			uvec2(uint32 x_, uint32 y_);
+		inline								uvec2();
+		explicit inline						uvec2(uint32 a_);
+		inline								uvec2(uint32 x_, uint32 y_);
 
-		inline uvec2&	operator = (const uint32 source);
-		inline uvec2&	operator = (const vec2 source);
-		inline uvec2&	operator = (const ivec2 source);
+		inline uvec2&						operator = (const uint32& source);
+		inline uvec2&						operator = (const vec2& source);
+		inline uvec2&						operator = (const ivec2& source);
+
+		inline uvec2						operator + (const uvec2& a) const;
+		inline ivec2						operator - (const uvec2& a) const;
+		inline ivec2						operator * (const uvec2& a) const;
+		inline ivec2						operator / (const uvec2& a) const;
+
+		inline uvec2						operator + (const uint32& a) const;
+		inline ivec2						operator - (const uint32& a) const;
+		inline ivec2						operator * (const uint32& a) const;
+		inline ivec2						operator / (const uint32& a) const;
+
 	};
 	struct vec3
 	{
@@ -147,20 +184,168 @@ TexProject::ivec2::ivec2(int32 x_, int32 y_):
 {
 }
 
-TexProject::ivec2&		TexProject::ivec2::operator = (const int32 source)
+TexProject::ivec2&							TexProject::ivec2::operator = (const int32& source)
 {
 	x = source;
 	y = source;
+	return *this;
 }
-TexProject::ivec2&		TexProject::ivec2::operator = (const vec2 source)
+TexProject::ivec2&							TexProject::ivec2::operator = (const vec2& source)
 {
 	x = int32(source.x);
 	y = int32(source.y);
+	return *this;
 }
-TexProject::ivec2&		TexProject::ivec2::operator = (const uvec2 source)
+TexProject::ivec2&							TexProject::ivec2::operator = (const uvec2& source)
 {
 	x = int32(source.x);
 	y = int32(source.y);
+	return *this;
+}
+
+TexProject::ivec2							TexProject::ivec2::operator + (const ivec2& a) const
+{
+	return ivec2(
+					x + a.x,
+					y + a.y
+				);
+}
+TexProject::ivec2							TexProject::ivec2::operator - (const ivec2& a) const
+{
+	return ivec2(
+					x - a.x,
+					y - a.y
+				);
+}
+TexProject::ivec2							TexProject::ivec2::operator * (const ivec2& a) const
+{
+	return ivec2(
+					x * a.x,
+					y * a.y
+				);
+}
+TexProject::ivec2							TexProject::ivec2::operator / (const ivec2& a) const
+{
+	return ivec2(
+					x / a.x,
+					y / a.y
+				);
+}
+
+inline TexProject::ivec2					TexProject::operator + (const ivec2& a,const int32& b)
+{
+	return ivec2(
+					a.x + b,
+					a.y + b
+				);
+}
+inline TexProject::ivec2					TexProject::operator - (const ivec2& a,const int32& b)
+{
+	return ivec2(
+					a.x - b,
+					a.y - b
+				);
+}
+inline TexProject::ivec2					TexProject::operator * (const ivec2& a,const int32& b)
+{
+	return ivec2(
+					a.x * b,
+					a.y * b
+				);
+}
+inline TexProject::ivec2					TexProject::operator / (const ivec2& a,const int32& b)
+{
+	return ivec2(
+					a.x / b,
+					a.y / b
+				);
+}
+
+inline TexProject::ivec2					TexProject::operator + (const ivec2& a,const uvec2& b)
+{
+	return ivec2(
+					a.x + int32(b.x),
+					a.y + int32(b.y)
+				);
+}
+inline TexProject::ivec2					TexProject::operator - (const ivec2& a,const uvec2& b)
+{
+	return ivec2(
+					a.x - int32(b.x),
+					a.y - int32(b.y)
+				);
+}
+inline TexProject::ivec2					TexProject::operator * (const ivec2& a,const uvec2& b)
+{
+	return ivec2(
+					a.x * int32(b.x),
+					a.y * int32(b.y)
+				);
+}
+inline TexProject::ivec2					TexProject::operator / (const ivec2& a,const uvec2& b)
+{
+	return ivec2(
+					a.x / int32(b.x),
+					a.y / int32(b.y)
+				);
+}
+
+inline TexProject::ivec2					TexProject::operator + (const uvec2& a,const ivec2& b)
+{
+	return ivec2(
+					int32(a.x) + b.x,
+					int32(a.y) + b.y
+				);
+}
+inline TexProject::ivec2					TexProject::operator - (const uvec2& a,const ivec2& b)
+{
+	return ivec2(
+					int32(a.x) - b.x,
+					int32(a.y) - b.y
+				);
+}
+inline TexProject::ivec2					TexProject::operator * (const uvec2& a,const ivec2& b)
+{
+	return ivec2(
+					int32(a.x) * b.x,
+					int32(a.y) * b.y
+				);
+}
+inline TexProject::ivec2					TexProject::operator / (const uvec2& a,const ivec2& b)
+{
+	return ivec2(
+					int32(a.x) / b.x,
+					int32(a.y) / b.y
+				);
+}
+
+inline TexProject::ivec2					TexProject::operator + (const int32& a,const ivec2& b)
+{
+	return ivec2(
+					a + b.x,
+					a + b.y
+				);
+}
+inline TexProject::ivec2					TexProject::operator - (const int32& a,const ivec2& b)
+{
+	return ivec2(
+					a - b.x,
+					a - b.y
+				);
+}
+inline TexProject::ivec2					TexProject::operator * (const int32& a,const ivec2& b)
+{
+	return ivec2(
+					a * b.x,
+					a * b.y
+				);
+}
+inline TexProject::ivec2					TexProject::operator / (const int32& a,const ivec2& b)
+{
+	return ivec2(
+					a / b.x,
+					a / b.y
+				);
 }
 
 
@@ -177,21 +362,83 @@ x(x_),y(y_)
 {
 }
 
-TexProject::uvec2&		TexProject::uvec2::operator = (const uint32 source)
+TexProject::uvec2&							TexProject::uvec2::operator = (const uint32& source)
 {
 	x = source;
 	y = source;
+	return *this;
 }
-TexProject::uvec2&		TexProject::uvec2::operator = (const vec2 source)
+TexProject::uvec2&							TexProject::uvec2::operator = (const vec2& source)
 {
 	x = uint32(source.x);
 	y = uint32(source.y);
+	return *this;
 }
-TexProject::uvec2&		TexProject::uvec2::operator = (const ivec2 source)
+TexProject::uvec2&							TexProject::uvec2::operator = (const ivec2& source)
 {
 	x = uint32(source.x);
 	y = uint32(source.y);
+	return *this;
 }
+
+TexProject::uvec2							TexProject::uvec2::operator + (const uvec2& a) const
+{
+	return uvec2(
+					x + a.x,
+					y + a.y
+				);
+}
+TexProject::ivec2							TexProject::uvec2::operator - (const uvec2& a) const
+{
+	return ivec2(
+					x - a.x,
+					y - a.y
+				);
+}
+TexProject::ivec2							TexProject::uvec2::operator * (const uvec2& a) const
+{
+	return ivec2(
+					x * a.x,
+					y * a.y
+				);
+}
+TexProject::ivec2							TexProject::uvec2::operator / (const uvec2& a) const
+{
+	return ivec2(
+					x / a.x,
+					y / a.y
+				);
+}
+
+TexProject::uvec2							TexProject::uvec2::operator + (const uint32& a) const
+{
+	return uvec2(
+					x + a,
+					y + a
+				);
+}
+TexProject::ivec2							TexProject::uvec2::operator - (const uint32& a) const
+{
+	return ivec2(
+					x - a,
+					y - a
+				);
+}
+TexProject::ivec2							TexProject::uvec2::operator * (const uint32& a) const
+{
+	return ivec2(
+					x * a,
+					y * a
+				);
+}
+TexProject::ivec2							TexProject::uvec2::operator / (const uint32& a) const
+{
+	return ivec2(
+					x / a,
+					y / a
+				);
+}
+
 
 // vec3
 TexProject::vec3::vec3()

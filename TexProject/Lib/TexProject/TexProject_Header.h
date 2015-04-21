@@ -160,6 +160,13 @@ namespace TexProject
 	struct									quat;
 
 
+	// Main
+	/*Базовий клас для винятків*/
+	struct Exception;
+	/*Помилка, що закриває програму*/
+	struct ErrorException;
+
+
 	/*
 	Всеможливі допоміжні типи
 	*/
@@ -187,6 +194,7 @@ namespace TexProject
 	{
 		struct Basic;
 		struct Main;
+		struct Render;
 
 		/*Ініціалізація*/
 		void								Init();

@@ -27,11 +27,7 @@ int WINAPI				WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLin
 		EntryPointData::nShowCmd = nShowCmd;
 	}
 
-	Window::Init();
-
-	Main();
-
-	Window::Free();
+	EntryPointSafeCall();
 
 	return 0;
 }
@@ -45,6 +41,16 @@ int WINAPI				WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLin
 #endif
 #endif
 #endif
+
+
+void					TexProject::EntryPointSafeCall()
+{
+	Window::Init();
+
+	ErrorException::SecureCall(Main);
+
+	Window::Free();
+}
 
 
 void					TexProject::Message(const string& text)
@@ -67,8 +73,7 @@ void					TexProject::Error(const string& text)
 {
 #ifdef __TEXPROJECT_WIN__
 
-	MessageBox(0, text.c_str(), "[TexProject] Error", MB_OK);
-	terminate();
+	throw ErrorException(text);
 
 #else
 #ifdef __TEXPROJECT_LIN__

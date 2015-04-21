@@ -66,7 +66,7 @@ inline typename T*				TexProject::Helper::Structure::IndirectClassArray<T,autoAd
 	}
 	else
 	{
-		Error("[TexProject::Helper::Structure::IndirectClassArray]\nOut of array.");
+		throw ErrorException("[TexProject::Helper::Structure::IndirectClassArray]\nOut of array.");
 	}
 #else
 	return array_[i];

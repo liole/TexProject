@@ -76,6 +76,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Lib\TexProject\Empty\TexProject_Empty.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_OpenGL.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Helpers.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
@@ -86,6 +87,7 @@
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
     <ClInclude Include="Lib\HalfFloat\half.hpp" />
     <ClInclude Include="Lib\TexProject\TexProject.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_OpenGL.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Helpers.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Windows.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Math.h" />

@@ -58,6 +58,10 @@ namespace TexProject
 	};
 
 	/*
+	Безпечний виклик точки входу.
+	*/
+	void				EntryPointSafeCall();
+	/*
 	Точка входу для кінцевого користувача.
 	Цю функцію визначає користувач.
 	*/
@@ -68,6 +72,7 @@ namespace TexProject
 	Функції сповіщення і повідомлення про помилки.
 	Викликати їх в Release збірці не рекомендовано, вони лише для своїх.
 	*/
+
 
 	/*
 	Виводить повідомлення, не обов'язково про помилку.
@@ -87,10 +92,70 @@ namespace TexProject
 	в залежності від того, натиснув користувач "Yes" чи "No".
 	*/
 	bool				Question(const string& text);
+
+
+	/*Базовий клас для винятків*/
+	struct Exception
+	{
+	public:
+		string								text = "";
+
+		inline								Exception() = default;
+		inline								Exception(const string& text_);
+		inline								Exception(const Exception& source) = default;
+		inline								Exception(Exception&& source) = delete;
+		inline								~Exception() = default;
+
+		inline Exception&					operator = (const Exception& source) = delete;
+		inline Exception&					operator = (Exception&& source) = delete;
+
+		inline string						Get() const;
+	};
+	/*Помилка, що закриває програму*/
+	struct ErrorException: public Exception
+	{
+		friend void TexProject::EntryPointSafeCall();
+		friend void TexProject::Error(const string&);
+
+		inline								ErrorException(const string& text_);
+
+	private:
+		inline static void					SecureCall(void(*func)(void));
+
+
+		inline								ErrorException(const ErrorException& source) = default;
+	};
 }
 
 
+// Exception
+inline								TexProject::Exception::Exception(const string& text_):
+	text(text_)
+{
+}
+inline TexProject::string			TexProject::Exception::Get() const
+{
+	return text;
+}
 
+
+// ErrorException
+inline void							TexProject::ErrorException::SecureCall(void(*func)(void))
+{
+	try
+	{
+		func();
+	}
+	catch(ErrorException exc)
+	{
+		MessageBox(0, exc.Get().c_str(), "[TexProject] Error", MB_OK);
+		abort();
+	}
+}
+inline								TexProject::ErrorException::ErrorException(const string& text_):
+	Exception(text_)
+{
+}
 
 
 
