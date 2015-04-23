@@ -51,6 +51,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)TexProject\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -76,6 +77,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Lib\TexProject\Empty\TexProject_Empty.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Shaders.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Textures.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_OpenGL.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Helpers.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
@@ -87,12 +90,19 @@
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
     <ClInclude Include="Lib\HalfFloat\half.hpp" />
     <ClInclude Include="Lib\TexProject\TexProject.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Shaders.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Textures.h" />
     <ClInclude Include="Lib\TexProject\TexProject_OpenGL.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Helpers.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Windows.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Math.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Main.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Header.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Media\Shaders\1.gs" />
+    <None Include="Media\Shaders\1.ps" />
+    <None Include="Media\Shaders\1.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

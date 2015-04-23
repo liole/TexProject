@@ -28,8 +28,10 @@ void					TexProject::Window::Process()
 	for(uint32 i = 0; i < Window::Basic::GetCount(); ++i)
 	{
 		auto window = Window::Basic::Get(i);
+		Window::Basic::current = window;
 		window->Loop();
 	}
+	Window::Basic::current = nullptr;
 }
 
 
@@ -235,6 +237,7 @@ bool					TexProject::Window::RenderContext::Basic::Use()
 
 
 // Window::RenderContext::OpenGL
+#ifdef __TEXPROJECT_OPENGL__
 PFNWGLCREATECONTEXTATTRIBSARBPROC			TexProject::Window::RenderContext::OpenGL::wglCreateContextAttribsARB = nullptr;
 
 void					TexProject::Window::RenderContext::OpenGL::Init()
@@ -326,6 +329,8 @@ void					TexProject::Window::RenderContext::OpenGL::Init()
 
 			wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
 
+			TexProject::OpenGL::Init();
+
 			if(!wglMakeCurrent(NULL,NULL))
 			{
 				Message("Can't Release Render Context.\nwglMakeCurrent(NULL, NULL)");
@@ -397,9 +402,16 @@ bool					TexProject::Window::RenderContext::OpenGL::Use()
 			Message("Fail to use OpenGL render context.");
 			return false;
 		}
+
+#ifdef __TEXPROJECT_DEBUG__
+	TexProject::OpenGL::ErrorTest();
+#endif
+
 		return true;
 	}
+	return false;
 }
+#endif
 
 
 // Window::Window::Default
@@ -659,6 +671,10 @@ void					TexProject::Window::Main::Loop()
 }
 
 
+// Window::Basic
+Window::Basic*			TexProject::Window::Basic::current = nullptr;
+
+
 // Window::Window::Render
 #ifdef __TEXPROJECT_WIN__
 PIXELFORMATDESCRIPTOR	TexProject::Window::Render::wndPixelFormatDescriptor;
@@ -838,6 +854,19 @@ void					TexProject::Window::Render::Free()
 #endif
 }
 
+TexProject::Window::Render::Render()	
+{
+#if __TEXPROJECT_WIN__
+	vSyncTimer = clock();
+	oVSyncTimer = vSyncTimer;
+#endif
+
+	ResetFuncs();
+}
+TexProject::Window::Render::~Render()
+{
+	Delete();
+}
 
 void					TexProject::Window::Render::Create()
 {
@@ -852,7 +881,7 @@ void					TexProject::Window::Render::Create()
 	Delete();
 
 	{
-		size = uvec2(512,512);
+		size = uvec2(256);
 		pos = GetDesktopSize()/2 - size/2;
 		title = "window";
 	}
@@ -910,8 +939,6 @@ void					TexProject::Window::Render::Create()
 		}
 	}
 
-	if(renderContext) renderContext->Create();
-
 	SetWindowLongPtr(wndHandle,GWLP_USERDATA,(LONG)this);
 	/*
 	GWL_EXSTYLE
@@ -929,9 +956,30 @@ void					TexProject::Window::Render::Create()
 	init = true;
 	running = true;
 
+	if(renderContext)
+	{
+		renderContext->Create();
+		if(renderContext->Use())
+		{
+			if(func[FuncTypes::Init]) func[FuncTypes::Init](this);
+		}
+	}
+
 }
 void					TexProject::Window::Render::Delete()
 {
+	if(renderContext)
+	{
+		if(init)
+		{
+			if(renderContext->Use())
+			{
+				if(func[FuncTypes::Free]) func[FuncTypes::Free](this);
+			}
+		}
+		renderContext->Delete();
+	}
+
 #ifdef __TEXPROJECT_WIN__
 
 	if(wndHandle)
@@ -954,7 +1002,6 @@ void					TexProject::Window::Render::Delete()
 		init = false;
 	}
 
-	if(renderContext) renderContext->Delete();
 #endif
 }
 void					TexProject::Window::Render::Loop()
@@ -983,9 +1030,21 @@ void					TexProject::Window::Render::Loop()
 				active = false;
 			}
 
-			if(renderContext && renderContext->Use())
+			if(renderContext)
 			{
-				SwapBuffers(wndDeviceContextHandle);
+				if(renderContext->Use())
+				{
+					if( vSync )
+					{
+						while( difftime((vSyncTimer = clock()),oVSyncTimer) < 1.0/60.0f );
+						oVSyncTimer = vSyncTimer;
+					}
+					else
+					{
+						if(func[FuncTypes::Render]) func[FuncTypes::Render](this);
+						SwapBuffers(wndDeviceContextHandle);
+					}
+				}
 			}
 		}
 		else
@@ -1004,11 +1063,13 @@ void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type&
 
 	switch(type_)
 	{
+#ifdef __TEXPROJECT_OPENGL__
 		case RenderContext::Types::OpenGL:
 		{
 			renderContext = new RenderContext::OpenGL(this);
 			break;
 		}
+#endif
 		default:
 		{
 			return;
@@ -1018,8 +1079,19 @@ void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type&
 	if( init && renderContext )
 	{
 		renderContext->Create();
-		renderContext->Use();
+		if(renderContext->Use())
+		{
+			if(func[FuncTypes::Init]) func[FuncTypes::Init](this);
+		}
 	}
+}
+void					TexProject::Window::Render::SetFunc(const FuncType& type_,Func func_)
+{
+	func[type_] = func_;
+}
+void					TexProject::Window::Render::ResetFuncs()
+{
+	for(uint32 i = 0; i < FuncTypes::count; ++i) func[i] = nullptr;
 }
 
 

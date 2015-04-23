@@ -17,13 +17,15 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 //#define __TEXPROJECT_LIN__
 //#define __TEXPROJECT_MAC__
 
+#define __TEXPROJECT_OPENGL__				1
+
 
 /*
 Замість використаня константи _DEBUG в перевідках дебаг режиму -
 будемо використовувати власну константу __TEXPROJECT_DEBUG__
 */
 #ifdef _DEBUG
-#define __TEXPROJECT_DEBUG__
+#define __TEXPROJECT_DEBUG__				1
 #endif
 
 
@@ -203,6 +205,23 @@ namespace TexProject
 		/*Функція обробки усіх вікон.*/
 		void								Process();
 	}
+
+#ifdef __TEXPROJECT_OPENGL__
+	/*Структури і методи бібліотеки OpenGL*/
+	// OpenGL
+	/*Головний неймспейс OpenGL*/
+	namespace OpenGL
+	{
+		// Shader
+		/*Клас шейдера*/
+		struct Shader;
+	}
+#endif
+
+
+	// Textures
+	/*Клас текстура*/
+	struct Texture;
 
 }
 

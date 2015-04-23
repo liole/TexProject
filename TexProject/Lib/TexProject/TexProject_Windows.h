@@ -10,6 +10,9 @@
 #include <TexProject/TexProject_Helpers.h>
 
 
+#include <time.h>
+
+
 #ifdef __TEXPROJECT_WIN__
 
 #include <Windows.h>
@@ -213,6 +216,7 @@ namespace TexProject
 				virtual bool				Use();
 			};
 			/*Контекст OpenGL*/
+#ifdef __TEXPROJECT_OPENGL__
 			struct OpenGL:
 				public Basic
 			{
@@ -251,6 +255,7 @@ namespace TexProject
 				virtual void				Delete();
 				virtual bool				Use();
 			};
+#endif
 
 			void							Init();
 			void							Free();
@@ -299,7 +304,10 @@ namespace TexProject
 		struct Basic:
 			public Helper::Structure::IndirectClassArray<Basic,true,true>
 		{
+			friend void Window::Process();
 		protected:
+
+			static Basic*					current;
 
 			bool							init		= false;
 			bool							running		= false;
@@ -309,6 +317,9 @@ namespace TexProject
 			string							title		= "window";
 
 		public:
+
+			static inline Basic*			GetCurrent();
+
 
 											Basic() = default;
 											Basic(const Basic& source) = delete;
@@ -325,6 +336,8 @@ namespace TexProject
 
 			inline bool						IsInit() const;
 			inline bool						IsRunning() const;
+
+			inline uvec2					GetSize() const;
 		};
 		/*Клас звичайного вікна*/
 		struct Main:
@@ -359,6 +372,22 @@ namespace TexProject
 			public Basic,
 			public WindowStructures<Render>
 		{
+		public:
+
+			struct FuncTypes
+			{
+				static const uint32			count = 3;
+				enum Enum
+				{
+					Render					= 0,
+					Init					= 1,
+					Free					= 2
+				};
+											FuncTypes() = delete;
+			};
+			typedef FuncTypes::Enum			FuncType;
+			typedef void(*Func)(Render*);
+
 			friend RenderContext::Basic;
 			friend RenderContext::OpenGL;
 
@@ -370,6 +399,8 @@ namespace TexProject
 			static LRESULT CALLBACK			callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 
 			HDC								wndDeviceContextHandle = 0;
+			clock_t							vSyncTimer,
+											oVSyncTimer;
 
 #endif
 
@@ -380,10 +411,15 @@ namespace TexProject
 			static void						Init();
 			static void						Free();
 
-											Render() = default;
+
+			bool							vSync = false;
+			Func							func[FuncTypes::count];
+
+
+											Render();
 											Render(const Render& source) = delete;
 											Render(Render&& source) = delete;
-			virtual							~Render() = default;
+			virtual							~Render();
 
 			Render&							operator = (const Render& source) = delete;
 			Render&							operator = (Render&& source) = delete;
@@ -392,12 +428,16 @@ namespace TexProject
 			virtual void					Delete();
 			virtual void					Loop();
 
-			void							SetRenderContext(const RenderContext::Type& type_);
+			virtual void					SetRenderContext(const RenderContext::Type& type_);
+			virtual void					SetFunc(const FuncType& type_, Func func_);
+			virtual void					ResetFuncs();
 		};
 
 		void								Init();
 		void								Free();
 
+		/*Повертає вказівник на вікно, яке в даний момент обробляється функцією Window::Process()*/
+		inline Basic*						GetCurrent();
 		inline uvec2						GetDesktopSize();
 	}
 
@@ -436,6 +476,10 @@ inline TexProject::uvec2					TexProject::Window::GetDesktopSize()
 					GetSystemMetrics(SM_CXSCREEN),
 					GetSystemMetrics(SM_CYSCREEN)
 				);
+}
+inline TexProject::Window::Basic*			TexProject::Window::GetCurrent()
+{
+	return Basic::GetCurrent();
 }
 
 
@@ -485,6 +529,12 @@ RECT										TexProject::Window::WindowStructures<T>::wndRect;
 
 
 // Window::Basic
+TexProject::Window::Basic*					TexProject::Window::Basic::GetCurrent()
+{
+	return current;
+}
+
+
 inline bool									TexProject::Window::Basic::IsInit() const
 {
 	return init;
@@ -492,6 +542,10 @@ inline bool									TexProject::Window::Basic::IsInit() const
 inline bool									TexProject::Window::Basic::IsRunning() const
 {
 	return running;
+}
+inline TexProject::uvec2					TexProject::Window::Basic::GetSize() const
+{
+	return size;
 }
 
 

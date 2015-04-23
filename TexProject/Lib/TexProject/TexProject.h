@@ -18,6 +18,9 @@
 #include <TexProject/TexProject_Math.h>
 #include <TexProject/TexProject_Helpers.h>
 #include <TexProject/TexProject_Windows.h>
+#include <TexProject/TexProject_OpenGL.h>
+#include <TexProject/TexProject_Shaders.h>
+#include <TexProject/TexProject_Textures.h>
 
 
 

@@ -31,7 +31,30 @@ namespace TexProject
 
 	struct vec2
 	{
-		float32			x, y;
+		float32								x, y;
+
+		inline								vec2();
+		inline								vec2(const vec2&) = default;
+		explicit inline						vec2(const float32 a_);
+		inline								vec2(float32 x_, float32 y_);
+
+		inline vec2&						operator = (const vec2&) = default;
+		inline vec2&						operator = (const float32& a);
+
+		inline vec2							operator + (const vec2& a) const;
+		inline vec2							operator - (const vec2& a) const;
+		inline vec2							operator * (const vec2& a) const;
+		inline vec2							operator / (const vec2& a) const;
+
+		friend inline vec2					operator + (const vec2& a,const float32& b);
+		friend inline vec2					operator - (const vec2& a,const float32& b);
+		friend inline vec2					operator * (const vec2& a,const float32& b);
+		friend inline vec2					operator / (const vec2& a,const float32& b);
+
+		friend inline vec2					operator + (const float32& a,const vec2& b);
+		friend inline vec2					operator - (const float32& a,const vec2& b);
+		friend inline vec2					operator * (const float32& a,const vec2& b);
+		friend inline vec2					operator / (const float32& a,const vec2& b);
 	};
 	struct ivec2
 	{
@@ -109,6 +132,13 @@ namespace TexProject
 	struct uvec3
 	{
 		uint32			x, y, z;
+
+		inline			uvec3();
+		inline explicit	uvec3(uint32 a_);
+		inline			uvec3(uint32 x_,uint32 y_,uint32 z_);
+		inline			uvec3(const uvec3&) = default;
+
+		inline uvec3&	operator = (const uvec3&) = default;
 	};
 	struct vec4
 	{
@@ -165,9 +195,132 @@ namespace TexProject
 	/*Скалярний добуток vec4*/
 	inline float32		dot(const vec4& a, const vec4& b);
 
+	/*Скалярний квадрат vec2*/
+	inline float32		sqr(const vec2& a);
+
+	/*Довжина vec2*/
+	inline float32		length(const vec2& a);
+
+	/*Нормалізований Vec2*/
+	inline vec2			normalize(const vec2& a);
+
+	/*Відстань між двома vec2*/
+	inline float32		dist(const vec2& a,const vec2& b);
+
 	/*Векторний добуток vec3*/
 	inline vec3			cross(const vec3& a,const vec3& b);
 
+	inline float32		getAng(const vec2& a,const vec2& b);
+
+}
+
+
+// vec2
+TexProject::vec2::vec2()
+{
+}
+TexProject::vec2::vec2(const float32 a_):
+	x(a_), y(a_)
+{
+}
+TexProject::vec2::vec2(float32 x_,float32 y_):
+	x(x_),y(y_)
+{
+}
+
+TexProject::vec2&							TexProject::vec2::operator = (const float32& a)
+{
+	x = a;
+	y = a;
+}
+
+TexProject::vec2							TexProject::vec2::operator + (const vec2& a) const
+{
+	return vec2	(
+					x + a.x,
+					y + a.y
+				);
+}
+TexProject::vec2							TexProject::vec2::operator - (const vec2& a) const
+{
+	return vec2	(
+					x - a.x,
+					y - a.y
+				);
+}
+TexProject::vec2							TexProject::vec2::operator * (const vec2& a) const
+{
+	return vec2	(
+					x * a.x,
+					y * a.y
+				);
+}
+TexProject::vec2							TexProject::vec2::operator / (const vec2& a) const
+{
+	return vec2	(
+					x * a.x,
+					y * a.y
+				);
+}
+
+TexProject::vec2							TexProject::operator + (const vec2& a,const float32& b)
+{
+	return vec2	(
+					a.x + b,
+					a.y + b
+				);
+}
+TexProject::vec2							TexProject::operator - (const vec2& a,const float32& b)
+{
+	return vec2	(
+					a.x - b,
+					a.y - b
+				);
+}
+TexProject::vec2							TexProject::operator * (const vec2& a,const float32& b)
+{
+	return vec2	(
+					a.x * b,
+					a.y * b
+				);
+}
+TexProject::vec2							TexProject::operator / (const vec2& a,const float32& b)
+{
+	static float32 t;
+	t = 1.0f/b;
+	return vec2	(
+					a.x * t,
+					a.y * t
+				);
+}
+
+TexProject::vec2							TexProject::operator + (const float32& a,const vec2& b)
+{
+	return vec2	(
+					a + b.x,
+					a + b.y
+				);
+}
+TexProject::vec2							TexProject::operator - (const float32& a,const vec2& b)
+{
+	return vec2	(
+					a - b.x,
+					a - b.y
+				);
+}
+TexProject::vec2							TexProject::operator * (const float32& a,const vec2& b)
+{
+	return vec2	(
+					a * b.x,
+					a * b.y
+				);
+}
+TexProject::vec2							TexProject::operator / (const float32& a,const vec2& b)
+{
+	return vec2	(
+					a / b.x,
+					a / b.y
+				);
 }
 
 
@@ -232,28 +385,28 @@ TexProject::ivec2							TexProject::ivec2::operator / (const ivec2& a) const
 				);
 }
 
-inline TexProject::ivec2					TexProject::operator + (const ivec2& a,const int32& b)
+TexProject::ivec2					TexProject::operator + (const ivec2& a,const int32& b)
 {
 	return ivec2(
 					a.x + b,
 					a.y + b
 				);
 }
-inline TexProject::ivec2					TexProject::operator - (const ivec2& a,const int32& b)
+TexProject::ivec2					TexProject::operator - (const ivec2& a,const int32& b)
 {
 	return ivec2(
 					a.x - b,
 					a.y - b
 				);
 }
-inline TexProject::ivec2					TexProject::operator * (const ivec2& a,const int32& b)
+TexProject::ivec2					TexProject::operator * (const ivec2& a,const int32& b)
 {
 	return ivec2(
 					a.x * b,
 					a.y * b
 				);
 }
-inline TexProject::ivec2					TexProject::operator / (const ivec2& a,const int32& b)
+TexProject::ivec2					TexProject::operator / (const ivec2& a,const int32& b)
 {
 	return ivec2(
 					a.x / b,
@@ -261,28 +414,28 @@ inline TexProject::ivec2					TexProject::operator / (const ivec2& a,const int32&
 				);
 }
 
-inline TexProject::ivec2					TexProject::operator + (const ivec2& a,const uvec2& b)
+TexProject::ivec2					TexProject::operator + (const ivec2& a,const uvec2& b)
 {
 	return ivec2(
 					a.x + int32(b.x),
 					a.y + int32(b.y)
 				);
 }
-inline TexProject::ivec2					TexProject::operator - (const ivec2& a,const uvec2& b)
+TexProject::ivec2					TexProject::operator - (const ivec2& a,const uvec2& b)
 {
 	return ivec2(
 					a.x - int32(b.x),
 					a.y - int32(b.y)
 				);
 }
-inline TexProject::ivec2					TexProject::operator * (const ivec2& a,const uvec2& b)
+TexProject::ivec2					TexProject::operator * (const ivec2& a,const uvec2& b)
 {
 	return ivec2(
 					a.x * int32(b.x),
 					a.y * int32(b.y)
 				);
 }
-inline TexProject::ivec2					TexProject::operator / (const ivec2& a,const uvec2& b)
+TexProject::ivec2					TexProject::operator / (const ivec2& a,const uvec2& b)
 {
 	return ivec2(
 					a.x / int32(b.x),
@@ -290,28 +443,28 @@ inline TexProject::ivec2					TexProject::operator / (const ivec2& a,const uvec2&
 				);
 }
 
-inline TexProject::ivec2					TexProject::operator + (const uvec2& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator + (const uvec2& a,const ivec2& b)
 {
 	return ivec2(
 					int32(a.x) + b.x,
 					int32(a.y) + b.y
 				);
 }
-inline TexProject::ivec2					TexProject::operator - (const uvec2& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator - (const uvec2& a,const ivec2& b)
 {
 	return ivec2(
 					int32(a.x) - b.x,
 					int32(a.y) - b.y
 				);
 }
-inline TexProject::ivec2					TexProject::operator * (const uvec2& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator * (const uvec2& a,const ivec2& b)
 {
 	return ivec2(
 					int32(a.x) * b.x,
 					int32(a.y) * b.y
 				);
 }
-inline TexProject::ivec2					TexProject::operator / (const uvec2& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator / (const uvec2& a,const ivec2& b)
 {
 	return ivec2(
 					int32(a.x) / b.x,
@@ -319,28 +472,28 @@ inline TexProject::ivec2					TexProject::operator / (const uvec2& a,const ivec2&
 				);
 }
 
-inline TexProject::ivec2					TexProject::operator + (const int32& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator + (const int32& a,const ivec2& b)
 {
 	return ivec2(
 					a + b.x,
 					a + b.y
 				);
 }
-inline TexProject::ivec2					TexProject::operator - (const int32& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator - (const int32& a,const ivec2& b)
 {
 	return ivec2(
 					a - b.x,
 					a - b.y
 				);
 }
-inline TexProject::ivec2					TexProject::operator * (const int32& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator * (const int32& a,const ivec2& b)
 {
 	return ivec2(
 					a * b.x,
 					a * b.y
 				);
 }
-inline TexProject::ivec2					TexProject::operator / (const int32& a,const ivec2& b)
+TexProject::ivec2					TexProject::operator / (const int32& a,const ivec2& b)
 {
 	return ivec2(
 					a / b.x,
@@ -454,6 +607,20 @@ TexProject::vec3::vec3(float32 x_, float32 y_, float32 z_):
 }
 
 
+// uvec3
+TexProject::uvec3::uvec3()
+{
+}
+TexProject::uvec3::uvec3(uint32 a_):
+	x(a_), y(a_), z(a_)
+{
+}
+TexProject::uvec3::uvec3(uint32 x_,uint32 y_,uint32 z_):
+	x(x_),y(y_),z(z_)
+{
+}
+
+
 inline TexProject::float32					TexProject::degrees(float32 in)
 {
 	return in * _180devPIf;
@@ -502,6 +669,26 @@ inline TexProject::float32					TexProject::dot(const vec4& a, const vec4& b)
 	return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
 }
 
+inline TexProject::float32					TexProject::sqr(const vec2& a)
+{
+	return a.x*a.x + a.y*a.y;
+}
+
+inline TexProject::float32					TexProject::length(const vec2& a)
+{
+	return sqrt(sqr(a));
+}
+
+inline TexProject::vec2						TexProject::normalize(const vec2& a)
+{
+	return a/sqr(a);
+}
+
+inline TexProject::float32					TexProject::dist(const vec2& a,const vec2& b)
+{
+	return length(a-b);
+}
+
 inline TexProject::vec3						TexProject::cross(const vec3& a, const vec3& b)
 {
 	return vec3	(
@@ -511,7 +698,10 @@ inline TexProject::vec3						TexProject::cross(const vec3& a, const vec3& b)
 				);
 }
 
-
+inline TexProject::float32					TexProject::getAng(const vec2& a,const vec2& b)
+{
+	return acosDg(dot(a,b) / (length(a)*length(b)));
+}
 
 
 
