@@ -21,17 +21,22 @@ void					TexProject::Window::Free()
 
 	Window::RenderContext::Free();
 }
-void					TexProject::Window::Process()
+bool					TexProject::Window::Process()
 {
 	Window::Input::Loop();
+
+	bool res = false;
 
 	for(uint32 i = 0; i < Window::Basic::GetCount(); ++i)
 	{
 		auto window = Window::Basic::Get(i);
+		if(window->IsRunning()) res = true;
 		Window::Basic::current = window;
 		window->Loop();
 	}
 	Window::Basic::current = nullptr;
+
+	return res;
 }
 
 
@@ -414,7 +419,32 @@ bool					TexProject::Window::RenderContext::OpenGL::Use()
 #endif
 
 
-// Window::Window::Default
+// Window::Basic
+Window::Basic*			TexProject::Window::Basic::current = nullptr;
+
+void					TexProject::Window::Basic::Delete()
+{
+	for(auto i: child) i->Delete();
+	child.clear();
+}
+
+
+void					TexProject::Window::Basic::SetSize(const uvec2 size_)
+{
+	size = size_;
+}
+void					TexProject::Window::Basic::SetPos(const ivec2 pos_)
+{
+	pos = pos_;
+}
+
+void*					TexProject::Window::Basic::GetHandle()
+{
+	return nullptr;
+}
+
+
+// Window::Main
 #ifdef __TEXPROJECT_WIN__
 LRESULT CALLBACK		TexProject::Window::Main::callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
@@ -559,7 +589,7 @@ void					TexProject::Window::Main::Free()
 }
 
 
-void					TexProject::Window::Main::Create()
+void					TexProject::Window::Main::Create(Basic* parent_)
 {
 #ifdef __TEXPROJECT_WIN__
 #ifdef __TEXPROJECT_DEBUG__
@@ -570,6 +600,15 @@ void					TexProject::Window::Main::Create()
 #endif
 
 	Delete();
+
+	{
+		parent = parent_;
+		if(parent)
+		{
+			if(!parent->IsInit()) return;
+			parent->AddChild(this);
+		}
+	}
 
 	{
 		size = uvec2(400, 300);
@@ -590,15 +629,15 @@ void					TexProject::Window::Main::Create()
 		wndExStyle,
 		wndClassName.c_str(),
 		title.c_str(),
-		wndStyle,
+		wndStyle | (parent ? WS_CHILD : 0),
 		wndRect.left,
 		wndRect.top,
 		wndRect.right - wndRect.left,
 		wndRect.bottom - wndRect.top,
-		(HWND)NULL,
-		(HMENU)NULL,
+		(HWND)(parent ? parent->GetHandle() : nullptr),	//nullptr,
+		(HMENU)nullptr,
 		wndClassEx.hInstance,
-		NULL
+		nullptr
 	);
 	if(!wndHandle)
 	{
@@ -626,6 +665,8 @@ void					TexProject::Window::Main::Create()
 }
 void					TexProject::Window::Main::Delete()
 {
+	Basic::Delete();
+
 #ifdef __TEXPROJECT_WIN__
 	if(wndHandle)
 	{
@@ -667,12 +708,76 @@ void					TexProject::Window::Main::Loop()
 		{
 			Delete();
 		}
+
+		UpdateWindow(wndHandle);
 	}
 }
 
+void					TexProject::Window::Main::SetSize(const uvec2 size_)
+{
+	if(size.x != size_.x || size.y != size_.y)
+	{
+		size = size_;
+#ifdef __TEXPROJECT_WIN__
+		if(wndHandle)
+		{
+			{
+				wndRect.left	= (LONG)(pos.x);
+				wndRect.right	= (LONG)(pos.x + size.x);
+				wndRect.top		= (LONG)(pos.y);
+				wndRect.bottom	= (LONG)(pos.y + size.y);
+			}
+			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
+			SetWindowPos
+				(
+				wndHandle,
+				HWND_NOTOPMOST,
+				wndRect.left,
+				wndRect.bottom,
+				wndRect.right-wndRect.left,
+				wndRect.bottom-wndRect.top,
+				SWP_NOMOVE
+				);
+			UpdateWindow(wndHandle);
+		}
+#endif
+	}
+}
+void					TexProject::Window::Main::SetPos(const ivec2 pos_)
+{
+	if(pos.x != pos_.x || pos.y != pos_.y)
+	{
+		pos = pos_;
+#ifdef __TEXPROJECT_WIN__
+		if(wndHandle)
+		{
+			{
+				wndRect.left	= (LONG)(pos.x);
+				wndRect.right	= (LONG)(pos.x + size.x);
+				wndRect.top		= (LONG)(pos.y);
+				wndRect.bottom	= (LONG)(pos.y + size.y);
+			}
+			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
+			SetWindowPos
+				(
+				wndHandle,
+				HWND_NOTOPMOST,
+				wndRect.left,
+				wndRect.bottom,
+				wndRect.right-wndRect.left,
+				wndRect.bottom-wndRect.top,
+				SWP_NOSIZE
+				);
+			UpdateWindow(wndHandle);
+		}
+#endif
+	}
+}
 
-// Window::Basic
-Window::Basic*			TexProject::Window::Basic::current = nullptr;
+void*					TexProject::Window::Main::GetHandle()
+{
+	return wndHandle;
+}
 
 
 // Window::Window::Render
@@ -868,7 +973,7 @@ TexProject::Window::Render::~Render()
 	Delete();
 }
 
-void					TexProject::Window::Render::Create()
+void					TexProject::Window::Render::Create(Basic* parent_)
 {
 #ifdef __TEXPROJECT_WIN__
 #ifdef __TEXPROJECT_DEBUG__
@@ -879,6 +984,16 @@ void					TexProject::Window::Render::Create()
 #endif
 
 	Delete();
+
+	{
+		parent = parent_;
+		if(parent && !parent->IsInit()) return;
+		if(parent)
+		{
+			if(!parent->IsInit()) return;
+			parent->AddChild(this);
+		}
+	}
 
 	{
 		size = uvec2(256);
@@ -900,12 +1015,12 @@ void					TexProject::Window::Render::Create()
 		wndExStyle,
 		wndClassName.c_str(),
 		title.c_str(),
-		wndStyle,
+		wndStyle | (parent ? WS_CHILD : 0),
 		wndRect.left,
 		wndRect.top,
 		wndRect.right - wndRect.left,
 		wndRect.bottom - wndRect.top,
-		(HWND)NULL,
+		(HWND)(parent ? parent->GetHandle() : nullptr),	//nullptr,
 		(HMENU)NULL,
 		wndClassEx.hInstance,
 		NULL
@@ -968,6 +1083,8 @@ void					TexProject::Window::Render::Create()
 }
 void					TexProject::Window::Render::Delete()
 {
+	Basic::Delete();
+
 	if(renderContext)
 	{
 		if(init)
@@ -1051,6 +1168,67 @@ void					TexProject::Window::Render::Loop()
 		{
 			Delete();
 		}
+	}
+}
+
+void					TexProject::Window::Render::SetSize(const uvec2 size_)
+{
+	if(size.x != size_.x || size.y != size_.y)
+	{
+		size = size_;
+#ifdef __TEXPROJECT_WIN__
+		if(wndHandle)
+		{
+			{
+				wndRect.left	= (LONG)(pos.x);
+				wndRect.right	= (LONG)(pos.x + size.x);
+				wndRect.top		= (LONG)(pos.y);
+				wndRect.bottom	= (LONG)(pos.y + size.y);
+			}
+			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
+			SetWindowPos
+				(
+				wndHandle,
+				HWND_NOTOPMOST,
+				wndRect.left,
+				wndRect.bottom,
+				wndRect.right-wndRect.left,
+				wndRect.bottom-wndRect.top,
+				SWP_NOMOVE
+				);
+			UpdateWindow(wndHandle);
+		}
+#endif
+	}
+}
+void					TexProject::Window::Render::SetPos(const ivec2 pos_)
+{
+	if(pos.x != pos_.x || pos.y != pos_.y)
+	{
+		pos = pos_;
+#ifdef __TEXPROJECT_WIN__
+		if(wndHandle)
+		{
+			{
+				wndRect.left	= (LONG)(pos.x);
+				wndRect.right	= (LONG)(pos.x + size.x);
+				wndRect.top		= (LONG)(pos.y);
+				wndRect.bottom	= (LONG)(pos.y + size.y);
+			}
+			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
+			SetWindowPos
+				(
+				wndHandle,
+				HWND_NOTOPMOST,
+				wndRect.left,
+				wndRect.bottom,
+				wndRect.right-wndRect.left,
+				wndRect.bottom-wndRect.top,
+				SWP_NOSIZE
+				);
+			UpdateWindow(wndHandle);
+		}
+#endif
 	}
 }
 

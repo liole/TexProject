@@ -203,7 +203,7 @@ namespace TexProject
 		/*Деініціалізація*/
 		void								Free();
 		/*Функція обробки усіх вікон.*/
-		void								Process();
+		bool								Process();
 	}
 
 #ifdef __TEXPROJECT_OPENGL__

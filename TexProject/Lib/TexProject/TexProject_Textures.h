@@ -128,19 +128,26 @@ namespace TexProject
 
 #endif
 
+	protected:
+
 		bool			init = false;
-		vec4***			data = nullptr;
+		//vec4***			data = nullptr;
+		vec4*			data = nullptr;
 		uvec3			size = uvec3(0);
+
+	public:
 
 		void								Delete();
 
 											Texture() = default;
 											~Texture();
 
-		vec4&								Get(uint32 x, uint32 y);
+		inline vec4&						Get(uint32 x, uint32 y);
+		inline uvec3						GetSize() const;
 		void								Resize(uvec3 size_);
 		void								Build();
 		void								Draw();
+
 
 #ifdef __TEXPROJECT_OPENGL__
 
@@ -180,7 +187,7 @@ namespace TexProject
 }
 
 
-void					TexProject::Texture::glUse(uint32 slot_)
+void										TexProject::Texture::glUse(uint32 slot_)
 {
 #ifdef __TEXPROJECT_OPENGL__
 	if( slot_ < glMaxTextureSlots && init && glTexture )
@@ -197,6 +204,25 @@ void					TexProject::Texture::glUse(uint32 slot_)
 	OpenGL::glActiveTexture(GL_TEXTURE0+slot_); glBindTexture(glType,glTexture);
 #endif
 }
+
+
+TexProject::vec4&							TexProject::Texture::Get(uint32 x,uint32 y)
+{
+	if(x < size.x && y < size.y && size.z > 0)
+	{
+		//return data[x][y][0];
+		return data[size.x*(0*size.y + y) + x];
+	}
+	else
+	{
+		throw Exception("Out of texture data array.");
+	}
+}
+TexProject::uvec3							TexProject::Texture::GetSize() const
+{
+	return size;
+}
+
 
 
 

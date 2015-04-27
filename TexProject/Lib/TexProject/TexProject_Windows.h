@@ -11,6 +11,7 @@
 
 
 #include <time.h>
+#include <list>
 
 
 #ifdef __TEXPROJECT_WIN__
@@ -304,11 +305,13 @@ namespace TexProject
 		struct Basic:
 			public Helper::Structure::IndirectClassArray<Basic,true,true>
 		{
-			friend void Window::Process();
+			friend bool Window::Process();
 		protected:
 
 			static Basic*					current;
 
+			Basic*							parent		= nullptr;
+			std::list<Basic*>				child;
 			bool							init		= false;
 			bool							running		= false;
 			bool							active		= false;
@@ -330,9 +333,16 @@ namespace TexProject
 			Basic&							operator = (Basic&& source) = delete;
 
 
-			virtual void					Create() = 0;
-			virtual void					Delete() = 0;
+			virtual void					Create(Basic* parent_ = nullptr) = 0;
+			virtual void					Delete();
 			virtual void					Loop() = 0;
+
+			inline void						AddChild(Basic* child_);
+
+			virtual void					SetSize(const uvec2 size_);
+			virtual void					SetPos(const ivec2 pos_);
+
+			virtual void*					GetHandle();
 
 			inline bool						IsInit() const;
 			inline bool						IsRunning() const;
@@ -363,9 +373,14 @@ namespace TexProject
 			Main&							operator = (const Main& source) = delete;
 			Main&							operator = (Main&& source) = delete;
 
-			virtual void					Create();
-			virtual void					Delete();
-			virtual void					Loop();
+			virtual void					Create(Basic* parent_ = nullptr) override;
+			virtual void					Delete() override;
+			virtual void					Loop() override;
+
+			virtual void 					SetSize(const uvec2 size_) override;
+			virtual void					SetPos(const ivec2 pos_) override;
+
+			virtual void*					GetHandle();
 		};
 		/*Вікно з підтримкою виводу*/
 		struct Render:
@@ -419,14 +434,17 @@ namespace TexProject
 											Render();
 											Render(const Render& source) = delete;
 											Render(Render&& source) = delete;
-			virtual							~Render();
+			virtual							~Render() override;
 
 			Render&							operator = (const Render& source) = delete;
 			Render&							operator = (Render&& source) = delete;
 
-			virtual void					Create();
-			virtual void					Delete();
-			virtual void					Loop();
+			virtual void					Create(Basic* parent_ = nullptr) override;
+			virtual void					Delete() override;
+			virtual void					Loop() override;
+
+			virtual void 					SetSize(const uvec2 size_) override;
+			virtual void					SetPos(const ivec2 pos_) override;
 
 			virtual void					SetRenderContext(const RenderContext::Type& type_);
 			virtual void					SetFunc(const FuncType& type_, Func func_);
@@ -529,11 +547,17 @@ RECT										TexProject::Window::WindowStructures<T>::wndRect;
 
 
 // Window::Basic
+
 TexProject::Window::Basic*					TexProject::Window::Basic::GetCurrent()
 {
 	return current;
 }
 
+
+inline void									TexProject::Window::Basic::AddChild(Basic* child_)
+{
+	child.push_back(child_);
+}
 
 inline bool									TexProject::Window::Basic::IsInit() const
 {

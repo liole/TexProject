@@ -28,7 +28,6 @@ namespace TexProject
 	const float32 _180devPIf					= 57.295779513082320876798154814105f;
 	const float32 _dev180PIf					= 0.00176838825657661484187648625969f;
 
-
 	struct vec2
 	{
 		float32								x, y;
@@ -55,6 +54,10 @@ namespace TexProject
 		friend inline vec2					operator - (const float32& a,const vec2& b);
 		friend inline vec2					operator * (const float32& a,const vec2& b);
 		friend inline vec2					operator / (const float32& a,const vec2& b);
+
+		inline float32						length() const;
+		inline void							sqr();
+		inline void							normalize();
 	};
 	struct ivec2
 	{
@@ -63,6 +66,10 @@ namespace TexProject
 		inline								ivec2();
 		explicit inline						ivec2(int32 a_);
 		inline								ivec2(int32 x_, int32 y_);
+		explicit inline						ivec2(vec2);
+		explicit inline						ivec2(uvec2);
+		inline								ivec2(const ivec2&) = default;
+		inline								~ivec2() = default;
 
 		inline ivec2&						operator = (const int32& source);
 		inline ivec2&						operator = (const vec2& source);
@@ -124,6 +131,11 @@ namespace TexProject
 		inline			vec3();
 		inline			vec3(float32 a_);
 		inline			vec3(float32 x_, float32 y_, float32 z_);
+		inline			vec3(vec2 xy_,float32 z_);
+		inline			vec3(float32 x_,vec2 yz_);
+
+		inline vec2		xy() const;
+		inline vec2		xz() const;
 	};
 	struct ivec3
 	{
@@ -143,6 +155,12 @@ namespace TexProject
 	struct vec4
 	{
 		float32			x, y, z, w;
+
+		inline			vec4() = default;
+		inline			vec4(const vec4&) = default;
+		inline			vec4(float32 x_,float32 y_,float32 z_,float32 w_);
+
+		inline vec4&	operator = (const vec4&) = default;
 	};
 	struct ivec4
 	{
@@ -200,6 +218,8 @@ namespace TexProject
 
 	/*Довжина vec2*/
 	inline float32		length(const vec2& a);
+	inline float32		length(const vec3& a);
+	inline float32		length(const vec4& a);
 
 	/*Нормалізований Vec2*/
 	inline vec2			normalize(const vec2& a);
@@ -258,8 +278,8 @@ TexProject::vec2							TexProject::vec2::operator * (const vec2& a) const
 TexProject::vec2							TexProject::vec2::operator / (const vec2& a) const
 {
 	return vec2	(
-					x * a.x,
-					y * a.y
+					x / a.x,
+					y / a.y
 				);
 }
 
@@ -621,6 +641,13 @@ TexProject::uvec3::uvec3(uint32 x_,uint32 y_,uint32 z_):
 }
 
 
+// vec4
+TexProject::vec4::vec4(float32 x_,float32 y_,float32 z_,float32 w_):
+	x(x_), y(y_), z(z_), w(w_)
+{
+}
+
+
 inline TexProject::float32					TexProject::degrees(float32 in)
 {
 	return in * _180devPIf;
@@ -671,6 +698,7 @@ inline TexProject::float32					TexProject::dot(const vec4& a, const vec4& b)
 
 inline TexProject::float32					TexProject::sqr(const vec2& a)
 {
+	//return dot(a,a); bad!
 	return a.x*a.x + a.y*a.y;
 }
 
@@ -681,7 +709,7 @@ inline TexProject::float32					TexProject::length(const vec2& a)
 
 inline TexProject::vec2						TexProject::normalize(const vec2& a)
 {
-	return a/sqr(a);
+	return a/length(a);
 }
 
 inline TexProject::float32					TexProject::dist(const vec2& a,const vec2& b)

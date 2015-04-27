@@ -42,6 +42,9 @@
     <ClCompile Include="Lib\TexProject\TexProject_Shaders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\TexProject.h">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_Shaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Interface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

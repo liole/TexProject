@@ -56,29 +56,18 @@ void					TexProject::Texture::Delete()
 	}
 }
 
-vec4&					TexProject::Texture::Get(uint32 x,uint32 y)
-{
-	if( x < size.x && y < size.y && size.z > 0 )
-	{
-		return data[x][y][0];
-	}
-	else
-	{
-		throw Exception("Out of texture data array.");
-	}
-}
 void					TexProject::Texture::Resize(uvec3 size_)
 {
 	if( size.x > 0 || size.y > 0 || size.z > 0 )
 	{
-		for(uint32 x = 0; x < size.x; ++x)
+		/*for(uint32 x = 0; x < size.x; ++x)
 		{
 			for(uint32 y = 0; y < size.y; ++y)
 			{
 				delete[] data[x][y];
 			}
 			delete[] data[x];
-		}
+		}*/
 		delete[] data;
 		data = nullptr;
 	}
@@ -87,7 +76,14 @@ void					TexProject::Texture::Resize(uvec3 size_)
 
 	if(size.x > 0 || size.y > 0 || size.z > 0)
 	{
-		data = new vec4**[size.x];
+		data = new vec4[size.x*size.y*size.z];
+		for(uint32 x = 0; x < size.x; ++x)
+		for(uint32 y = 0; y < size.y; ++y)
+		for(uint32 z = 0; z < size.z; ++z)
+		{
+			data[size.x*(0*size.y + y) + x] = vec4(0.0f,0.0f,0.0f,1.0f);
+		}
+		/*data = new vec4**[size.x];
 		for(uint32 x = 0; x < size.x; ++x)
 		{
 			data[x] = new vec4*[size.y];
@@ -102,7 +98,7 @@ void					TexProject::Texture::Resize(uvec3 size_)
 					data[x][y][z].w = 1.0f;
 				}
 			}
-		}
+		}*/
 	}
 }
 void					TexProject::Texture::Build()
@@ -113,11 +109,11 @@ void					TexProject::Texture::Build()
 	for(uint32 y = 0; y < size.y; ++y)
 	for(uint32 z = 0; z < size.z; ++z)
 	{
-		auto id = 4*(size.x*(z*size.y + y) + x);
-		t[id+0] = data[x][y][z].x;
-		t[id+1] = data[x][y][z].y;
-		t[id+2] = data[x][y][z].z;
-		t[id+3] = data[x][y][z].w;
+		auto id = (size.x*(z*size.y + y) + x);
+		t[4*id+0] = data[id].x;	//data[x][y][z].x;
+		t[4*id+1] = data[id].y;	//data[x][y][z].y;
+		t[4*id+2] = data[id].z;	//data[x][y][z].z;
+		t[4*id+3] = data[id].w;	//data[x][y][z].w;
 	}
 
 	{
