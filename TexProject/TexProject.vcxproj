@@ -106,6 +106,9 @@
     <None Include="Media\Shaders\1.ps" />
     <None Include="Media\Shaders\1.vs" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Media\Images\Test.bmp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

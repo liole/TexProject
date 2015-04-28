@@ -39,6 +39,27 @@ bool					TexProject::Window::Process()
 	return res;
 }
 
+bool					TexProject::Window::ErrorTest()
+{
+	auto error = GetLastError();
+	if(error != NO_ERROR)
+	{
+		string text = "[Windows]\n";
+		switch(error)
+		{
+			default:
+			{
+				text += "Unknown Error.";
+				break;
+			}
+		}
+		Message(text);
+		return true;
+	}
+	return false;
+}
+
+
 
 // Window::Input
 bool					TexProject::Window::Input::Init()
@@ -211,11 +232,23 @@ void					TexProject::Window::RenderContext::Init()
 #endif
 #endif
 
+#ifdef __TEXPROJECT_WIN__
+	Default::Init();
+#endif
+
+#ifdef __TEXPROJECT_OPENGL__
 	OpenGL::Init();
+#endif
 }
 void					TexProject::Window::RenderContext::Free()
 {
+#ifdef __TEXPROJECT_WIN__
+	Default::Free();
+#endif
+
+#ifdef __TEXPROJECT_OPENGL__
 	OpenGL::Free();
+#endif
 }
 
 
@@ -231,8 +264,12 @@ TexProject::Window::RenderContext::Basic::~Basic()
 
 void					TexProject::Window::RenderContext::Basic::Create()
 {
+	Delete();
 }
 void					TexProject::Window::RenderContext::Basic::Delete()
+{
+}
+void					TexProject::Window::RenderContext::Basic::Loop()
 {
 }
 bool					TexProject::Window::RenderContext::Basic::Use()
@@ -241,9 +278,169 @@ bool					TexProject::Window::RenderContext::Basic::Use()
 }
 
 
+// Window::RenderContext::Default
+#ifdef __TEXPROJECT_WIN__
+void					TexProject::Window::RenderContext::Default::Init()
+{
+}
+void					TexProject::Window::RenderContext::Default::Free()
+{
+}
+
+TexProject::Window::RenderContext::Default::Default(Window::Render* window_):
+	Basic(window_)
+{
+}
+TexProject::Window::RenderContext::Default::~Default()
+{
+	Delete();
+}
+void					TexProject::Window::RenderContext::Default::Create()
+{
+	Delete();
+
+	if(!inter)
+	{
+		//inter = Interface::Create<Interface::Default>(window);
+		inter = Interface::Creator::CreateInterface<Interface::Default>(window);
+	}
+
+	init = true;
+}
+void					TexProject::Window::RenderContext::Default::Delete()
+{
+	if(init)
+	{
+		if(inter)
+		{
+			Interface::Creator::DeleteInterface(inter);
+			inter = nullptr;
+		}
+
+		init = false;
+	}
+}
+void					TexProject::Window::RenderContext::Default::Loop()
+{
+	if(inter)
+	{
+		inter->Loop();
+	}
+}
+bool					TexProject::Window::RenderContext::Default::Use()
+{
+	if(init && window->IsInit())
+	{
+		SetROP2(window->wndDeviceContextHandle,R2_COPYPEN);
+		/*
+		R2_BLACK
+		R2_NOTMERGEPEN
+		R2_MASKNOTPEN
+		R2_NOTCOPYPEN
+		R2_MASKPENNOT
+		R2_NOT
+		R2_XORPEN
+		R2_NOTMASKPEN
+		R2_MASKPEN
+		R2_NOTXORPEN
+		R2_NOP
+		R2_MERGENOTPEN
+		R2_COPYPEN
+		R2_MERGEPENNOT
+		R2_MERGEPEN
+		R2_WHITE
+		R2_LAST
+		*/
+
+		//HPEN tPen = CreatePen();
+
+		{
+			/*auto newPen = (HPEN)GetStockObject(WHITE_PEN);
+			auto oldPen = (HPEN)SelectObject(window->wndDeviceContextHandle,newPen);
+			auto newBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
+			auto ondBrush = (HBRUSH)SelectObject(window->wndDeviceContextHandle,newBrush);
+
+			auto tBMP = (HBITMAP)LoadImage(NULL,"Media/Images/Test.bmp",IMAGE_BITMAP,0,0,LR_LOADFROMFILE);			
+			auto tBrush = CreatePatternBrush(tBMP);
+			SelectObject(window->wndDeviceContextHandle,tBrush);*/
+			{
+				//SetDCPenColor(window->wndDeviceContextHandle,RGB(255,0,255));
+				//SetDCBrushColor(window->wndDeviceContextHandle,RGB(0,255,255));
+			}
+			{
+				/*MoveToEx(window->wndDeviceContextHandle,100,100,NULL);
+				LineTo(window->wndDeviceContextHandle,200,200);*/
+			}
+			{
+				//Rectangle(window->wndDeviceContextHandle,100,200,200,100);
+				/*RECT tRect;
+				tRect.bottom = 100;
+				tRect.top = 200;
+				tRect.left = 100;
+				tRect.right = 400;
+				FillRect(window->wndDeviceContextHandle,&tRect,tBrush);*/
+			}
+			{
+				/*PAINTSTRUCT ps;
+				auto hdc = BeginPaint(window->wndHandle,&ps);
+
+				auto hdcMem = CreateCompatibleDC(hdc);
+
+				BITMAP bitmap;
+
+				SelectObject(hdcMem,tBMP);
+				GetObject(tBMP,sizeof(bitmap),&bitmap);
+
+				BitBlt(window->wndDeviceContextHandle,50,50,64,64,hdcMem,0,0,SRCCOPY);
+				DeleteObject(hdcMem);
+
+				EndPaint(window->wndHandle,&ps);*/
+			}
+			{
+				/*RECT tRect;
+				tRect.bottom = 100;
+				tRect.top = 200;
+				tRect.left = 100;
+				tRect.right = 400;
+				DrawText(window->wndDeviceContextHandle,"lol",-1,&tRect,DT_SINGLELINE | DT_CENTER | DT_VCENTER);*/
+				/*
+				DT_TOP
+				DT_LEFT
+				DT_CENTER
+				DT_RIGHT
+				DT_VCENTER
+				DT_BOTTOM
+				DT_WORDBREAK
+				DT_SINGLELINE
+				DT_EXPANDTABS
+				DT_TABSTOP
+				DT_NOCLIP
+				DT_EXTERNALLEADING
+				DT_CALCRECT
+				DT_NOPREFIX
+				DT_INTERNAL
+				*/
+			}
+			/*SelectObject(window->wndDeviceContextHandle,oldPen);
+
+			DeleteObject(tBrush);
+			DeleteObject(tBMP);*/
+		}
+
+#ifdef __TEXPROJECT_DEBUG__
+		Window::ErrorTest();
+#endif
+
+		return true;
+	}
+	return false;
+}
+#endif
+
+
 // Window::RenderContext::OpenGL
 #ifdef __TEXPROJECT_OPENGL__
-PFNWGLCREATECONTEXTATTRIBSARBPROC			TexProject::Window::RenderContext::OpenGL::wglCreateContextAttribsARB = nullptr;
+PFNWGLCREATECONTEXTATTRIBSARBPROC			TexProject::Window::RenderContext::OpenGL::wglCreateContextAttribsARB = NULL;
 
 void					TexProject::Window::RenderContext::OpenGL::Init()
 {
@@ -256,8 +453,8 @@ void					TexProject::Window::RenderContext::OpenGL::Init()
 
 		tempWinClass.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 		tempWinClass.lpfnWndProc	= DefWindowProc;
-		tempWinClass.cbClsExtra		= 0;
-		tempWinClass.cbWndExtra		= 0;
+		tempWinClass.cbClsExtra		= NULL;
+		tempWinClass.cbWndExtra		= NULL;
 		tempWinClass.hInstance		= EntryPointData::hInstance;
 		tempWinClass.hIcon			= LoadIcon(NULL,IDI_APPLICATION);
 		tempWinClass.hCursor		= LoadCursor(NULL,IDC_ARROW);
@@ -400,7 +597,7 @@ void					TexProject::Window::RenderContext::OpenGL::Delete()
 }
 bool					TexProject::Window::RenderContext::OpenGL::Use()
 {
-	if( init && window->init )
+	if(init && window->IsInit())
 	{
 		if(!wglMakeCurrent(window->wndDeviceContextHandle,wndRenderContextHandle))
 		{
@@ -710,6 +907,10 @@ void					TexProject::Window::Main::Loop()
 		}
 
 		UpdateWindow(wndHandle);
+
+#ifdef __TEXPROJECT_DEBUG__
+		Window::ErrorTest();
+#endif
 	}
 }
 
@@ -1083,8 +1284,6 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 }
 void					TexProject::Window::Render::Delete()
 {
-	Basic::Delete();
-
 	if(renderContext)
 	{
 		if(init)
@@ -1094,6 +1293,12 @@ void					TexProject::Window::Render::Delete()
 				if(func[FuncTypes::Free]) func[FuncTypes::Free](this);
 			}
 		}
+	}
+
+	Basic::Delete();
+
+	if(renderContext)
+	{
 		renderContext->Delete();
 	}
 
@@ -1158,7 +1363,10 @@ void					TexProject::Window::Render::Loop()
 					}
 					else
 					{
-						if(func[FuncTypes::Render]) func[FuncTypes::Render](this);
+						if(func[FuncTypes::Loop]) func[FuncTypes::Loop](this);
+
+						renderContext->Loop();
+
 						SwapBuffers(wndDeviceContextHandle);
 					}
 				}
@@ -1168,6 +1376,10 @@ void					TexProject::Window::Render::Loop()
 		{
 			Delete();
 		}
+
+#ifdef __TEXPROJECT_DEBUG__
+		Window::ErrorTest();
+#endif
 	}
 }
 
@@ -1241,6 +1453,13 @@ void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type&
 
 	switch(type_)
 	{
+#ifdef __TEXPROJECT_WIN__
+		case RenderContext::Types::Default:
+		{
+			renderContext = new RenderContext::Default(this);
+			break;
+		}
+#endif
 #ifdef __TEXPROJECT_OPENGL__
 		case RenderContext::Types::OpenGL:
 		{

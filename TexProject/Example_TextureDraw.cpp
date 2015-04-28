@@ -100,7 +100,7 @@ void TexProject::Main()
 	tWindow.Create();
 	tWindow.SetSize(uvec2(512,512));
 	tWindow.SetFunc(Window::Render::FuncTypes::Init,TexInitFunc);		// Встановлюємо функції ініціалізації
-	tWindow.SetFunc(Window::Render::FuncTypes::Loop,TexRenderFunc);	// Рендеру (обробки)
+	tWindow.SetFunc(Window::Render::FuncTypes::Render,TexRenderFunc);	// Рендеру (обробки)
 	tWindow.SetFunc(Window::Render::FuncTypes::Free,TexFreeFunc);		// І звільнення ресурсів
 	tWindow.SetRenderContext(Window::RenderContext::Types::OpenGL);		// Встановлюємо контекст рендеру
 

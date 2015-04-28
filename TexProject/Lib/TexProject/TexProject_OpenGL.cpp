@@ -132,25 +132,35 @@ bool										TexProject::OpenGL::ErrorTest()
 	bool result = false;
 	while((error = glGetError()) != GL_NO_ERROR)
 	{
-		string code;
+		string code = "[OpenGL]\n";
 
 		switch(error)
 		{
-		case GL_INVALID_OPERATION:
-			code = "INVALID_OPERATION";
-			break;
-		case GL_INVALID_ENUM:
-			code = "INVALID_ENUM";
-			break;
-		case GL_INVALID_VALUE:
-			code = "INVALID_VALUE";
-			break;
-		case GL_OUT_OF_MEMORY:
-			code = "OUT_OF_MEMORY";
-			break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION:
-			code = "INVALID_FRAMEBUFFER_OPERATION";
-			break;
+			case GL_INVALID_OPERATION:
+			{
+				code += "INVALID_OPERATION";
+				break;
+			}
+			case GL_INVALID_ENUM:
+			{
+				code += "INVALID_ENUM";
+				break;
+			}
+			case GL_INVALID_VALUE:
+			{
+				code += "INVALID_VALUE";
+				break;
+			}
+			case GL_OUT_OF_MEMORY:
+			{
+				code += "OUT_OF_MEMORY";
+				break;
+			}
+			case GL_INVALID_FRAMEBUFFER_OPERATION:
+			{
+				code += "INVALID_FRAMEBUFFER_OPERATION";
+				break;
+			}
 		}
 		Message(code);
 

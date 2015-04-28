@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Struct Name="TexProject::Interface::Basic">
+    <Position X="3.5" Y="0.5" Width="5.25" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="TexProject::Interface::Basic::Item" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Lib\TexProject\TexProject_Interface.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="TexProject::Interface::Basic::Panel" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Lib\TexProject\TexProject_Interface.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="TexProject::Interface::Basic::Button" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Lib\TexProject\TexProject_Interface.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAIAAFIAAAAEAAAAAAAAAAAAAEABEAIAAAgAYDAQAA=</HashCode>
+      <FileName>Lib\TexProject\TexProject_Interface.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="TexProject::Interface::Default">
+    <Position X="4" Y="2.75" Width="4.5" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Lib\TexProject\TexProject_Interface.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Typedef Name="TexProject::Interface::PWindow" Collapsed="true">
+    <Position X="0.5" Y="1.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Lib\TexProject\TexProject_Interface.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TexProject::Interface::PInterface" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Lib\TexProject\TexProject_Interface.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

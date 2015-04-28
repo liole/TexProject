@@ -198,6 +198,26 @@ namespace TexProject
 		struct Main;
 		struct Render;
 
+
+		namespace RenderContext
+		{
+
+			/*Базовий контекст виводу*/
+			struct Basic;
+
+#ifdef __TEXPROJECT_WIN__
+			/*Контекст Windows*/
+			struct Default;
+#endif
+
+#ifdef __TEXPROJECT_OPENGL__
+			/*Контекст OpenGL*/
+			struct OpenGL;
+#endif
+		
+		};
+
+
 		/*Ініціалізація*/
 		void								Init();
 		/*Деініціалізація*/

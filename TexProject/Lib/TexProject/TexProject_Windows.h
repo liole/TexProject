@@ -8,6 +8,7 @@
 #include <TexProject/TexProject_Math.h>
 #include <TexProject/TexProject_OpenGL.h>
 #include <TexProject/TexProject_Helpers.h>
+#include <TexProject/TexProject_Interface.h>
 
 
 #include <time.h>
@@ -190,6 +191,7 @@ namespace TexProject
 			{
 				enum Enum
 				{
+					Default,
 					OpenGL
 				};
 			};
@@ -202,6 +204,7 @@ namespace TexProject
 
 				Window::Render*	const		window;
 				bool						init = false;
+				Interface::GUI*				inter = nullptr;
 
 			public:
 											Basic(Window::Render* window_);
@@ -214,8 +217,46 @@ namespace TexProject
 
 				virtual void				Create();
 				virtual void				Delete();
+				virtual void				Loop();
 				virtual bool				Use();
+
+				inline Interface::GUIPanelDefault*				AddPanelDefault();
+				inline Interface::GUIButtonDefault*				AddButtonDefault();
+				inline Interface::GUIButtonTrigger*				AddButtonTrigger();
+				inline Interface::GUIButtonAction*				AddButtonAction();
+				inline Interface::GUIButtonSlider*				AddButtonSlider();
+				inline void										RemovePanel(Interface::GUIPanel* source);
+				inline void										RemoveButton(Interface::GUIButton* source);
 			};
+
+			/*Контекст Windows*/
+#ifdef __TEXPROJECT_WIN__
+			struct Default:
+				public Basic
+			{
+			protected:
+
+				HPEN						winPenRect = NULL;
+
+			public:
+
+				static void					Init();
+				static void					Free();
+
+											Default(Window::Render* window_);
+											Default(const Default&) = delete;
+											Default(Default&& source) = delete;
+				virtual						~Default();
+
+				Default&					operator = (const Default&) = delete;
+				Default&					operator = (Default&&) = delete;
+
+				virtual void				Create() override;
+				virtual void				Delete() override;
+				virtual void				Loop() override;
+				virtual bool				Use() override;
+			};
+#endif
 			/*Контекст OpenGL*/
 #ifdef __TEXPROJECT_OPENGL__
 			struct OpenGL:
@@ -245,16 +286,16 @@ namespace TexProject
 				static void					Free();
 
 											OpenGL(Window::Render* window_);
-											OpenGL(const OpenGL& source) = delete;
+											OpenGL(const OpenGL&) = delete;
 											OpenGL(OpenGL&& source) = delete;
 				virtual						~OpenGL();
 
-				OpenGL&						operator = (const OpenGL& source) = delete;
-				OpenGL&						operator = (OpenGL&& source) = delete;
+				OpenGL&						operator = (const OpenGL&) = delete;
+				OpenGL&						operator = (OpenGL&&) = delete;
 
-				virtual void				Create();
-				virtual void				Delete();
-				virtual bool				Use();
+				virtual void				Create() override;
+				virtual void				Delete() override;
+				virtual bool				Use() override;
 			};
 #endif
 
@@ -394,9 +435,9 @@ namespace TexProject
 				static const uint32			count = 3;
 				enum Enum
 				{
-					Render					= 0,
-					Init					= 1,
-					Free					= 2
+					Init					= 0,
+					Free					= 1,
+					Loop					= 2
 				};
 											FuncTypes() = delete;
 			};
@@ -404,7 +445,16 @@ namespace TexProject
 			typedef void(*Func)(Render*);
 
 			friend RenderContext::Basic;
+#ifdef __TEXPROJECT_WIN__
+			friend RenderContext::Default;
+			friend Interface::Default;
+#endif
+#ifdef __TEXPROJECT_OPENGL__
 			friend RenderContext::OpenGL;
+#endif
+
+			template <typename T>
+			T*								AddPanel();
 
 		protected:
 
@@ -413,7 +463,7 @@ namespace TexProject
 			static PIXELFORMATDESCRIPTOR	wndPixelFormatDescriptor;
 			static LRESULT CALLBACK			callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 
-			HDC								wndDeviceContextHandle = 0;
+			HDC								wndDeviceContextHandle = NULL;
 			clock_t							vSyncTimer,
 											oVSyncTimer;
 
@@ -449,6 +499,14 @@ namespace TexProject
 			virtual void					SetRenderContext(const RenderContext::Type& type_);
 			virtual void					SetFunc(const FuncType& type_, Func func_);
 			virtual void					ResetFuncs();
+
+			inline Interface::GUIPanelDefault*					AddPanelDefault();
+			inline Interface::GUIButtonDefault*					AddButtonDefault();
+			inline Interface::GUIButtonTrigger*					AddButtonTrigger();
+			inline Interface::GUIButtonAction*					AddButtonAction();
+			inline Interface::GUIButtonSlider*					AddButtonSlider();
+			inline void											RemovePanel(Interface::GUIPanel* source);
+			inline void											RemoveButton(Interface::GUIButton* source);
 		};
 
 		void								Init();
@@ -457,6 +515,9 @@ namespace TexProject
 		/*Повертає вказівник на вікно, яке в даний момент обробляється функцією Window::Process()*/
 		inline Basic*						GetCurrent();
 		inline uvec2						GetDesktopSize();
+
+		/*Обробка помилок Windows*/
+		bool								ErrorTest();
 	}
 
 	//Keyboard Input
@@ -546,31 +607,92 @@ RECT										TexProject::Window::WindowStructures<T>::wndRect;
 #endif
 
 
-// Window::Basic
+// RenderContext
+TexProject::Interface::GUIPanelDefault*							TexProject::Window::RenderContext::Basic::AddPanelDefault()
+{
+	return inter->AddPanelDefault();
+}
+TexProject::Interface::GUIButtonDefault*						TexProject::Window::RenderContext::Basic::AddButtonDefault()
+{
+	return inter->AddButtonDefault();
+}
+TexProject::Interface::GUIButtonTrigger*						TexProject::Window::RenderContext::Basic::AddButtonTrigger()
+{
+	return inter->AddButtonTrigger();
+}
+TexProject::Interface::GUIButtonAction*							TexProject::Window::RenderContext::Basic::AddButtonAction()
+{
+	return inter->AddButtonAction();
+}
+TexProject::Interface::GUIButtonSlider*							TexProject::Window::RenderContext::Basic::AddButtonSlider()
+{
+	return inter->AddButtonSlider();
+}
+void															TexProject::Window::RenderContext::Basic::RemovePanel(Interface::GUIPanel* source)
+{
+	inter->RemovePanel(source);
+}
+void															TexProject::Window::RenderContext::Basic::RemoveButton(Interface::GUIButton* source)
+{
+	inter->RemoveButton(source);
+}
 
+
+// Window::Basic
 TexProject::Window::Basic*					TexProject::Window::Basic::GetCurrent()
 {
 	return current;
 }
 
-
-inline void									TexProject::Window::Basic::AddChild(Basic* child_)
+void										TexProject::Window::Basic::AddChild(Basic* child_)
 {
 	child.push_back(child_);
 }
 
-inline bool									TexProject::Window::Basic::IsInit() const
+bool										TexProject::Window::Basic::IsInit() const
 {
 	return init;
 }
-inline bool									TexProject::Window::Basic::IsRunning() const
+bool										TexProject::Window::Basic::IsRunning() const
 {
 	return running;
 }
-inline TexProject::uvec2					TexProject::Window::Basic::GetSize() const
+TexProject::uvec2							TexProject::Window::Basic::GetSize() const
 {
 	return size;
 }
+
+
+// Window::Render
+TexProject::Interface::GUIPanelDefault*		TexProject::Window::Render::AddPanelDefault()
+{
+	return renderContext->AddPanelDefault();
+}
+TexProject::Interface::GUIButtonDefault*	TexProject::Window::Render::AddButtonDefault()
+{
+	return renderContext->AddButtonDefault();
+}
+TexProject::Interface::GUIButtonTrigger*	TexProject::Window::Render::AddButtonTrigger()
+{
+	return renderContext->AddButtonTrigger();
+}
+TexProject::Interface::GUIButtonAction*		TexProject::Window::Render::AddButtonAction()
+{
+	return renderContext->AddButtonAction();
+}
+TexProject::Interface::GUIButtonSlider*		TexProject::Window::Render::AddButtonSlider()
+{
+	return renderContext->AddButtonSlider();
+}
+void										TexProject::Window::Render::RemovePanel(Interface::GUIPanel* source)
+{
+	renderContext->RemovePanel(source);
+}
+void										TexProject::Window::Render::RemoveButton(Interface::GUIButton* source)
+{
+	renderContext->RemoveButton(source);
+}
+
 
 
 
