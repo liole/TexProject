@@ -4,13 +4,14 @@
 
 #include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Math.h>
-//#include <TexProject/TexProject_Helpers.h>
+#include <TexProject/TexProject_Helpers.h>
 //#include <TexProject/TexProject_OpenGL.h>
 //#include <TexProject/TexProject_Shaders.h>
 //#include <TexProject/TexProject_Textures.h>
 
 
 #include<list>
+#include<vector>
 
 
 namespace TexProject
@@ -67,7 +68,10 @@ namespace TexProject
 		typedef Button::Default				GUIButtonSlider;
 
 
-		struct Item
+		struct Item:
+			public TexProject::Helper::Prio,
+			public TexProject::Helper::Pos2,
+			public TexProject::Helper::Size2
 		{
 			friend Interface::Basic;
 			friend Interface::Default;
@@ -78,11 +82,12 @@ namespace TexProject
 
 
 			GUI * const				inter = nullptr;
+			std::list<Item**>		pointer;
 
 									Item(GUI* interface_);
 									Item(const Item&) = delete;
 									Item(Item&&) = delete;
-			virtual					~Item() = default;
+			virtual					~Item();
 
 			Item&					operator = (const Item&) = delete;
 			Item&					operator = (Item&&) = delete;
@@ -90,6 +95,23 @@ namespace TexProject
 			virtual void			Create();
 			virtual void			Delete();
 			virtual void			Loop();
+
+			/*Методи, специфічні для ОС Windows*/
+#if __TEXPROJECT_WIN__
+			/*
+			Цю функцію інтерфейс буде викликати при обробці повідомлення WM_PAINT зі своєї _win_WMPaint
+			Параметр hDC, який приходить в інтерфейс з вікна - зберігатимемо у внутрішніх полях, для економії аргументів
+			*/
+			virtual void									_win_WMPaint();
+#endif
+		public:
+
+			virtual bool			IsSelect();
+
+			inline void				AddPointer(void*& pointer_);					// Додаємо у список керований вказівник
+			inline void				RemovePointer(void*& pointer_);					// Видаляємо зі списку керований вказівник і занулюємо його
+			inline void				ResetPointers();								// Видаляємо зі списку усі вказівники і занулуємо їх
+			inline void				FlushPointers();								// Видаляємо зі списку усі вказівники
 		};
 		namespace Panel
 		{
@@ -173,9 +195,29 @@ namespace TexProject
 			friend Creator;
 		protected:
 
+			struct Mouse
+			{
+				bool						stateL = false,stateM = false,stateR = false,
+											stateOL = false,stateOM = false,stateOR = false,
+											pressL = false,pressM = false,pressR = false;
+				ivec2						pos = ivec2(0,0),oPos = ivec2(0,0),dPos = ivec2(0,0);
+
+				inline void					Update()
+				{
+					//stateL = 
+				}
+			};
+			Mouse							mouse;
+
 			template <typename T>
 			static T*						CreateInterface(PWindow window_);
 			static inline void				DeleteInterface(GUI* interface_);
+
+			Item*							picked = nullptr;
+			Item*							selected = nullptr;
+			Item*							top = nullptr;
+			void							RefreshPicked();
+			void							RefreshSelected();
 
 
 			PWindow							window = nullptr;
@@ -214,6 +256,22 @@ namespace TexProject
 			{
 				return window;
 			}
+
+			inline void											ToTop(Item* item_);
+			inline Item*										GetPicked();
+			inline Item*										GetSelected();
+			inline Item*										GetTop();
+			inline void											ResetPicked();
+			inline void											ResetSelected();
+			inline void											ResetTop();
+
+			/*Методи, специфічні для ОС Windows*/
+#if __TEXPROJECT_WIN__
+			/*
+			Цю функцію контекст буде викликати при обробці повідомлення WM_PAINT зі своєї _win_WMPaint
+			*/
+			virtual void									_win_WMPaint(HDC hDC);
+#endif
 		};
 
 #if __TEXPROJECT_WIN__
@@ -222,7 +280,31 @@ namespace TexProject
 			friend Creator;
 		protected:
 
-			HDC								deviceContextHandle = NULL;
+			struct Panel
+			{
+				struct Default: public Interface::Panel::Default
+				{
+				protected:
+				public:
+					Default(GUI* interface_);
+					~Default() = default;
+
+					virtual void			Create() override;
+					virtual void			Delete() override;
+					virtual void			Loop() override;
+
+					virtual bool			IsSelect() override;
+
+					virtual void			_win_WMPaint() override;
+				};
+			};
+			struct Button
+			{
+			};
+
+
+			HDC								renderDeviceContextHandle = NULL;
+			RECT							renderRect;
 
 											Default(PWindow window_);
 											Default(const Default&) = delete;
@@ -231,21 +313,6 @@ namespace TexProject
 
 			Default&						operator = (const Default&) = delete;
 			Default&						operator = (Default&&) = delete;
-
-			struct Panel
-			{
-				struct Default: public Interface::Panel::Default
-				{
-				protected:
-				public:
-											Default(GUI* interface_);
-											~Default() = default;
-
-					virtual void			Create() override;
-					virtual void			Delete() override;
-					virtual void			Loop() override;
-				};
-			};
 
 		public:
 
@@ -259,9 +326,7 @@ namespace TexProject
 			virtual GUIButtonAction*							AddButtonAction() override;
 			virtual GUIButtonSlider*							AddButtonSlider() override;
 
-			/*struct Button: public Interface::Basic::Button
-			{
-			};*/
+			virtual void									_win_WMPaint(HDC hDC);
 		};
 #endif
 	}
@@ -296,6 +361,36 @@ void										TexProject::Interface::Item::DeleteItem(GUIItem* item_)
 {
 	item_->Delete();
 	delete item_;
+}
+
+void										TexProject::Interface::Item::AddPointer(void*& pointer_)
+{
+	pointer_ = this;
+	pointer.push_back((Item**)(&pointer_));
+}
+void										TexProject::Interface::Item::RemovePointer(void*& pointer_)
+{
+	auto i = pointer.begin();
+	while(i != pointer.end())
+	{
+		auto t = *i;
+		if(t == (Item**)(&pointer_))
+		{
+			i = pointer.erase(i);
+			pointer_ = nullptr;
+			continue;
+		}
+		++i;
+	}
+}
+void										TexProject::Interface::Item::ResetPointers()
+{
+	for(auto i: pointer) *i = nullptr;
+	pointer.clear();
+}
+void										TexProject::Interface::Item::FlushPointers()
+{
+	pointer.clear();
 }
 
 
@@ -344,18 +439,54 @@ void										TexProject::Interface::Basic::RemovePanel(GUIPanel* source)
 }
 void										TexProject::Interface::Basic::RemoveButton(GUIButton* source)
 {
-	for(auto i = button.begin(); i != button.end(); ++i)
+	auto i = button.begin();
+	while(i != button.end())
 	{
 		auto t = *i;
 		if(t == source)
 		{
 			Item::DeleteItem((Item*)t);
 			i = button.erase(i);
+			continue;
 		}
+		++i;
 	}
 }
 
+TexProject::Interface::Item*				TexProject::Interface::Basic::GetPicked()
+{
+	return picked;
+}
+TexProject::Interface::Item*				TexProject::Interface::Basic::GetSelected()
+{
+	return selected;
+}
+TexProject::Interface::Item*				TexProject::Interface::Basic::GetTop()
+{
+	return top;
+}
+void										TexProject::Interface::Basic::ResetPicked()
+{
+	picked = nullptr;
+}
+void										TexProject::Interface::Basic::ResetSelected()
+{
+	selected = nullptr;
+}
+void										TexProject::Interface::Basic::ResetTop()
+{
+	top = nullptr;
+}
 
-// Interface::Basic
+void										TexProject::Interface::Basic::ToTop(Item* item_)
+{
+	if(item_)
+	{
+		if(top)
+		{
+			item_->SetPriority(top->GetPriority() + 1);
+		}
+	}
+}
 
 

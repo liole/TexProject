@@ -85,7 +85,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Main.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Main_GUITest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
