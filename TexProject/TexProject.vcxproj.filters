@@ -42,7 +42,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Main.cpp">
+    <ClCompile Include="Main_GUITest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
