@@ -64,62 +64,20 @@ bool					TexProject::Window::ErrorTest()
 // Window::Input
 bool					TexProject::Window::Input::Init()
 {
-	if(!Mouse::Init()) return false;
-	if(!Keyboard::Init()) return false;
+	if( !Keyboard::Init() ) return false;
 	return true;
 }
 void					TexProject::Window::Input::Loop()
 {
-	Mouse::Loop();
 	Keyboard::Loop();
 }
 void					TexProject::Window::Input::Free()
 {
-	Mouse::Free();
 	Keyboard::Free();
 }
 void					TexProject::Window::Input::Flush()
 {
-	Mouse::Flush();
 	Keyboard::Flush();
-}
-
-
-// Window::Input::Mouse
-Window::Input::Key		TexProject::Window::Input::Mouse::lB,
-						TexProject::Window::Input::Mouse::mB,
-						TexProject::Window::Input::Mouse::rB;
-ivec2					TexProject::Window::Input::Mouse::pos;
-
-bool					TexProject::Window::Input::Mouse::Init()
-{
-	return true;
-}
-void					TexProject::Window::Input::Mouse::Loop()
-{
-	static POINT t;
-	GetCursorPos(&t);
-	//ScreenToClient(Window.WndHandle,&t);
-	pos.x = t.x;
-	pos.y = t.y;	//.y = Window.size.y - t.y;
-
-	lB.state = GetAsyncKeyState(VK_LBUTTON) != NULL;
-	mB.state = GetAsyncKeyState(VK_MBUTTON) != NULL;
-	rB.state = GetAsyncKeyState(VK_RBUTTON) != NULL;
-
-	lB.Loop();
-	mB.Loop();
-	rB.Loop();
-}
-void					TexProject::Window::Input::Mouse::Free()
-{
-}
-void					TexProject::Window::Input::Mouse::Flush()
-{
-	pos = ivec2(0,0);
-	lB.Flush();
-	mB.Flush();
-	rB.Flush();
 }
 
 
@@ -265,8 +223,8 @@ void					TexProject::Window::Input::Keyboard::Flush()
 // Window::RenderContext
 void					TexProject::Window::RenderContext::Init()
 {
-#if __TEXPROJECT_WIN__
-#if __TEXPROJECT_DEBUG__
+#ifdef __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_DEBUG__
 	if(!EntryPointData::init)
 	{
 		Error("Initing a RenderContext before entry point.");
@@ -274,11 +232,11 @@ void					TexProject::Window::RenderContext::Init()
 #endif
 #endif
 
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 	Default::Init();
 #endif
 
-#if __TEXPROJECT_OPENGL__
+#ifdef __TEXPROJECT_OPENGL__
 	OpenGL::Init();
 #endif
 }
@@ -319,16 +277,9 @@ bool					TexProject::Window::RenderContext::Basic::Use()
 	return false;
 }
 
-#if __TEXPROJECT_WIN__
-void					TexProject::Window::RenderContext::Basic::_win_WMPaint(HDC hDC)
-{
-}
-#endif
-
-
 
 // Window::RenderContext::Default
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 void					TexProject::Window::RenderContext::Default::Init()
 {
 }
@@ -375,9 +326,6 @@ void					TexProject::Window::RenderContext::Default::Loop()
 	{
 		inter->Loop();
 	}
-	UpdateWindow(window->wndHandle);
-	//SwapBuffers(wndDeviceContextHandle);
-	InvalidateRect(window->wndHandle,NULL,TRUE);
 }
 bool					TexProject::Window::RenderContext::Default::Use()
 {
@@ -479,7 +427,7 @@ bool					TexProject::Window::RenderContext::Default::Use()
 			DeleteObject(tBMP);*/
 		}
 
-#if __TEXPROJECT_DEBUG__
+#ifdef __TEXPROJECT_DEBUG__
 		Window::ErrorTest();
 #endif
 
@@ -487,24 +435,11 @@ bool					TexProject::Window::RenderContext::Default::Use()
 	}
 	return false;
 }
-
-void					TexProject::Window::RenderContext::Default::_win_WMPaint(HDC hDC)
-{
-	RECT rc;
-	rc.left = 0;
-	rc.right = window->GetSize().x;
-	rc.top = 0;
-	rc.bottom = window->GetSize().y;
-
-	FillRect(hDC,&rc,(HBRUSH)GetStockObject(DKGRAY_BRUSH));
-
-	inter->_win_WMPaint(hDC);
-}
 #endif
 
 
 // Window::RenderContext::OpenGL
-#if __TEXPROJECT_OPENGL__
+#ifdef __TEXPROJECT_OPENGL__
 PFNWGLCREATECONTEXTATTRIBSARBPROC			TexProject::Window::RenderContext::OpenGL::wglCreateContextAttribsARB = NULL;
 
 void					TexProject::Window::RenderContext::OpenGL::Init()
@@ -660,10 +595,6 @@ void					TexProject::Window::RenderContext::OpenGL::Delete()
 		init = false;
 	}
 }
-void					TexProject::Window::RenderContext::OpenGL::Loop()
-{
-	SwapBuffers(window->wndDeviceContextHandle);
-}
 bool					TexProject::Window::RenderContext::OpenGL::Use()
 {
 	if(init && window->IsInit())
@@ -711,7 +642,7 @@ void*					TexProject::Window::Basic::GetHandle()
 
 
 // Window::Main
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 LRESULT CALLBACK		TexProject::Window::Main::callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	auto window = (Main*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
@@ -1051,77 +982,34 @@ void*					TexProject::Window::Main::GetHandle()
 
 
 // Window::Window::Render
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 PIXELFORMATDESCRIPTOR	TexProject::Window::Render::wndPixelFormatDescriptor;
 LRESULT CALLBACK		TexProject::Window::Render::callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
-	auto window = (Window::Render*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
+	auto window = (Render*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
 
 	switch(msg)
 	{
-		case WM_PAINT:
-		{			
-			if(window)
-			{
-				if(window->renderContext)
-				{
-					PAINTSTRUCT ps;
-					auto hDC = BeginPaint(hWnd,&ps);
-					
-					auto hOldBitmap = (HBITMAP)SelectObject(window->dbHDC,window->dbBitmap);
-
-					window->renderContext->_win_WMPaint(window->dbHDC);
-
-					BitBlt(hDC,0,0,window->GetSize().x,window->GetSize().y,window->dbHDC,0,0,SRCCOPY);
-
-					SelectObject(window->dbHDC,hOldBitmap);
-
-					ValidateRect(hWnd,NULL);
-
-					EndPaint(hWnd,&ps);
-				}
-			}
-			return 0;
-		}
-		case WM_ERASEBKGND:
-		{
-			return 1; // Say we handled it.
-		}
-		case WM_MOVE:
-		{
-			if(window)
-			{
-				RECT rect;
-				GetClientRect(hWnd,&rect);
-				POINT p;
-				p.x = rect.left;
-				p.y = rect.top;
-				ClientToScreen(hWnd,&p);
-				window->pos.x = p.x;
-				window->pos.y = p.y;
-			}
-			return DefWindowProc(hWnd,msg,wParam,lParam);
-		}
-		case WM_CLOSE:
-		{
-			window->running = false;
-			return 0;
-		}
-		case WM_QUIT:
-		{
-			window->running = false;
-			return 0;
-		}
-		case WM_DESTROY:
-		{
-			window->running = false;
-			//PostQuitMessage(0);
-			return 0;
-		}
-		default:
-		{
-			return DefWindowProc(hWnd,msg,wParam,lParam);
-		}
+	case WM_CLOSE:
+	{
+					 window->running = false;
+					 return 0;
+	}
+	case WM_QUIT:
+	{
+					window->running = false;
+					return 0;
+	}
+	case WM_DESTROY:
+	{
+					   window->running = false;
+					   //PostQuitMessage(0);
+					   return 0;
+	}
+	default:
+	{
+			   return DefWindowProc(hWnd,msg,wParam,lParam);
+	}
 	}
 
 	return 0;
@@ -1130,12 +1018,12 @@ LRESULT CALLBACK		TexProject::Window::Render::callbackDefault(HWND hWnd,UINT msg
 
 void					TexProject::Window::Render::Init()
 {
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 	{
 		wndClassName = "[Window::Render] Class";
 
 		wndClassEx.cbSize			= sizeof(wndClassEx);
-		wndClassEx.style			= CS_OWNDC;	//CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wndClassEx.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 		/*
 		CS_BYTEALIGNCLIENT
 		CS_BYTEALIGNWINDOW
@@ -1267,7 +1155,7 @@ void					TexProject::Window::Render::Init()
 }
 void					TexProject::Window::Render::Free()
 {
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 	UnregisterClass(wndClassName.c_str(),EntryPointData::hInstance);
 #endif
 }
@@ -1288,8 +1176,8 @@ TexProject::Window::Render::~Render()
 
 void					TexProject::Window::Render::Create(Basic* parent_)
 {
-#if __TEXPROJECT_WIN__
-#if __TEXPROJECT_DEBUG__
+#ifdef __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_DEBUG__
 	if(!EntryPointData::init)
 	{
 		Error("Creating a window before entry point.");
@@ -1325,18 +1213,18 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 
 	wndHandle =	CreateWindowEx
 		(
-			wndExStyle,
-			wndClassName.c_str(),
-			title.c_str(),
-			wndStyle | (parent ? WS_CHILD : 0),
-			wndRect.left,
-			wndRect.top,
-			wndRect.right - wndRect.left,
-			wndRect.bottom - wndRect.top,
-			(HWND)(parent ? parent->GetHandle() : nullptr),	//nullptr,
-			(HMENU)NULL,
-			wndClassEx.hInstance,
-			NULL
+		wndExStyle,
+		wndClassName.c_str(),
+		title.c_str(),
+		wndStyle | (parent ? WS_CHILD : 0),
+		wndRect.left,
+		wndRect.top,
+		wndRect.right - wndRect.left,
+		wndRect.bottom - wndRect.top,
+		(HWND)(parent ? parent->GetHandle() : nullptr),	//nullptr,
+		(HMENU)NULL,
+		wndClassEx.hInstance,
+		NULL
 		);
 	if(!wndHandle)
 	{
@@ -1377,15 +1265,8 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 	GWLP_WNDPROC
 	*/
 
-
-	{
-		dbHDC = CreateCompatibleDC(wndDeviceContextHandle);
-		dbBitmap = CreateCompatibleBitmap(wndDeviceContextHandle,size.x,size.y);
-	}
-
-
-	//ShowWindow(wndHandle,SW_SHOW);
-	//SetFocus(wndHandle);
+	ShowWindow(wndHandle,SW_SHOW);
+	SetFocus(wndHandle);
 #endif
 
 	init = true;
@@ -1421,18 +1302,7 @@ void					TexProject::Window::Render::Delete()
 		renderContext->Delete();
 	}
 
-#if __TEXPROJECT_WIN__
-
-	if(dbBitmap)
-	{
-		DeleteObject(dbBitmap);
-		dbBitmap = NULL;
-	}
-	if(dbHDC)
-	{
-		DeleteDC(dbHDC);
-		dbHDC = NULL;
-	}
+#ifdef __TEXPROJECT_WIN__
 
 	if(wndHandle)
 	{
@@ -1458,7 +1328,7 @@ void					TexProject::Window::Render::Delete()
 }
 void					TexProject::Window::Render::Loop()
 {
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 	{
 		static MSG msg;
 		while(running && PeekMessage(&msg,NULL,0,0,PM_REMOVE))
@@ -1494,7 +1364,10 @@ void					TexProject::Window::Render::Loop()
 					else
 					{
 						if(func[FuncTypes::Loop]) func[FuncTypes::Loop](this);
+
 						renderContext->Loop();
+
+						SwapBuffers(wndDeviceContextHandle);
 					}
 				}
 			}
@@ -1504,7 +1377,7 @@ void					TexProject::Window::Render::Loop()
 			Delete();
 		}
 
-#if __TEXPROJECT_DEBUG__
+#ifdef __TEXPROJECT_DEBUG__
 		Window::ErrorTest();
 #endif
 	}
@@ -1536,12 +1409,6 @@ void					TexProject::Window::Render::SetSize(const uvec2 size_)
 				SWP_NOMOVE
 				);
 			UpdateWindow(wndHandle);
-		}
-		{
-			if(dbHDC) DeleteDC(dbHDC);
-			dbHDC = CreateCompatibleDC(wndDeviceContextHandle);
-			if(dbBitmap) DeleteObject(dbBitmap);
-			dbBitmap = CreateCompatibleBitmap(wndDeviceContextHandle,size.x,size.y);
 		}
 #endif
 	}
@@ -1581,8 +1448,7 @@ void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type&
 {
 	if(renderContext)
 	{
-		delete renderContext;
-		renderContext = nullptr;
+		delete renderContext; renderContext = nullptr;
 	}
 
 	switch(type_)

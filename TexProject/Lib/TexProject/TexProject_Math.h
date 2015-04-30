@@ -36,16 +36,9 @@ namespace TexProject
 		inline								vec2(const vec2&) = default;
 		explicit inline						vec2(const float32 a_);
 		inline								vec2(float32 x_, float32 y_);
-		explicit inline						vec2(ivec2 a_);
-		explicit inline						vec2(uvec2 a_);
 
 		inline vec2&						operator = (const vec2&) = default;
 		inline vec2&						operator = (const float32& a);
-
-		inline vec2&						operator += (const vec2& a);
-		inline vec2&						operator -= (const vec2& a);
-		inline vec2&						operator *= (const vec2& a);
-		inline vec2&						operator /= (const vec2& a);
 
 		inline vec2							operator + (const vec2& a) const;
 		inline vec2							operator - (const vec2& a) const;
@@ -254,47 +247,12 @@ TexProject::vec2::vec2(float32 x_,float32 y_):
 	x(x_),y(y_)
 {
 }
-TexProject::vec2::vec2(ivec2 a_):
-	x(float32(a_.x)),y(float32(a_.y))
-{
-}
-TexProject::vec2::vec2(uvec2 a_):
-	x(float32(a_.x)),y(float32(a_.y))
-{
-}
-
 
 TexProject::vec2&							TexProject::vec2::operator = (const float32& a)
 {
 	x = a;
 	y = a;
 }
-
-TexProject::vec2&							TexProject::vec2::operator += (const vec2& a)
-{
-	x += a.x;
-	y += a.y;
-	return *this;
-}
-TexProject::vec2&							TexProject::vec2::operator -= (const vec2& a)
-{
-	x -= a.x;
-	y -= a.y;
-	return *this;
-}
-TexProject::vec2&							TexProject::vec2::operator *= (const vec2& a)
-{
-	x *= a.x;
-	y *= a.y;
-	return *this;
-}
-TexProject::vec2&							TexProject::vec2::operator /= (const vec2& a)
-{
-	x /= a.x;
-	y /= a.y;
-	return *this;
-}
-
 
 TexProject::vec2							TexProject::vec2::operator + (const vec2& a) const
 {

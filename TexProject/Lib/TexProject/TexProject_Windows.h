@@ -15,15 +15,15 @@
 #include <list>
 
 
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 
 #include <Windows.h>
 
 #else
-#if __TEXPROJECT_LIN__
+#ifdef __TEXPROJECT_LIN__
 // Linux variant
 #else
-#if __TEXPROJECT_MAC__
+#ifdef __TEXPROJECT_MAC__
 // MacOS variant
 #endif
 #endif
@@ -41,27 +41,14 @@ namespace TexProject
 			/*Базова структура клавіші*/
 			struct Key
 			{
-				bool						state = false;
-				bool						press = false;
+				bool						state;
+				bool						press;
 
-				inline						Key() = default;
-				inline						~Key() = default;
+				inline						Key();
 
 				inline void					Loop();
 				inline void					Flush();
 				inline void					Press();
-			};
-
-			/*Неймспейс Миші*/
-			namespace Mouse
-			{
-				extern Key						lB,mB,rB;
-				extern ivec2					pos;
-
-				bool							Init();
-				void							Loop();
-				void							Free();
-				void							Flush();
 			};
 
 			/*Неймспейс клавіатури*/
@@ -240,18 +227,10 @@ namespace TexProject
 				inline Interface::GUIButtonSlider*				AddButtonSlider();
 				inline void										RemovePanel(Interface::GUIPanel* source);
 				inline void										RemoveButton(Interface::GUIButton* source);
-
-				/*Методи, специфічні для ОС Windows*/
-#if __TEXPROJECT_WIN__
-				/*
-				Цю функцію вікно буде викликати при обробці повідомлення WM_PAINT
-				*/
-				virtual void									_win_WMPaint(HDC hDC);
-#endif
 			};
 
 			/*Контекст Windows*/
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 			struct Default:
 				public Basic
 			{
@@ -276,8 +255,6 @@ namespace TexProject
 				virtual void				Delete() override;
 				virtual void				Loop() override;
 				virtual bool				Use() override;
-
-				virtual void									_win_WMPaint(HDC hDC) override;
 			};
 #endif
 			/*Контекст OpenGL*/
@@ -318,7 +295,6 @@ namespace TexProject
 
 				virtual void				Create() override;
 				virtual void				Delete() override;
-				virtual void				Loop() override;
 				virtual bool				Use() override;
 			};
 #endif
@@ -413,7 +389,6 @@ namespace TexProject
 			inline bool						IsRunning() const;
 
 			inline uvec2					GetSize() const;
-			inline ivec2					GetPos() const;
 		};
 		/*Клас звичайного вікна*/
 		struct Main:
@@ -453,7 +428,6 @@ namespace TexProject
 			public Basic,
 			public WindowStructures<Render>
 		{
-			friend RenderContext::Default;
 		public:
 
 			struct FuncTypes
@@ -471,11 +445,11 @@ namespace TexProject
 			typedef void(*Func)(Render*);
 
 			friend RenderContext::Basic;
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 			friend RenderContext::Default;
 			friend Interface::Default;
 #endif
-#if __TEXPROJECT_OPENGL__
+#ifdef __TEXPROJECT_OPENGL__
 			friend RenderContext::OpenGL;
 #endif
 
@@ -484,7 +458,7 @@ namespace TexProject
 
 		protected:
 
-#if __TEXPROJECT_WIN__
+#ifdef __TEXPROJECT_WIN__
 
 			static PIXELFORMATDESCRIPTOR	wndPixelFormatDescriptor;
 			static LRESULT CALLBACK			callbackDefault(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
@@ -492,10 +466,6 @@ namespace TexProject
 			HDC								wndDeviceContextHandle = NULL;
 			clock_t							vSyncTimer,
 											oVSyncTimer;
-
-			// Double Buffering Stuff
-			HDC								dbHDC = NULL;
-			HBITMAP							dbBitmap = NULL;
 
 #endif
 
@@ -550,20 +520,6 @@ namespace TexProject
 		bool								ErrorTest();
 	}
 
-
-	// Mouse Input
-	inline bool								MouseLState();
-	inline bool								MouseMState();
-	inline bool								MouseRState();
-	inline bool								MouseLPress();
-	inline bool								MouseMPress();
-	inline bool								MouseRPress();
-	inline void								MousePressL();
-	inline void								MousePressM();
-	inline void								MousePressR();
-	inline ivec2							MousePos();
-
-
 	//Keyboard Input
 	typedef Window::Input::Keyboard::KeyCodes					Keys;
 
@@ -578,47 +534,6 @@ namespace TexProject
 
 
 // TexProject
-bool										TexProject::MouseLState()
-{
-	return Window::Input::Mouse::lB.state;
-}
-bool										TexProject::MouseMState()
-{
-	return Window::Input::Mouse::mB.state;
-}
-bool										TexProject::MouseRState()
-{
-	return Window::Input::Mouse::rB.state;
-}
-bool										TexProject::MouseLPress()
-{
-	return Window::Input::Mouse::lB.press;
-}
-bool										TexProject::MouseMPress()
-{
-	return Window::Input::Mouse::mB.press;
-}
-bool										TexProject::MouseRPress()
-{
-	return Window::Input::Mouse::rB.press;
-}
-void										TexProject::MousePressL()
-{
-	Window::Input::Mouse::lB.press = true;
-}
-void										TexProject::MousePressM()
-{
-	Window::Input::Mouse::mB.press = true;
-}
-void										TexProject::MousePressR()
-{
-	Window::Input::Mouse::rB.press = true;
-}
-TexProject::ivec2							TexProject::MousePos()
-{
-	return Window::Input::Mouse::pos;
-}
-
 bool										TexProject::KeyState(const Window::Input::Keyboard::KeyCode& key)
 {
 	return Window::Input::Keyboard::keys[key].state;
@@ -648,6 +563,10 @@ inline TexProject::Window::Basic*			TexProject::Window::GetCurrent()
 
 
 // Window::Input::Key
+TexProject::Window::Input::Key::Key():
+	press(false), state(false)
+{
+}
 void										TexProject::Window::Input::Key::Loop()
 {
 	if(!state) press = false;
@@ -741,10 +660,6 @@ bool										TexProject::Window::Basic::IsRunning() const
 TexProject::uvec2							TexProject::Window::Basic::GetSize() const
 {
 	return size;
-}
-TexProject::ivec2							TexProject::Window::Basic::GetPos() const
-{
-	return pos;
 }
 
 

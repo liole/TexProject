@@ -10,9 +10,6 @@ using namespace TexProject;
 void windowInit(Window::Render* window)
 {
 	auto p1 = window->AddPanelDefault();
-	p1->SetPos(vec2(400.0f,200.0f));
-	auto p2 = window->AddPanelDefault();
-	p2->SetSize(vec2(150.0f));
 }
 void windowLoop(Window::Render* window)
 {
