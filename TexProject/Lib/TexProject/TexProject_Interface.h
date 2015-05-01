@@ -53,7 +53,6 @@ namespace TexProject
 			struct Basic;					// Базовий
 			struct Default;					// Звичайна
 			struct Trigger;					// Перемикач
-			struct Action;					// З дією
 			struct Slider;					// Повзунок
 		}
 
@@ -64,8 +63,29 @@ namespace TexProject
 		typedef Button::Basic				GUIButton;
 		typedef Button::Default				GUIButtonDefault;
 		typedef Button::Trigger				GUIButtonTrigger;
-		typedef Button::Action				GUIButtonAction;
-		typedef Button::Default				GUIButtonSlider;
+		typedef Button::Slider				GUIButtonSlider;
+
+
+		struct PanelTypes
+		{
+			enum Enum
+			{
+				Default
+			};
+		};
+		typedef PanelTypes::Enum			PanelType;
+
+		struct ButtonTypes
+		{
+			enum Enum
+			{
+				Default,
+				Trigger,
+				Slider,
+				Close
+			};
+		};
+		typedef ButtonTypes::Enum			ButtonType;
 
 
 		struct Item:
@@ -75,26 +95,55 @@ namespace TexProject
 		{
 			friend Interface::Basic;
 			friend Interface::Default;
+		public:
+
+			typedef void(Action)(Item*);
+
+			struct ActionTypes
+			{
+				static const uint32			count = 4;
+				enum Enum
+				{
+					Select					= 0,
+					Unselect				= 1,
+					Click					= 2,
+					Free					= 3
+				};
+			};
+			typedef ActionTypes::Enum		ActionType;
+
 		protected:
+
+			struct Exception_Destruction
+			{
+			};
+			struct Exception_LocalDestruction
+			{
+			};
+
 			template <typename T>
-			static T*				CreateItem(GUI* interface_);
-			static inline void		DeleteItem(GUIItem* item_);
+			static T*						CreateItem(GUI* interface_,Item* parent_ = nullptr);
+			static inline void				DeleteItem(GUIItem* item_);
 
 
-			GUI * const				inter = nullptr;
-			std::list<Item**>		pointer;
+			Item*							parent = nullptr;
+			GUI * const						inter = nullptr;
+			std::list<Item**>				pointer;
+			Action*							action[ActionTypes::count];
 
-									Item(GUI* interface_);
-									Item(const Item&) = delete;
-									Item(Item&&) = delete;
-			virtual					~Item();
+											Item(GUI* interface_,Item* parent_ = nullptr);
+											Item(const Item&) = delete;
+											Item(Item&&) = delete;
+			virtual							~Item();
 
-			Item&					operator = (const Item&) = delete;
-			Item&					operator = (Item&&) = delete;
+			Item&							operator = (const Item&) = delete;
+			Item&							operator = (Item&&) = delete;
 
-			virtual void			Create();
-			virtual void			Delete();
-			virtual void			Loop();
+			virtual void					Create();
+			virtual void					Delete();
+			virtual void					Loop();
+
+			inline void						CallAction(const ActionType& type_);
 
 			/*Методи, специфічні для ОС Windows*/
 #if __TEXPROJECT_WIN__
@@ -102,16 +151,28 @@ namespace TexProject
 			Цю функцію інтерфейс буде викликати при обробці повідомлення WM_PAINT зі своєї _win_WMPaint
 			Параметр hDC, який приходить в інтерфейс з вікна - зберігатимемо у внутрішніх полях, для економії аргументів
 			*/
-			virtual void									_win_WMPaint();
+			virtual void					_win_WMPaint();
 #endif
 		public:
 
-			virtual bool			IsSelect();
+			GUIItem*						GetBase();
 
-			inline void				AddPointer(void*& pointer_);					// Додаємо у список керований вказівник
-			inline void				RemovePointer(void*& pointer_);					// Видаляємо зі списку керований вказівник і занулюємо його
-			inline void				ResetPointers();								// Видаляємо зі списку усі вказівники і занулуємо їх
-			inline void				FlushPointers();								// Видаляємо зі списку усі вказівники
+			virtual vec2					GetPos();
+			virtual vec2					GetLocalPos();
+			virtual int32					GetPriority();
+			virtual int32					GetLocalPriority();
+
+			virtual bool					IsSelect();
+			virtual bool					IsAnyButtonSelect();				// Без урахування поверхні кнопок
+
+			inline void						ToTop();
+
+			inline void						SetAction(const ActionType& type_,Action* action_);
+
+			inline void						AddPointer(void*& pointer_);					// Додаємо у список керований вказівник
+			inline void						RemovePointer(void*& pointer_);					// Видаляємо зі списку керований вказівник і занулюємо його
+			inline void						ResetPointers();								// Видаляємо зі списку усі вказівники і занулуємо їх
+			inline void						FlushPointers();								// Видаляємо зі списку усі вказівники
 		};
 		namespace Panel
 		{
@@ -120,36 +181,52 @@ namespace TexProject
 				friend Item;
 				friend Interface::Basic;
 			protected:
-				Panel::Basic*								parent = nullptr;
-				std::list<Panel::Basic*>					panel;
-				std::list<Button::Basic*>					button;
+				std::list<Panel::Basic*>	panel;
+				std::list<Button::Basic*>	button;
 
-										Basic(GUI* interface_);
-										Basic(const Basic&) = delete;
-										Basic(Basic&&) = delete;
-				virtual					~Basic() = default;
+											Basic(GUI* interface_,Item* parent_ = nullptr);
+											Basic(const Basic&) = delete;
+											Basic(Basic&&) = delete;
+				virtual						~Basic() = default;
 
-				Basic&					operator = (const Basic&) = delete;
-				Basic&					operator = (Basic&&) = delete;
+				Basic&						operator = (const Basic&) = delete;
+				Basic&						operator = (Basic&&) = delete;
 
-				virtual void			Create() override;
-				virtual void			Delete() override;
-				virtual void			Loop() override;
+				virtual void				Create() override;
+				virtual void				Delete() override;
+				virtual void				Loop() override;
+
+				template <typename T>
+				T*							AddPanel();
+				template <typename T>
+				T*							AddButton();
+
+#if __TEXPROJECT_WIN__
+				virtual void				_win_WMPaint() override;
+#endif
+
+			public:
+
+				inline void					ToTop();
+
+				virtual GUIPanel*			AddPanel(const PanelType& type_);
+				virtual GUIButton*			AddButton(const ButtonType& type_);
+
 			};
 			struct Default: public Panel::Basic
 			{
 				friend Item;
 				friend Interface::Basic;
 			protected:
-										Default(GUI* interface_);
-				/*						Default(const Basic&) = delete;
+										Default(GUI* interface_,Item* parent_ = nullptr);
+										Default(const Basic&) = delete;
 										Default(Default&&) = delete;
 				virtual					~Default() = default;
 
 				Default&				operator = (const Default&) = delete;
 				Default&				operator = (Default&&) = delete;
 
-				virtual void			Create() override;
+				/*virtual void			Create() override;
 				virtual void			Delete() override;
 				virtual void			Loop() override;*/
 			};
@@ -160,10 +237,9 @@ namespace TexProject
 			{
 				friend Item;
 				friend Interface::Basic;
+				friend Interface::Panel::Basic;
 			protected:
-				Panel::Basic*			parent = nullptr;
-
-										Basic(GUI* interface_);
+										Basic(GUI* interface_,Item* parent_ = nullptr);
 										Basic(const Basic&) = delete;
 										Basic(Basic&&) = delete;
 				virtual					~Basic() = default;
@@ -174,14 +250,31 @@ namespace TexProject
 				virtual void			Create() override;
 				virtual void			Delete() override;
 				virtual void			Loop() override;
+
+			public:
+
+				inline void				ToTop();
+
 			};
 			struct Default: public Button::Basic
 			{
+				friend Item;
+				friend Interface::Basic;
+			protected:
+										Default(GUI* interface_,Item* parent_ = nullptr);
+										Default(const Basic&) = delete;
+										Default(Default&&) = delete;
+				virtual					~Default() = default;
+
+				Default&				operator = (const Default&) = delete;
+				Default&				operator = (Default&&) = delete;
+
+				/*virtual void			Create() override;
+				virtual void			Delete() override;
+				virtual void			Loop() override;*/
+
 			};
 			struct Trigger: public Button::Basic
-			{
-			};
-			struct Action: public Button::Basic
 			{
 			};
 			struct Slider: public Button::Basic
@@ -193,7 +286,6 @@ namespace TexProject
 		struct Basic
 		{
 			friend Creator;
-		protected:
 
 			struct Mouse
 			{
@@ -209,6 +301,8 @@ namespace TexProject
 			};
 			Mouse							mouse;
 
+		protected:
+
 			template <typename T>
 			static T*						CreateInterface(PWindow window_);
 			static inline void				DeleteInterface(GUI* interface_);
@@ -221,8 +315,7 @@ namespace TexProject
 
 
 			PWindow							window = nullptr;
-			std::list<Panel::Basic*>		panel;
-			std::list<Button::Basic*>		button;
+			std::list<Item*>				item;
 
 											Basic(PWindow window_);
 											Basic(const Basic&) = delete;
@@ -233,9 +326,7 @@ namespace TexProject
 			Basic&							operator = (Basic&&) = delete;
 
 			template <typename T>
-			T*													AddPanel();
-			template <typename T>
-			T*													AddButton();
+			T*													AddItem();
 
 		public:
 
@@ -243,14 +334,10 @@ namespace TexProject
 			virtual void										Delete();
 			virtual void										Loop();
 
-			virtual GUIPanelDefault*							AddPanelDefault();
-			virtual GUIButtonDefault*							AddButtonDefault();
-			virtual GUIButtonTrigger*							AddButtonTrigger();
-			virtual GUIButtonAction*							AddButtonAction();
-			virtual GUIButtonSlider*							AddButtonSlider();
+			virtual GUIPanel*									AddPanel(const PanelType& type_);
+			virtual GUIButton*									AddButton(const ButtonType& type_);
 
-			inline void											RemovePanel(GUIPanel* source);
-			inline void											RemoveButton(GUIButton* source);
+			inline void											RemoveItem(GUIItem* source);
 
 			inline PWindow										GetWindow()
 			{
@@ -286,25 +373,51 @@ namespace TexProject
 				{
 				protected:
 				public:
-					Default(GUI* interface_);
-					~Default() = default;
+																Default(GUI* interface_,Item* parent_ = nullptr);
+																~Default() = default;
 
-					virtual void			Create() override;
-					virtual void			Delete() override;
-					virtual void			Loop() override;
+					virtual void								Create() override;
+					virtual void								Delete() override;
+					virtual void								Loop() override;
 
-					virtual bool			IsSelect() override;
+					virtual bool								IsSelect() override;
+					virtual bool								IsAnyButtonSelect() override;
 
-					virtual void			_win_WMPaint() override;
+					virtual void								_win_WMPaint() override;
+
+					virtual GUIPanel*							AddPanel(const PanelType& type_) override;
+					virtual GUIButton*							AddButton(const ButtonType& type_) override;
 				};
 			};
 			struct Button
 			{
+				struct Default: public Interface::Button::Default
+				{
+				protected:
+				public:
+																Default(GUI* interface_,Item* parent_ = nullptr);
+																~Default() = default;
+
+					virtual void								Create() override;
+					virtual void								Delete() override;
+					virtual void								Loop() override;
+
+					virtual bool								IsSelect() override;
+
+					virtual void								_win_WMPaint() override;
+				};
 			};
+
+			friend Panel::Default;
+			friend Button::Default;
 
 
 			HDC								renderDeviceContextHandle = NULL;
 			RECT							renderRect;
+
+			HBRUSH							renderBrushRed = NULL;
+			HBRUSH							renderBrushGreen = NULL;
+			HBRUSH							renderBrushBlue = NULL;
 
 											Default(PWindow window_);
 											Default(const Default&) = delete;
@@ -316,17 +429,14 @@ namespace TexProject
 
 		public:
 
-			virtual void										Create() override;
-			virtual void										Delete() override;
-			virtual void										Loop() override;
+			virtual void					Create() override;
+			virtual void					Delete() override;
+			virtual void					Loop() override;
 
-			virtual GUIPanelDefault*							AddPanelDefault() override;
-			virtual GUIButtonDefault*							AddButtonDefault() override;
-			virtual GUIButtonTrigger*							AddButtonTrigger() override;
-			virtual GUIButtonAction*							AddButtonAction() override;
-			virtual GUIButtonSlider*							AddButtonSlider() override;
+			virtual GUIPanel*				AddPanel(const PanelType& type_);
+			virtual GUIButton*				AddButton(const ButtonType& type_);
 
-			virtual void									_win_WMPaint(HDC hDC);
+			virtual void					_win_WMPaint(HDC hDC);
 		};
 #endif
 	}
@@ -351,9 +461,9 @@ void										TexProject::Interface::Creator::DeleteInterface(GUI* interface_)
 
 // Interface::Basic::Item
 template <typename T>
-typename T*									TexProject::Interface::Item::CreateItem(GUI* interface_)
+typename T*									TexProject::Interface::Item::CreateItem(GUI* interface_,Item* parent_)
 {
-	auto t = new T(interface_);
+	auto t = new T(interface_,parent_);
 	t->Create();
 	return t;
 }
@@ -361,6 +471,20 @@ void										TexProject::Interface::Item::DeleteItem(GUIItem* item_)
 {
 	item_->Delete();
 	delete item_;
+}
+
+void										TexProject::Interface::Item::ToTop()
+{
+	inter->ToTop(this);
+}
+
+void										TexProject::Interface::Item::CallAction(const ActionType& type_)
+{
+	if(action[type_]) action[type_](this);
+}
+void										TexProject::Interface::Item::SetAction(const ActionType& type_,Action* action_)
+{
+	action[type_] = action_;
 }
 
 void										TexProject::Interface::Item::AddPointer(void*& pointer_)
@@ -394,6 +518,49 @@ void										TexProject::Interface::Item::FlushPointers()
 }
 
 
+// Interface::Panel::Basic
+void										TexProject::Interface::Panel::Basic::ToTop()
+{
+	if(parent)
+	{
+		parent->ToTop();
+	}
+	else
+	{
+		inter->ToTop(this);
+	}
+}
+
+template <typename T>
+typename T*									TexProject::Interface::Panel::Basic::AddPanel()
+{
+	auto t = Item::CreateItem<T>(inter,this);
+	panel.push_back((Panel::Basic*)t);
+	return t;
+}
+template <typename T>
+typename T*									TexProject::Interface::Panel::Basic::AddButton()
+{
+	auto t = Item::CreateItem<T>(inter,this);
+	button.push_back((Button::Basic*)t);
+	return t;
+}
+
+
+// Interface::Button::Basic
+void										TexProject::Interface::Button::Basic::ToTop()
+{
+	if(parent)
+	{
+		parent->ToTop();
+	}
+	else
+	{
+		inter->ToTop(this);
+	}
+}
+
+
 // Interface::Basic
 template <typename T>
 typename T*									TexProject::Interface::Basic::CreateInterface(PWindow window_)
@@ -411,6 +578,7 @@ void										TexProject::Interface::Basic::DeleteInterface(GUI* interface_)
 	}
 }
 
+/*
 template <typename T>
 typename T*									TexProject::Interface::Basic::AddPanel()
 {
@@ -425,31 +593,24 @@ typename T*									TexProject::Interface::Basic::AddButton()
 	button.push_back(t);
 	return t;
 }
-void										TexProject::Interface::Basic::RemovePanel(GUIPanel* source)
+*/
+template <typename T>
+typename T*									TexProject::Interface::Basic::AddItem()
 {
-	for(auto i = panel.begin(); i != panel.end(); ++i)
-	{
-		auto t = *i;
-		if(t == source)
-		{
-			Item::DeleteItem((Item*)t);
-			i = panel.erase(i);
-		}
-	}
+	auto t = Interface::Item::CreateItem<T>(this);
+	item.push_back((Item*)t);
+	return t;
 }
-void										TexProject::Interface::Basic::RemoveButton(GUIButton* source)
+void										TexProject::Interface::Basic::RemoveItem(GUIItem* source)
 {
-	auto i = button.begin();
-	while(i != button.end())
+	for(auto i = item.begin(); i != item.end(); ++i)
 	{
 		auto t = *i;
 		if(t == source)
 		{
 			Item::DeleteItem((Item*)t);
-			i = button.erase(i);
-			continue;
+			i = item.erase(i);
 		}
-		++i;
 	}
 }
 

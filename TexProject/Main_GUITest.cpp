@@ -9,10 +9,23 @@ using namespace TexProject;
 
 void windowInit(Window::Render* window)
 {
-	auto p1 = window->AddPanelDefault();
+	auto p1 = window->AddPanel(Interface::PanelTypes::Default);
 	p1->SetPos(vec2(400.0f,200.0f));
-	auto p2 = window->AddPanelDefault();
+	p1->SetSize(vec2(200.0f,100.0f));
+	auto p2 = window->AddPanel(Interface::PanelTypes::Default);
 	p2->SetSize(vec2(150.0f));
+
+	auto b1 = p1->AddButton(Interface::ButtonTypes::Close);	// Add Button to panel p1
+	b1->SetPos(vec2(100.0f-15.0f,-50.0f+15.0f));
+	b1->SetSize(vec2(24.0f));
+
+	auto b2 = p2->AddButton(Interface::ButtonTypes::Close);	// Add Button to panel p2
+	b2->SetPos(vec2(75.0f-15.0f,-75.0f+15.0f));
+	b2->SetSize(vec2(24.0f));
+
+	auto b3 = p2->AddButton(Interface::ButtonTypes::Default);
+	b3->SetSize(vec2(80.0f,24.0f));
+	b3->SetAction(Interface::Item::ActionTypes::Click,[](Interface::Item*){Message("Action occured.");});
 }
 void windowLoop(Window::Render* window)
 {

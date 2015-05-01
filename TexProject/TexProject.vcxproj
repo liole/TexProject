@@ -76,7 +76,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Example_TextureDraw.cpp" />
     <ClCompile Include="Lib\TexProject\Empty\TexProject_Empty.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Shaders.cpp" />
@@ -86,6 +85,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Main.cpp" />
+    <ClCompile Include="Main_GUITest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />

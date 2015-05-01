@@ -233,13 +233,9 @@ namespace TexProject
 				virtual void				Loop();
 				virtual bool				Use();
 
-				inline Interface::GUIPanelDefault*				AddPanelDefault();
-				inline Interface::GUIButtonDefault*				AddButtonDefault();
-				inline Interface::GUIButtonTrigger*				AddButtonTrigger();
-				inline Interface::GUIButtonAction*				AddButtonAction();
-				inline Interface::GUIButtonSlider*				AddButtonSlider();
-				inline void										RemovePanel(Interface::GUIPanel* source);
-				inline void										RemoveButton(Interface::GUIButton* source);
+				inline Interface::GUIPanel*						AddPanel(const Interface::PanelType& type_);
+				inline Interface::GUIButton*					AddButton(const Interface::ButtonType& type_);
+				inline void										RemoveItem(Interface::GUIItem* source);
 
 				/*Методи, специфічні для ОС Windows*/
 #if __TEXPROJECT_WIN__
@@ -530,13 +526,9 @@ namespace TexProject
 			virtual void					SetFunc(const FuncType& type_, Func func_);
 			virtual void					ResetFuncs();
 
-			inline Interface::GUIPanelDefault*					AddPanelDefault();
-			inline Interface::GUIButtonDefault*					AddButtonDefault();
-			inline Interface::GUIButtonTrigger*					AddButtonTrigger();
-			inline Interface::GUIButtonAction*					AddButtonAction();
-			inline Interface::GUIButtonSlider*					AddButtonSlider();
-			inline void											RemovePanel(Interface::GUIPanel* source);
-			inline void											RemoveButton(Interface::GUIButton* source);
+			inline Interface::GUIPanel*		AddPanel(const Interface::PanelType& type_);
+			inline Interface::GUIButton*	AddButton(const Interface::ButtonType& type_);
+			inline void						RemoveItem(Interface::GUIItem* source);
 		};
 
 		void								Init();
@@ -689,33 +681,17 @@ RECT										TexProject::Window::WindowStructures<T>::wndRect;
 
 
 // RenderContext
-TexProject::Interface::GUIPanelDefault*							TexProject::Window::RenderContext::Basic::AddPanelDefault()
+TexProject::Interface::GUIPanel*								TexProject::Window::RenderContext::Basic::AddPanel(const Interface::PanelType& type_)
 {
-	return inter->AddPanelDefault();
+	return inter->AddPanel(type_);
 }
-TexProject::Interface::GUIButtonDefault*						TexProject::Window::RenderContext::Basic::AddButtonDefault()
+TexProject::Interface::GUIButton*								TexProject::Window::RenderContext::Basic::AddButton(const Interface::ButtonType& type_)
 {
-	return inter->AddButtonDefault();
+	return inter->AddButton(type_);
 }
-TexProject::Interface::GUIButtonTrigger*						TexProject::Window::RenderContext::Basic::AddButtonTrigger()
+void															TexProject::Window::RenderContext::Basic::RemoveItem(Interface::GUIItem* source)
 {
-	return inter->AddButtonTrigger();
-}
-TexProject::Interface::GUIButtonAction*							TexProject::Window::RenderContext::Basic::AddButtonAction()
-{
-	return inter->AddButtonAction();
-}
-TexProject::Interface::GUIButtonSlider*							TexProject::Window::RenderContext::Basic::AddButtonSlider()
-{
-	return inter->AddButtonSlider();
-}
-void															TexProject::Window::RenderContext::Basic::RemovePanel(Interface::GUIPanel* source)
-{
-	inter->RemovePanel(source);
-}
-void															TexProject::Window::RenderContext::Basic::RemoveButton(Interface::GUIButton* source)
-{
-	inter->RemoveButton(source);
+	inter->RemoveItem(source);
 }
 
 
@@ -749,33 +725,17 @@ TexProject::ivec2							TexProject::Window::Basic::GetPos() const
 
 
 // Window::Render
-TexProject::Interface::GUIPanelDefault*		TexProject::Window::Render::AddPanelDefault()
+TexProject::Interface::GUIPanel*			TexProject::Window::Render::AddPanel(const Interface::PanelType& type_)
 {
-	return renderContext->AddPanelDefault();
+	return renderContext->AddPanel(type_);
 }
-TexProject::Interface::GUIButtonDefault*	TexProject::Window::Render::AddButtonDefault()
+TexProject::Interface::GUIButton*			TexProject::Window::Render::AddButton(const Interface::ButtonType& type_)
 {
-	return renderContext->AddButtonDefault();
+	return renderContext->AddButton(type_);
 }
-TexProject::Interface::GUIButtonTrigger*	TexProject::Window::Render::AddButtonTrigger()
+void										TexProject::Window::Render::RemoveItem(Interface::GUIItem* source)
 {
-	return renderContext->AddButtonTrigger();
-}
-TexProject::Interface::GUIButtonAction*		TexProject::Window::Render::AddButtonAction()
-{
-	return renderContext->AddButtonAction();
-}
-TexProject::Interface::GUIButtonSlider*		TexProject::Window::Render::AddButtonSlider()
-{
-	return renderContext->AddButtonSlider();
-}
-void										TexProject::Window::Render::RemovePanel(Interface::GUIPanel* source)
-{
-	renderContext->RemovePanel(source);
-}
-void										TexProject::Window::Render::RemoveButton(Interface::GUIButton* source)
-{
-	renderContext->RemoveButton(source);
+	renderContext->RemoveItem(source);
 }
 
 
