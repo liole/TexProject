@@ -110,10 +110,10 @@ void					TexProject::Texture::Build()
 	for(uint32 z = 0; z < size.z; ++z)
 	{
 		auto id = (size.x*(z*size.y + y) + x);
-		t[4*id+0] = data[id].x;	//data[x][y][z].x;
-		t[4*id+1] = data[id].y;	//data[x][y][z].y;
-		t[4*id+2] = data[id].z;	//data[x][y][z].z;
-		t[4*id+3] = data[id].w;	//data[x][y][z].w;
+		t[4*id+0] = data[id].x;
+		t[4*id+1] = data[id].y;
+		t[4*id+2] = data[id].z;
+		t[4*id+3] = data[id].w;
 	}
 
 	{
@@ -134,8 +134,9 @@ void					TexProject::Texture::Build()
 			glFormat = GLFormats::RGBA;
 			glComponent = GLComponents::Float;
 			glFilter = GLFilters::Linear;
-			glWrap = GLWraps::Repeat;
-			glType = GLTypes::tex2D;
+			glWrap = GLWraps::Clamp;
+			if(size.z > 1) glType = GLTypes::tex3D;
+			else glType = GLTypes::tex2D;
 		}
 
 		{
@@ -241,6 +242,187 @@ void					TexProject::Texture::Draw()
 
 	OpenGL::Shader::UseNull();
 }
+
+#if __TEXPROJECT_DEVIL__
+
+bool					TexProject::Texture::_devIL_Load2D(const string& filename)
+{
+	Delete();
+
+	ILuint	id;
+
+	ilGenImages(1,&id);
+	ilBindImage(id);
+
+	if(ilLoadImage(filename.c_str()) != IL_TRUE)
+	{
+		Message("[DevIL]\nCan't Load Image '"+filename+"'");
+		ilDeleteImages(1,&id);
+		return false;
+	}
+	DevIL::ErrorTest();
+
+	ivec3 inILSize;
+	inILSize.x		= ilGetInteger(IL_IMAGE_WIDTH);
+	inILSize.y		= ilGetInteger(IL_IMAGE_HEIGHT);
+	inILSize.z		= ilGetInteger(IL_IMAGE_DEPTH);
+
+	Resize(uvec3(inILSize.x,inILSize.y,inILSize.z));
+
+	auto ilOriginMode	= ilGetInteger(IL_ORIGIN_MODE);	// top-to-down or down-to-top
+	/*
+	IL_ORIGIN_LOWER_LEFT
+	IL_ORIGIN_UPPER_LEFT
+	*/
+
+	auto inILType	= ilGetInteger(IL_IMAGE_TYPE);
+	auto inILFormat	= ilGetInteger(IL_IMAGE_FORMAT);
+	auto inILBytes	= ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL);
+	auto inILBits	= ilGetInteger(IL_IMAGE_BITS_PER_PIXEL);
+	auto inILData	= ilGetData();
+
+
+	{
+		ivec4	off(-1,-1,-1,-1);
+
+		switch(inILFormat)
+		{
+			/*
+			IL_COLOUR_INDEX
+			IL_COLOR_INDEX
+			IL_ALPHA
+			IL_RGB
+			IL_RGBA
+			IL_BGR
+			IL_BGRA
+			IL_LUMINANCE
+			IL_LUMINANCE_ALPHA
+			*/
+			case IL_ALPHA:				{ off = ivec4(-1,-1,-1,0); break; }	// not shure
+			case IL_RGB:				{ off = ivec4(0,1,2,-1); break; }
+			case IL_BGR:				{ off = ivec4(2,1,0,-1); break; }
+			case IL_RGBA:				{ off = ivec4(0,1,2,3); break; }
+			case IL_BGRA:				{ off = ivec4(2,1,0,3); break; }	// not shure
+			case IL_LUMINANCE:			{ off = ivec4(0,0,0,-1); break; }	// not shure
+			case IL_LUMINANCE_ALPHA:	{ off = ivec4(0,0,0,-1); break; }	// not shure
+			default:
+			{
+				throw Exception("[DevIL] Image loading\nUnknown of forbidden format.");
+			}
+		}
+
+		for(uint32 x = 0; x < size.x; ++x)
+		for(uint32 y = 0; y < size.y; ++y)
+		for(uint32 z = 0; z < size.z; ++z)
+		{
+			vec4 color(0.0f,0.0f,0.0f,1.0f);
+			auto data =	inILData;
+			data +=	(ilOriginMode==IL_ORIGIN_LOWER_LEFT)
+					? ((z*size.y + y)*size.x + x)*inILBytes
+					: ((z*size.y + (size.y-1-y))*size.x + x)*inILBytes;
+
+			switch(inILType)
+			{
+				/*
+				IL_BYTE           0x1400
+				IL_UNSIGNED_BYTE  0x1401
+				IL_SHORT          0x1402
+				IL_UNSIGNED_SHORT 0x1403
+				IL_INT            0x1404
+				IL_UNSIGNED_INT   0x1405
+				IL_FLOAT          0x1406
+				IL_DOUBLE         0x140A
+				IL_HALF           0x140B
+				*/
+				case IL_BYTE:
+				{
+					if(off.x>=0) color.x =  float32(float64(*((int8*)data+off.x) - INT8_MIN) / INT8_MAX);
+					if(off.y>=0) color.y =  float32(float64(*((int8*)data+off.y) - INT8_MIN) / INT8_MAX);
+					if(off.z>=0) color.z =  float32(float64(*((int8*)data+off.z) - INT8_MIN) / INT8_MAX);
+					if(off.w>=0) color.w =  float32(float64(*((int8*)data+off.w) - INT8_MIN) / INT8_MAX);
+					break;
+				}
+				case IL_UNSIGNED_BYTE:
+				{
+					if(off.x>=0) color.x =  float32(float64(*((uint8*)data+off.x)) / UINT8_MAX);
+					if(off.y>=0) color.y =  float32(float64(*((uint8*)data+off.y)) / UINT8_MAX);
+					if(off.z>=0) color.z =  float32(float64(*((uint8*)data+off.z)) / UINT8_MAX);
+					if(off.w>=0) color.w =  float32(float64(*((uint8*)data+off.w)) / UINT8_MAX);
+					break;
+				}
+				case IL_SHORT:
+				{
+					if(off.x>=0) color.x =  float32(float64(*((int16*)data+off.x) - INT16_MIN) / INT16_MAX);
+					if(off.y>=0) color.y =  float32(float64(*((int16*)data+off.y) - INT16_MIN) / INT16_MAX);
+					if(off.z>=0) color.z =  float32(float64(*((int16*)data+off.z) - INT16_MIN) / INT16_MAX);
+					if(off.w>=0) color.w =  float32(float64(*((int16*)data+off.w) - INT16_MIN) / INT16_MAX);
+					break;
+				}
+				case IL_UNSIGNED_SHORT:
+				{
+					if(off.x>=0) color.x =  float32(float64(*((uint16*)data+off.x)) / UINT16_MAX);
+					if(off.y>=0) color.y =  float32(float64(*((uint16*)data+off.y)) / UINT16_MAX);
+					if(off.z>=0) color.z =  float32(float64(*((uint16*)data+off.z)) / UINT16_MAX);
+					if(off.w>=0) color.w =  float32(float64(*((uint16*)data+off.w)) / UINT16_MAX);
+					break;
+				}
+				case IL_INT:
+				{
+					if(off.x>=0) color.x =  float32(float64(*((int32*)data+off.x) - INT32_MIN) / INT32_MAX);
+					if(off.y>=0) color.y =  float32(float64(*((int32*)data+off.y) - INT32_MIN) / INT32_MAX);
+					if(off.z>=0) color.z =  float32(float64(*((int32*)data+off.z) - INT32_MIN) / INT32_MAX);
+					if(off.w>=0) color.w =  float32(float64(*((int32*)data+off.w) - INT32_MIN) / INT32_MAX);
+					break;
+				}
+				case IL_UNSIGNED_INT:
+				{
+					if(off.x>=0) color.x =  float32(float64(*((uint32*)data+off.x)) / UINT32_MAX);
+					if(off.y>=0) color.y =  float32(float64(*((uint32*)data+off.y)) / UINT32_MAX);
+					if(off.z>=0) color.z =  float32(float64(*((uint32*)data+off.z)) / UINT32_MAX);
+					if(off.w>=0) color.w =  float32(float64(*((uint32*)data+off.w)) / UINT32_MAX);
+					break;
+				}
+				case IL_HALF:
+				{
+					if(off.x>=0) color.x =  float32(*((float16*)data+off.x));
+					if(off.y>=0) color.y =  float32(*((float16*)data+off.y));
+					if(off.z>=0) color.z =  float32(*((float16*)data+off.z));
+					if(off.w>=0) color.w =  float32(*((float16*)data+off.w));
+					break;
+				}
+				case IL_FLOAT:
+				{
+					if(off.x>=0) color.x =  float32(*((float32*)data+off.x));
+					if(off.y>=0) color.y =  float32(*((float32*)data+off.y));
+					if(off.z>=0) color.z =  float32(*((float32*)data+off.z));
+					if(off.w>=0) color.w =  float32(*((float32*)data+off.w));
+					break;
+				}
+				case IL_DOUBLE:
+				{
+					if(off.x>=0) color.x =  float32(*((float64*)data+off.x));
+					if(off.y>=0) color.y =  float32(*((float64*)data+off.y));
+					if(off.z>=0) color.z =  float32(*((float64*)data+off.z));
+					if(off.w>=0) color.w =  float32(*((float64*)data+off.w));
+					break;
+				}
+				default:
+				{
+					throw Exception("[DevIL] Image loading\nUnknown of forbidden type.");
+				}
+			}
+			Get(x,y,z) = color;
+		}
+	}
+
+	ilDeleteImages(1,&id);
+
+	Build();
+
+	return true;
+}
+
+#endif
 
 
 #ifdef __TEXPROJECT_OPENGL__

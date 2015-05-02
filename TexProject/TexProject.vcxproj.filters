@@ -42,7 +42,10 @@
     <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Main_GUITest.cpp">
+    <ClCompile Include="Lib\TexProject\TexProject_DevIL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Main_GUITest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -81,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_Interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_DevIL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

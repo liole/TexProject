@@ -4,11 +4,14 @@
 #include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Math.h>
 
-#ifdef __TEXPROJECT_OPENGL__
 
+#if __TEXPROJECT_DEVIL__
+#include <TexProject/TexProject_DevIL.h>
+#endif
+
+#if __TEXPROJECT_OPENGL__
 #include <TexProject/TexProject_OpenGL.h>
 #include <TexProject/TexProject_Shaders.h>
-
 #endif
 
 
@@ -24,7 +27,7 @@ namespace TexProject
 		static void							InitDraw();
 		static void							FreeDraw();
 
-#ifdef __TEXPROJECT_OPENGL__
+#if __TEXPROJECT_OPENGL__
 
 		struct GLTypes
 		{
@@ -131,7 +134,6 @@ namespace TexProject
 	protected:
 
 		bool			init = false;
-		//vec4***			data = nullptr;
 		vec4*			data = nullptr;
 		uvec3			size = uvec3(0);
 
@@ -142,14 +144,19 @@ namespace TexProject
 											Texture() = default;
 											~Texture();
 
-		inline vec4&						Get(uint32 x, uint32 y);
+		inline bool							Load(const string& filename);
+		inline vec4&						Get(uint32 x,uint32 y);
+		inline vec4&						Get(uint32 x,uint32 y,uint32 z);
 		inline uvec3						GetSize() const;
 		void								Resize(uvec3 size_);
 		void								Build();
 		void								Draw();
 
+#if __TEXPROJECT_DEVIL__
+		bool								_devIL_Load2D(const string& filename);
+#endif
 
-#ifdef __TEXPROJECT_OPENGL__
+#if __TEXPROJECT_OPENGL__
 
 	protected:
 
@@ -206,19 +213,48 @@ void										TexProject::Texture::glUse(uint32 slot_)
 }
 
 
-TexProject::vec4&							TexProject::Texture::Get(uint32 x,uint32 y)
+inline bool									TexProject::Texture::Load(const string& filename)
 {
+#if __TEXPROJECT_DEVIL__
+	return _devIL_Load2D(filename);
+#endif
+
+#if __TEXPROJECT_DEBUG__
+	Message("[Texture]\nCan't Load Image '"+filename+"'");
+#endif
+	return false;
+}
+inline TexProject::vec4&					TexProject::Texture::Get(uint32 x,uint32 y)
+{
+#if __TEXPROJECT_DEBUG__
 	if(x < size.x && y < size.y && size.z > 0)
 	{
-		//return data[x][y][0];
 		return data[size.x*(0*size.y + y) + x];
 	}
 	else
 	{
 		throw Exception("Out of texture data array.");
 	}
+#else
+	return data[size.x*(0*size.y + y) + x];
+#endif
 }
-TexProject::uvec3							TexProject::Texture::GetSize() const
+inline TexProject::vec4&					TexProject::Texture::Get(uint32 x,uint32 y,uint32 z)
+{
+#if __TEXPROJECT_DEBUG__
+	if(x < size.x && y < size.y && z < size.z)
+	{
+		return data[size.x*(z*size.y + y) + x];
+	}
+	else
+	{
+		throw Exception("Out of texture data array.");
+	}
+#else
+	return data[size.x*(z*size.y + y) + x];
+#endif
+}
+inline TexProject::uvec3					TexProject::Texture::GetSize() const
 {
 	return size;
 }

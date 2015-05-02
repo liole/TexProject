@@ -14,10 +14,11 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 Бажано одночасно визначати лише один з них.
 */
 #define __TEXPROJECT_WIN__					1
-//#define __TEXPROJECT_LIN__
-//#define __TEXPROJECT_MAC__
+#define __TEXPROJECT_LIN__					0
+#define __TEXPROJECT_MAC__					0
 
 #define __TEXPROJECT_OPENGL__				1
+#define __TEXPROJECT_DEVIL__				1
 
 
 /*
@@ -32,15 +33,15 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 /*
 В таких блоках будемо писати платформо-залежний код.
 */
-#ifdef __TEXPROJECT_WIN__
+#if __TEXPROJECT_WIN__
 
 #include <Windows.h>
 
 #else
-#ifdef __TEXPROJECT_LIN__
+#if __TEXPROJECT_LIN__
 // Linux variant
 #else
-#ifdef __TEXPROJECT_MAC__
+#if __TEXPROJECT_MAC__
 // MacOS variant
 #endif
 #endif
@@ -66,7 +67,7 @@ namespace TexProject
 	маленькі локальні функції, які не використовуються за межами
 	окремого моделя.
 	*/
-#ifdef __TEXPROJECT_WIN__
+#if __TEXPROJECT_WIN__
 
 	/*
 	Типи void, bool і char поки не перевизначаємо.
@@ -120,10 +121,10 @@ namespace TexProject
 	*/
 
 #else
-#ifdef __TEXPROJECT_LIN__
+#if __TEXPROJECT_LIN__
 	// Linux variant
 #else
-#ifdef __TEXPROJECT_MAC__
+#if __TEXPROJECT_MAC__
 	// MacOS variant
 #endif
 #endif
@@ -226,7 +227,7 @@ namespace TexProject
 		bool								Process();
 	}
 
-#ifdef __TEXPROJECT_OPENGL__
+#if __TEXPROJECT_OPENGL__
 	/*Структури і методи бібліотеки OpenGL*/
 	// OpenGL
 	/*Головний неймспейс OpenGL*/
@@ -235,6 +236,16 @@ namespace TexProject
 		// Shader
 		/*Клас шейдера*/
 		struct Shader;
+	}
+#endif
+
+
+#if __TEXPROJECT_DEVIL__
+	/*Структури і методи бібліотеки DevIL*/
+	//DevIL
+	/*Головний неймспейс DevIL*/
+	namespace DevIL
+	{
 	}
 #endif
 

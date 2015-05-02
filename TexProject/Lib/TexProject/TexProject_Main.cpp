@@ -2,6 +2,7 @@
 using namespace TexProject;
 
 
+#include <TexProject/TexProject_DevIL.h>
 #include <TexProject/TexProject_Textures.h>
 
 
@@ -45,8 +46,8 @@ int WINAPI				WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLin
 
 void					TexProject::EntryPointSafeCall()
 {
+	DevIL::Init();
 	Window::Init();
-
 	Texture::Init();
 
 	ErrorException::SecureCall(Main);

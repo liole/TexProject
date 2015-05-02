@@ -146,7 +146,7 @@ namespace TexProject
 	};
 	struct ivec3
 	{
-		float32			x, y, z;
+		int32			x, y, z;
 	};
 	struct uvec3
 	{
@@ -172,6 +172,12 @@ namespace TexProject
 	struct ivec4
 	{
 		int32			x, y, z, w;
+
+		inline			ivec4() = default;
+		inline			ivec4(int32 x_,int32 y_,int32 z_,int32 w_):
+			x(x_),y(y_),z(z_),w(w_)
+		{
+		}
 	};
 	struct uvec4
 	{
