@@ -49,6 +49,8 @@ void TexProject::Main()
 	while(Window::Process())
 	{
 		if(KeyState(Keys::ESC)) break;
+		if (KeyState(Keys::E))
+			CloseHandle((HANDLE)0); // error example
 	}
 
 	tWindow.Delete();

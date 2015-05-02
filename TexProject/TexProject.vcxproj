@@ -57,6 +57,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>echo Copying DLL files to output directory...
+for /R "$(SolutionDir)TexProject\Lib" %%f in (*.dll) do xcopy /y /d %%f "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -86,7 +90,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Main.cpp" />
-    <ClCompile Include="Source\Main_GUITest.cpp" />
+    <ClCompile Include="Source\Example_GUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
