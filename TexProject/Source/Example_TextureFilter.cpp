@@ -18,7 +18,7 @@ Texture* filterFunc(Texture* sourceTexture)
 			vec4 color;
 			{	// turn into grayscale
 				color = sourceTexture->Get(x,y);
-				float t = sqrt(color.x*color.x + color.y*color.y + color.z*color.z)/3.0f;
+				float t = sqrt((color.x*color.x + color.y*color.y + color.z*color.z)/3.0f);
 				color = vec4(t,t,t,1.0f);
 			}
 			tex->Get(x,y) = color;
@@ -37,7 +37,7 @@ void TexInitFunc(Window::Render* window)
 	if(!tInputTexture)
 	{
 		tInputTexture = new Texture;
-		tInputTexture->Load("Media/Images/Test.BMP");	// Завантажуємо вхідну текстуру
+		tInputTexture->Load("Media/Images/3.PNG");	// Завантажуємо вхідну текстуру
 	}
 	if(!tOutputTexture)
 	{
@@ -83,7 +83,7 @@ void TexProject::Main()
 	Window::Render tWindow;
 
 	tWindow.Create();
-	tWindow.SetSize(uvec2(128,128));
+	tWindow.SetSize(uvec2(256,256));
 	tWindow.SetFunc(Window::Render::FuncTypes::Init,TexInitFunc);		// Встановлюємо функції ініціалізації
 	tWindow.SetFunc(Window::Render::FuncTypes::Loop,TexRenderFunc);		// Рендеру (обробки)
 	tWindow.SetFunc(Window::Render::FuncTypes::Free,TexFreeFunc);		// І звільнення ресурсів

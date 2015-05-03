@@ -25,6 +25,9 @@ bool					TexProject::DevIL::Init()
 		ilutEnable(ILUT_OPENGL_CONV);
 		ilutEnable(ILUT_GL_USE_S3TC);
 
+		ilEnable(IL_ORIGIN_SET);
+		ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+
 		DevIL::ErrorTest();
 
 		isInit = true;

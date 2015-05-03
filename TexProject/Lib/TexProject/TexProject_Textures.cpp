@@ -231,7 +231,7 @@ void					TexProject::Texture::Draw()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND); glBlendFunc(GL_ONE,GL_ONE);
+	glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 	glViewport(0,0,Window::GetCurrent()->GetSize().x,Window::GetCurrent()->GetSize().y);
 
@@ -242,6 +242,7 @@ void					TexProject::Texture::Draw()
 
 	OpenGL::Shader::UseNull();
 }
+
 
 #if __TEXPROJECT_DEVIL__
 
