@@ -238,3 +238,4 @@ FakesAssemblies/
 
 # Visual Studio 6 workspace options file
 *.opt
+TexProject/Lib/TexProject/TexProject_Windows.cpp
