@@ -45,7 +45,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_DevIL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Main_wolf8196.cpp">
+    <ClCompile Include="Source\Example_GUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

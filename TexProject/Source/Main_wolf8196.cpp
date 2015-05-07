@@ -9,7 +9,7 @@ using namespace TexProject::OpenGL;
 
 const uint32 texSize = 256;
 const uint32 octaves = 8;
-const float32 frequencyStart = 3.5;
+const float32 frequencyStart = 3.5f;
 
 Texture* tTexture = nullptr;
 
@@ -36,7 +36,7 @@ float32 Linear_Interpolate(float32 a, float32 b, float32 x)
 {
 	return a*(1 - x) + b*x;
 }
-float32 Interpolate(float32 x, float32 y)
+float32 CompileNoise(float32 x, float32 y)
 {
 	float32 int_X = int(x);
 	float32 fractional_X = x - int_X;
@@ -61,11 +61,11 @@ float32 PerlinNoise2D(float32 x, float32 y, float32 factor)
 	y += factor;
 	for (int i = 0; i<octaves; ++i)
 	{
-		total += Interpolate(x*frequency, y*frequency) * amplitude;
+		total += CompileNoise(x*frequency, y*frequency) * amplitude;
 		amplitude *= persistence;
 		frequency *= 2;
 	}
-	return total / 2.0f + 0.5f;
+	return total;
 }
 
 
