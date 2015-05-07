@@ -7,9 +7,9 @@
 using namespace TexProject;
 using namespace TexProject::OpenGL;
 
-const uint32 texSize = 512;
-const uint32 octaves = 10;
-const float32 frequencyStart = 5;
+const uint32 texSize = 256;
+const uint32 octaves = 8;
+const float32 frequencyStart = 3.5f;
 
 Texture* tTexture = nullptr;
 
@@ -96,8 +96,6 @@ Texture*	texGenFunc()
 		}
 	}
 
-	tex->Build();
-
 	return tex;
 }
 
@@ -118,6 +116,7 @@ void TexInitFunc(Window::Render* window)
 		tTexture = nullptr;
 	}
 	tTexture = texGenFunc();
+	tTexture->Build(window);
 
 }
 void TexRenderFunc(Window::Render* window)
