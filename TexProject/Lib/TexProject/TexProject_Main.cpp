@@ -2,11 +2,16 @@
 using namespace TexProject;
 
 
+#if __TEXPROJECT_WIN__
+#include <cstdlib>
+#include <ctime>
+#endif
+
 #include <TexProject/TexProject_DevIL.h>
 #include <TexProject/TexProject_Textures.h>
 
 
-#ifdef __TEXPROJECT_WIN__
+#if __TEXPROJECT_WIN__
 
 
 // EntryPointData
@@ -46,6 +51,8 @@ int WINAPI				WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLin
 
 void					TexProject::EntryPointSafeCall()
 {
+	srand(static_cast <unsigned> (time(0)));
+
 	DevIL::Init();
 	Window::Init();
 	Texture::Init();

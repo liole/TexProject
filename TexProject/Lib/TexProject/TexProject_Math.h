@@ -296,8 +296,9 @@ namespace TexProject
 	{
 		float32			x, y, z, w;
 
-		inline								vec4() = default;																   
-		inline								vec4(const vec3& xyz_, const float32 w_);										   
+		inline								vec4() = default;
+		inline								vec4(const float32& a_);
+		inline								vec4(const vec3& xyz_,const float32 w_);
 		inline								vec4(const float32 x_, const vec3& yzw_);										   
 		inline								vec4(const vec2& xy_, const vec2& zw_);											   
 		inline								vec4(const vec2& xy_, const float32 z_, const float32 w_);						   
@@ -454,6 +455,17 @@ namespace TexProject
 		float32			x, y, z, w;
 	};
 
+	/*Випадкове число в межах [0,1]*/
+	inline float32							rnd();
+	/*Випадкове число в межах [0,highLimit]*/
+	inline float32							rnd(float32 highLimit);
+	/*Випадкове число в межах [0,limit]*/
+	inline float32							rnd(float32 lowLimit,float32 highLimit);
+
+	/*Повертає таке val, що minVal < val < maxVal*/
+	inline float32							block(float32 val,float32 minVal,float32 maxVal);
+	inline vec4								block(const vec4& val,const vec4& minVal,const vec4& maxVal);
+
 	/*Конвертує радіани в градуси*/
 	inline float32							degrees(const float32 rads);
 	/*Конвертує градуси в радіани*/
@@ -512,6 +524,9 @@ namespace TexProject
 	inline vec3								cross(const vec3& a,const vec3& b);
 
 	inline float32							getAng(const vec2& a,const vec2& b);
+
+	/*Криві Безьє*/
+	inline vec4								bezier(const vec4& t1,const vec4& t2,float32 t);
 
 }
 
@@ -1745,7 +1760,11 @@ inline TexProject::uvec2					TexProject::uvec3::yz() const
 }
 
 // vec4
-inline										TexProject::vec4::vec4(const vec3& xyz_, const float32 w_) :
+inline										TexProject::vec4::vec4(const float32& a_):
+	x(a_), y(a_), z(a_), w(a_)
+{
+}
+inline										TexProject::vec4::vec4(const vec3& xyz_,const float32 w_):
 	x(xyz_.x),
 	y(xyz_.y),
 	z(xyz_.z),
@@ -2563,6 +2582,33 @@ inline TexProject::uvec3					TexProject::uvec4::yzw() const
 }
 
 // functions;
+inline TexProject::float32					TexProject::rnd()
+{
+	return static_cast <float32> (rand()) / static_cast <float32> (RAND_MAX);
+}
+inline TexProject::float32					TexProject::rnd(float32 highLimit)
+{
+	return static_cast <float32> (rand()) / (static_cast <float32> (RAND_MAX/highLimit));
+}
+inline TexProject::float32					TexProject::rnd(float32 lowLimit,float32 highLimit)
+{
+	return lowLimit + static_cast <float32> (rand()) / (static_cast <float32> (RAND_MAX/(highLimit-lowLimit)));
+}
+
+inline TexProject::float32					TexProject::block(float32 val,float32 minVal,float32 maxVal)
+{
+	return (val < minVal) ? (minVal) : ((val > maxVal) ? maxVal : val);
+}
+inline TexProject::vec4						TexProject::block(const vec4& val,const vec4& minVal,const vec4& maxVal)
+{
+	return vec4	(
+					block(val.x,minVal.x,maxVal.x),
+					block(val.y,minVal.y,maxVal.y),
+					block(val.z,minVal.z,maxVal.z),
+					block(val.w,minVal.w,maxVal.w)
+				);
+}
+
 inline TexProject::float32					TexProject::degrees(const float32 rads)
 {
 	return rads * _180devPIf;
@@ -2686,6 +2732,10 @@ inline TexProject::float32					TexProject::getAng(const vec2& a, const vec2& b)
 	return acosDg(dot(a,b) / (length(a)*length(b)));
 }
 
+inline TexProject::vec4						TexProject::bezier(const vec4& t1,const vec4& t2,float32 t)
+{
+	return t1*(1.0f-t) + t2*t;
+}
 
 
 

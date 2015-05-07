@@ -151,6 +151,10 @@ namespace TexProject
 		bool								Load(const string& filename);
 		inline vec4&						Get(uint32 x,uint32 y);
 		inline vec4&						Get(uint32 x,uint32 y,uint32 z);
+		inline void							SetPixel(const uvec3& texCoord, const vec4& val);
+		inline vec4							GetPixel(const uvec3& texCoord) const;
+		inline vec4							GetPixelLinear(const vec3& texCoord) const;
+		inline vec4							GetPixelCosine(const vec3& texCoord) const;
 		inline uvec3						GetSize() const;
 		void								Resize(uvec3 size_);
 		void								Build(Window::Render* window);
@@ -212,6 +216,22 @@ namespace TexProject
 #endif
 
 	};
+
+	/*Неймспейс генераторів*/
+	namespace Generator
+	{
+		/*Неймспейс шумів*/
+		namespace Noise
+		{
+			/*Монохромний шум*/
+			Texture*						SimpleMono(const uvec3& size);
+			Texture*						Perlin(const uvec3& size);
+		}
+	}
+	/*Неймспейс фільтрів*/
+	namespace Filter
+	{
+	}
 }
 
 
@@ -263,6 +283,105 @@ inline TexProject::vec4&					TexProject::Texture::Get(uint32 x,uint32 y,uint32 z
 #else
 	return data[size.x*(z*size.y + y) + x];
 #endif
+}
+inline void									TexProject::Texture::SetPixel(const uvec3& texCoord,const vec4& val)
+{
+#if __TEXPROJECT_DEBUG__
+	if(texCoord.x >= size.x || texCoord.y >= size.y || texCoord.z >= size.z)
+	{
+		throw Exception("Out of texture data array.");
+	}
+#endif
+	data[size.x*(texCoord.z*size.y + texCoord.y) + texCoord.x] = val;
+}
+inline TexProject::vec4						TexProject::Texture::GetPixel(const uvec3& texCoord) const
+{
+#if __TEXPROJECT_DEBUG__
+	if(texCoord.x >= size.x || texCoord.y >= size.y || texCoord.z >= size.z)
+	{
+		throw Exception("Out of texture data array.");
+	}
+#endif
+	return data[size.x*(texCoord.z*size.y + texCoord.y) + texCoord.x];
+}
+inline TexProject::vec4						TexProject::Texture::GetPixelLinear(const vec3& texCoord) const
+{
+	uvec3 minT,maxT;
+	vec3 difT;
+
+	difT = texCoord * vec3(size);
+	minT = uvec3( uint32(floor(difT.x)), uint32(floor(difT.y)), uint32(floor(difT.z)) );
+	maxT = uvec3( uint32(ceil(difT.x)), uint32(ceil(difT.y)), uint32(ceil(difT.z)) );
+	difT = difT - vec3(minT);
+
+
+	vec4 v000 = GetPixel(uvec3(minT.x,minT.y,minT.z));
+	vec4 v100 = GetPixel(uvec3(maxT.x,minT.y,minT.z));
+	vec4 v010 = GetPixel(uvec3(minT.x,maxT.y,minT.z));
+	vec4 v110 = GetPixel(uvec3(maxT.x,maxT.y,minT.z));
+	vec4 v001 = GetPixel(uvec3(minT.x,minT.y,maxT.z));
+	vec4 v101 = GetPixel(uvec3(maxT.x,minT.y,maxT.z));
+	vec4 v011 = GetPixel(uvec3(minT.x,maxT.y,maxT.z));
+	vec4 v111 = GetPixel(uvec3(maxT.x,maxT.y,maxT.z));
+
+	return	bezier
+			(
+				bezier
+				(
+					bezier(v000,v100,difT.x),
+					bezier(v010,v110,difT.x),
+					difT.y
+				),
+				bezier
+				(
+					bezier(v001,v101,difT.x),
+					bezier(v011,v111,difT.x),
+					difT.y
+				),
+				difT.z
+			);
+
+}
+inline TexProject::vec4						TexProject::Texture::GetPixelCosine(const vec3& texCoord) const
+{
+	uvec3 minT,maxT;
+	vec3 difT;
+
+	difT = texCoord * vec3(size);
+	minT = uvec3( uint32(floor(difT.x)), uint32(floor(difT.y)), uint32(floor(difT.z)) );
+	maxT = uvec3( uint32(ceil(difT.x)), uint32(ceil(difT.y)), uint32(ceil(difT.z)) );
+	difT = difT - vec3(minT);
+	difT = (vec3(1.0f) - vec3(cos(difT.x*_PIf),cos(difT.y*_PIf),cos(difT.z*_PIf))) * 0.5f;
+	//float32 t = 1.5f;
+	//difT = vec3(pow(difT.x,t),pow(difT.y,t),pow(difT.z,t));
+
+
+	vec4 v000 = GetPixel(uvec3(minT.x,minT.y,minT.z));
+	vec4 v100 = GetPixel(uvec3(maxT.x,minT.y,minT.z));
+	vec4 v010 = GetPixel(uvec3(minT.x,maxT.y,minT.z));
+	vec4 v110 = GetPixel(uvec3(maxT.x,maxT.y,minT.z));
+	vec4 v001 = GetPixel(uvec3(minT.x,minT.y,maxT.z));
+	vec4 v101 = GetPixel(uvec3(maxT.x,minT.y,maxT.z));
+	vec4 v011 = GetPixel(uvec3(minT.x,maxT.y,maxT.z));
+	vec4 v111 = GetPixel(uvec3(maxT.x,maxT.y,maxT.z));
+
+	return	bezier
+			(
+				bezier
+				(
+					bezier(v000,v100,difT.x),
+					bezier(v010,v110,difT.x),
+					difT.y
+				),
+				bezier
+				(
+					bezier(v001,v101,difT.x),
+					bezier(v011,v111,difT.x),
+					difT.y
+				),
+				difT.z
+			);
+
 }
 inline TexProject::uvec3					TexProject::Texture::GetSize() const
 {

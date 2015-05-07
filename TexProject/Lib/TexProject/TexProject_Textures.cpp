@@ -641,6 +641,54 @@ bool					TexProject::Texture::glCreate
 
 
 
+// Generator::Noise
+TexProject::Texture*			TexProject::Generator::Noise::SimpleMono(const uvec3& size)
+{
+	auto tex = new Texture;
+	tex->Resize(size);
+
+	for(uint32 x = 0; x < tex->GetSize().x; ++x)
+	for(uint32 y = 0; y < tex->GetSize().y; ++y)
+	for(uint32 z = 0; z < tex->GetSize().z; ++z)
+	{
+		tex->SetPixel(uvec3(x,y,z),vec4(vec3(rnd()),1.0f));
+	}
+
+	return tex;
+}
+TexProject::Texture*			TexProject::Generator::Noise::Perlin(const uvec3& size)
+{
+	auto noiseTex = Noise::SimpleMono(size);
+	auto tex = new Texture; tex->Resize(size);
+
+	const uint32 iterations = 8;
+
+	for(uint32 i = 1; i < iterations; ++i)
+	{
+		float32 v = pow(float32(i)/iterations*(3.0f/5.0f), 1.5f);
+		vec3 t = (1.0f / pow(2.0f,float32(i))) / vec3(size);
+		for(uint32 x = 0; x < tex->GetSize().x; ++x)
+		for(uint32 y = 0; y < tex->GetSize().y; ++y)
+		for(uint32 z = 0; z < tex->GetSize().z; ++z)
+		{
+			tex->SetPixel
+			(
+				uvec3(x,y,z), 
+				block
+				(
+					tex->GetPixel(uvec3(x,y,z)) +
+					block(noiseTex->GetPixelCosine(vec3(x,y,z)*t)*v,vec4(0.0f),vec4(1.0f)),
+					vec4(0.0f),
+					vec4(1.0f)
+				)
+			);
+		}
+	}
+
+	return tex;
+}
+
+
 
 
 

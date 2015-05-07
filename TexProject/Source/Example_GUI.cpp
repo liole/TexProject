@@ -39,12 +39,13 @@ void windowInit(Window::Render* window)
 	basicPropertyPanel->LockMove();
 
 
-	tex = new Texture;
-	tex->Load("Media/Images/3.png");
+	//tex = new Texture;
+	//tex->Load("Media/Images/3.png");
+	tex = Generator::Noise::Perlin(uvec3(uvec2(256),1));
 	tex->Build(window);
 
 	auto panelImage = (Interface::GUIPanelImage*)window->AddPanel(Interface::PanelTypes::Image);
-	panelImage->SetSize(vec2(100.0f));
+	panelImage->SetSize(vec2(tex->GetSize().xy()));
 	panelImage->SetImage(tex);
 }
 

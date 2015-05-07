@@ -8,8 +8,8 @@ using namespace TexProject;
 using namespace TexProject::OpenGL;
 
 const uint32 texSize = 256;
-const uint32 octaves = 8;
-const float32 frequencyStart = 3.5f;
+const uint32 octaves = 10;
+const float32 frequencyStart = 3.0f;
 
 Texture* tTexture = nullptr;
 
