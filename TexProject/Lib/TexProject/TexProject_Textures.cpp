@@ -3,6 +3,9 @@ using namespace TexProject;
 using namespace TexProject::OpenGL;
 
 
+#include <TexProject/TexProject_Windows.h>
+
+
 void					TexProject::Texture::Init()
 {
 #ifdef __TEXPROJECT_OPENGL__
@@ -32,6 +35,17 @@ TexProject::Texture::~Texture()
 	Delete();
 }
 
+bool					TexProject::Texture::Load(const string& filename)
+{
+#if __TEXPROJECT_DEVIL__
+	return _devIL_Load2D(filename);
+#endif
+
+#if __TEXPROJECT_DEBUG__
+	Message("[Texture]\nCan't Load Image '"+filename+"'");
+#endif
+	return false;
+}
 void					TexProject::Texture::Delete()
 {
 	if(init)
@@ -101,129 +115,9 @@ void					TexProject::Texture::Resize(uvec3 size_)
 		}*/
 	}
 }
-void					TexProject::Texture::Build()
+void					TexProject::Texture::Build(Window::Render* window)
 {
-	auto t = new float32[size.x*size.y*size.z*4];
-
-	for(uint32 x = 0; x < size.x; ++x)
-	for(uint32 y = 0; y < size.y; ++y)
-	for(uint32 z = 0; z < size.z; ++z)
-	{
-		auto id = (size.x*(z*size.y + y) + x);
-		t[4*id+0] = data[id].x;
-		t[4*id+1] = data[id].y;
-		t[4*id+2] = data[id].z;
-		t[4*id+3] = data[id].w;
-	}
-
-	{
-#ifdef __TEXPROJECT_OPENGL__
-		if( init && OpenGL::initFuncShader)
-		{
-			if(glTexture)
-			{
-				for(uint32 i = 0; i < glMaxTextureSlots; ++i) if(glCurrent[i] == this) glUseNull(i,glType);
-
-				glDeleteTextures(1,&glTexture);
-				glTexture = 0;
-			}
-		}
-
-		{
-			glIFormat = GLIFormats::RGBA32F;
-			glFormat = GLFormats::RGBA;
-			glComponent = GLComponents::Float;
-			glFilter = GLFilters::Linear;
-			glWrap = GLWraps::Clamp;
-			if(size.z > 1) glType = GLTypes::tex3D;
-			else glType = GLTypes::tex2D;
-		}
-
-		{
-			glGenTextures(1,&glTexture);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(glType,glTexture);
-		}
-
-		switch(glFilter)
-		{
-			case GLFilters::Off:
-			{
-				glTexParameteri(glType,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-				glTexParameteri(glType,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-				break;
-			}
-			case GLFilters::Linear:
-			{
-				glTexParameteri(glType,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-				glTexParameteri(glType,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-				break;
-			}
-			case GLFilters::Mipmap:
-			{
-				glTexParameteri(glType,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-				glTexParameteri(glType,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-				break;
-			}
-		}
-
-		switch(glWrap)
-		{
-			case GLWraps::Clamp:
-			{
-				glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
-				break;
-			}
-			case GLWraps::Border:
-			{
-				glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_BORDER);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_BORDER);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_BORDER);
-				break;
-			}
-			case GLWraps::Repeat:
-			{
-				glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_REPEAT);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_REPEAT);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_REPEAT);
-				break;
-			}
-			case GLWraps::Mirror:
-			{
-				glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
-				glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_MIRRORED_REPEAT);
-				break;
-			}
-		}
-
-		{
-			static GLfloat color[4];
-			color[0] = 0.0f;	//borderColor.x;
-			color[1] = 0.0f;	//borderColor.y;
-			color[2] = 0.0f;	//borderColor.z;
-			color[3] = 0.0f;	//borderColor.w;
-			glTexParameterfv(glType,GL_TEXTURE_BORDER_COLOR,color);
-		}
-
-		glTexImage2D(GL_TEXTURE_2D,0,glIFormat,size.x,size.y,0,glFormat,glComponent,t);
-
-		if(glFilter == GLFilters::Mipmap)
-		{
-			//glGenerateMipmap(type);
-		}
-
-		glBindTexture(glType,0);
-
-		OpenGL::ErrorTest();
-#endif
-
-		init = true;
-	}
-
-	delete t;
+	if(window) window->Build(this);
 }
 void					TexProject::Texture::Draw()
 {
@@ -418,9 +312,64 @@ bool					TexProject::Texture::_devIL_Load2D(const string& filename)
 
 	ilDeleteImages(1,&id);
 
-	Build();
+	//Build();
 
 	return true;
+}
+
+#endif
+
+#if __TEXPROJECT_WIN__
+
+bool					TexProject::Texture::winCreate()
+{
+	{
+		winBitCount = 32;
+
+		winBytesPerLine = ((size.x * winBitCount + 31)/32) * 4;
+
+		/*{
+			img.bFile.bfType = 0x4d42;
+			img.bFile.bfSize = sizeof(BITMAPFILEHEADER)+ sizeof(BITMAPINFOHEADER)+ img.bytesPerLine*img.height;
+			img.bFile.bfReserved1 = 0;
+			img.bFile.bfReserved2 = 0;
+			img.bFile.bfOffBits = sizeof(BITMAPFILEHEADER)+ sizeof(BITMAPINFOHEADER);
+		}*/
+		{
+			winInfoHeader.biSize = sizeof(BITMAPINFOHEADER);
+			winInfoHeader.biWidth = size.x;
+			winInfoHeader.biHeight = size.y;
+			winInfoHeader.biPlanes = 1;
+			winInfoHeader.biBitCount = 32;
+			winInfoHeader.biCompression = BI_RGB;
+			winInfoHeader.biSizeImage = 0; //for BI_RGB
+			winInfoHeader.biXPelsPerMeter = 0;
+			winInfoHeader.biYPelsPerMeter = 0;
+			winInfoHeader.biClrUsed = 0;
+			winInfoHeader.biClrImportant = 0;
+		}
+		{
+			winTextureData = new BYTE[winBytesPerLine*size.y];
+			for(uint32 x = 0; x < size.x; ++x)
+			for(uint32 y = 0; y < size.y; ++y)
+			{
+				uint32 id = (y*winBytesPerLine + x*4);
+				winTextureData[id+0] = Get(x,y).x*255.0f;
+				winTextureData[id+1] = Get(x,y).y*255.0f;
+				winTextureData[id+2] = Get(x,y).z*255.0f;
+				winTextureData[id+3] = Get(x,y).w*255.0f;
+			}
+		}
+
+		winBitmapHandle = CreateBitmap(size.x,size.y,1,32,winTextureData);
+
+	}
+
+	return true;
+}
+void					TexProject::Texture::winBuild()
+{
+	winCreate();
 }
 
 #endif
@@ -436,7 +385,128 @@ void					TexProject::Texture::glUseNull(uint32 slot_,const GLType& type_)
 {
 	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
 }
+void					TexProject::Texture::glBuild()
+{
+	auto t = new float32[size.x*size.y*size.z*4];
 
+	for(uint32 x = 0; x < size.x; ++x)
+	for(uint32 y = 0; y < size.y; ++y)
+	for(uint32 z = 0; z < size.z; ++z)
+	{
+		auto id = (size.x*(z*size.y + y) + x);
+		t[4*id+0] = data[id].x;
+		t[4*id+1] = data[id].y;
+		t[4*id+2] = data[id].z;
+		t[4*id+3] = data[id].w;
+	}
+
+	{
+		if(init && OpenGL::initFuncShader)
+		{
+			if(glTexture)
+			{
+				for(uint32 i = 0; i < glMaxTextureSlots; ++i) if(glCurrent[i] == this) glUseNull(i,glType);
+
+				glDeleteTextures(1,&glTexture);
+				glTexture = 0;
+			}
+		}
+
+		{
+			glIFormat = GLIFormats::RGBA32F;
+			glFormat = GLFormats::RGBA;
+			glComponent = GLComponents::Float;
+			glFilter = GLFilters::Linear;
+			glWrap = GLWraps::Clamp;
+			if(size.z > 1) glType = GLTypes::tex3D;
+			else glType = GLTypes::tex2D;
+		}
+
+		{
+			glGenTextures(1,&glTexture);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(glType,glTexture);
+		}
+
+		switch(glFilter)
+		{
+		case GLFilters::Off:
+		{
+							   glTexParameteri(glType,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+							   glTexParameteri(glType,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+							   break;
+		}
+		case GLFilters::Linear:
+		{
+								  glTexParameteri(glType,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+								  glTexParameteri(glType,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+								  break;
+		}
+		case GLFilters::Mipmap:
+		{
+								  glTexParameteri(glType,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+								  glTexParameteri(glType,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+								  break;
+		}
+		}
+
+		switch(glWrap)
+		{
+		case GLWraps::Clamp:
+		{
+							   glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+							   glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+							   glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
+							   break;
+		}
+		case GLWraps::Border:
+		{
+								glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_BORDER);
+								glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_BORDER);
+								glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_BORDER);
+								break;
+		}
+		case GLWraps::Repeat:
+		{
+								glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_REPEAT);
+								glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_REPEAT);
+								glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_REPEAT);
+								break;
+		}
+		case GLWraps::Mirror:
+		{
+								glTexParameteri(glType,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
+								glTexParameteri(glType,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
+								glTexParameteri(glType,GL_TEXTURE_WRAP_R,GL_MIRRORED_REPEAT);
+								break;
+		}
+		}
+
+		{
+			static GLfloat color[4];
+			color[0] = 0.0f;	//borderColor.x;
+			color[1] = 0.0f;	//borderColor.y;
+			color[2] = 0.0f;	//borderColor.z;
+			color[3] = 0.0f;	//borderColor.w;
+			glTexParameterfv(glType,GL_TEXTURE_BORDER_COLOR,color);
+		}
+
+		glTexImage2D(GL_TEXTURE_2D,0,glIFormat,size.x,size.y,0,glFormat,glComponent,t);
+
+		if(glFilter == GLFilters::Mipmap)
+		{
+			//glGenerateMipmap(type);
+		}
+
+		glBindTexture(glType,0);
+
+		OpenGL::ErrorTest();
+
+		init = true;
+	}
+
+	delete t;
+}
 
 bool					TexProject::Texture::glCreate
 						(

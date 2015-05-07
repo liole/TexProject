@@ -19,6 +19,10 @@ namespace TexProject
 {
 	struct Texture
 	{
+		friend Window::Render;
+		friend Window::RenderContext::Default;
+		friend Window::RenderContext::OpenGL;
+		friend Interface::Default::Panel::Image;
 
 		typedef void*(*GenFunc)(Texture*);
 
@@ -144,18 +148,34 @@ namespace TexProject
 											Texture() = default;
 											~Texture();
 
-		inline bool							Load(const string& filename);
+		bool								Load(const string& filename);
 		inline vec4&						Get(uint32 x,uint32 y);
 		inline vec4&						Get(uint32 x,uint32 y,uint32 z);
 		inline uvec3						GetSize() const;
 		void								Resize(uvec3 size_);
-		void								Build();
+		void								Build(Window::Render* window);
 		void								Draw();
 
 #if __TEXPROJECT_DEVIL__
 		bool								_devIL_Load2D(const string& filename);
 #endif
+#if __TEXPROJECT_WIN__
 
+	protected:
+
+		uint32								winBitCount = 32;
+		uint32								winBytesPerLine = 0;
+		//BITMAPFILEHEADER					winFileHeader;
+		HBITMAP								winBitmapHandle = NULL;
+		BITMAPINFOHEADER					winInfoHeader;
+		BYTE*								winTextureData = nullptr;
+
+	public:
+
+		bool								winCreate();
+		void								winBuild();
+
+#endif
 #if __TEXPROJECT_OPENGL__
 
 	protected:
@@ -164,10 +184,6 @@ namespace TexProject
 		static Texture*						glCurrent[glMaxTextureSlots];
 		static OpenGL::Shader				glDrawShader;
 
-	public:
-		static void							glUseNull(uint32 slot_ = 0, const GLType& type_ = GLTypes::tex2D);
-
-
 		GLFilter							glFilter = GLFilters::Off;
 		GLWrap								glWrap = GLWraps::Clamp;
 		GLType								glType = GLTypes::tex2D;
@@ -175,6 +191,10 @@ namespace TexProject
 		GLFormat							glFormat = GLFormats::RGB;
 		GLComponent							glComponent = GLComponents::UByte;
 		GLuint								glTexture = 0;
+
+	public:
+		static void							glUseNull(uint32 slot_ = 0, const GLType& type_ = GLTypes::tex2D);
+
 
 		bool								glCreate(
 														const uvec3& size_,
@@ -186,6 +206,7 @@ namespace TexProject
 														const GLType& type_ = GLTypes::tex2D,
 														GenFunc genFunc = nullptr
 													);
+		void								glBuild();
 
 		inline void							glUse(uint32 slot_ = 0);
 #endif
@@ -213,17 +234,6 @@ void										TexProject::Texture::glUse(uint32 slot_)
 }
 
 
-inline bool									TexProject::Texture::Load(const string& filename)
-{
-#if __TEXPROJECT_DEVIL__
-	return _devIL_Load2D(filename);
-#endif
-
-#if __TEXPROJECT_DEBUG__
-	Message("[Texture]\nCan't Load Image '"+filename+"'");
-#endif
-	return false;
-}
 inline TexProject::vec4&					TexProject::Texture::Get(uint32 x,uint32 y)
 {
 #if __TEXPROJECT_DEBUG__

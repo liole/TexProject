@@ -60,6 +60,7 @@ namespace TexProject
 		typedef Item						GUIItem;
 		typedef Panel::Basic				GUIPanel;
 		typedef Panel::Default				GUIPanelDefault;
+		typedef Panel::Image				GUIPanelImage;
 		typedef Button::Basic				GUIButton;
 		typedef Button::Default				GUIButtonDefault;
 		typedef Button::Trigger				GUIButtonTrigger;
@@ -70,7 +71,8 @@ namespace TexProject
 		{
 			enum Enum
 			{
-				Default
+				Default,
+				Image
 			};
 		};
 		typedef PanelTypes::Enum			PanelType;
@@ -114,6 +116,15 @@ namespace TexProject
 
 		protected:
 
+			struct PropertyBits
+			{
+				enum Enum
+				{
+					Default					= 0xFFFFFFFF,
+					Move					= 0x00000001
+				};
+			};
+
 			struct Exception_Destruction
 			{
 			};
@@ -130,6 +141,7 @@ namespace TexProject
 			GUI * const						inter = nullptr;
 			std::list<Item**>				pointer;
 			Action*							action[ActionTypes::count];
+			uint32							properties = PropertyBits::Default;
 
 											Item(GUI* interface_,Item* parent_ = nullptr);
 											Item(const Item&) = delete;
@@ -173,6 +185,10 @@ namespace TexProject
 			inline void						RemovePointer(void*& pointer_);					// Видаляємо зі списку керований вказівник і занулюємо його
 			inline void						ResetPointers();								// Видаляємо зі списку усі вказівники і занулуємо їх
 			inline void						FlushPointers();								// Видаляємо зі списку усі вказівники
+
+			inline void						LockMove();
+			inline void						UnlockMove();
+			inline bool						CanMove();
 		};
 		namespace Panel
 		{
@@ -225,10 +241,27 @@ namespace TexProject
 
 				Default&				operator = (const Default&) = delete;
 				Default&				operator = (Default&&) = delete;
+			};
+			struct Image: public Panel::Basic
+			{
+				friend Item;
+				friend Interface::Basic;
+			protected:
 
-				/*virtual void			Create() override;
-				virtual void			Delete() override;
-				virtual void			Loop() override;*/
+				Texture*				texture = nullptr;
+
+										Image(GUI* interface_,Item* parent_ = nullptr);
+										Image(const Basic&) = delete;
+										Image(Image&&) = delete;
+				virtual					~Image() = default;
+
+				Default&				operator = (const Image&) = delete;
+				Default&				operator = (Image&&) = delete;
+
+			public:
+
+				inline void				SetImage(Texture* texture_);
+
 			};
 		}
 		namespace Button
@@ -247,10 +280,6 @@ namespace TexProject
 				Basic&					operator = (const Basic&) = delete;
 				Basic&					operator = (Basic&&) = delete;
 
-				virtual void			Create() override;
-				virtual void			Delete() override;
-				virtual void			Loop() override;
-
 			public:
 
 				inline void				ToTop();
@@ -268,14 +297,24 @@ namespace TexProject
 
 				Default&				operator = (const Default&) = delete;
 				Default&				operator = (Default&&) = delete;
-
-				/*virtual void			Create() override;
-				virtual void			Delete() override;
-				virtual void			Loop() override;*/
-
 			};
 			struct Trigger: public Button::Basic
 			{
+				friend Item;
+				friend Interface::Basic;
+			protected:
+
+				bool					state;
+
+										Trigger(GUI* interface_,Item* parent_ = nullptr);
+										Trigger(const Trigger&) = delete;
+										Trigger(Trigger&&) = delete;
+				virtual					~Trigger() = default;
+
+				Trigger&				operator = (const Trigger&) = delete;
+				Trigger&				operator = (Trigger&&) = delete;
+
+				virtual void			Loop() override;
 			};
 			struct Slider: public Button::Basic
 			{
@@ -365,6 +404,7 @@ namespace TexProject
 		struct Default: public Interface::Basic
 		{
 			friend Creator;
+			friend Texture;
 		protected:
 
 			struct Panel
@@ -376,10 +416,6 @@ namespace TexProject
 																Default(GUI* interface_,Item* parent_ = nullptr);
 																~Default() = default;
 
-					virtual void								Create() override;
-					virtual void								Delete() override;
-					virtual void								Loop() override;
-
 					virtual bool								IsSelect() override;
 					virtual bool								IsAnyButtonSelect() override;
 
@@ -387,6 +423,17 @@ namespace TexProject
 
 					virtual GUIPanel*							AddPanel(const PanelType& type_) override;
 					virtual GUIButton*							AddButton(const ButtonType& type_) override;
+				};
+				struct Image: public Interface::Panel::Image
+				{
+				protected:
+				public:
+																Image(GUI* interface_,Item* parent_ = nullptr);
+																~Image() = default;
+
+					virtual bool								IsSelect() override;
+
+					virtual void								_win_WMPaint() override;
 				};
 			};
 			struct Button
@@ -398,9 +445,16 @@ namespace TexProject
 																Default(GUI* interface_,Item* parent_ = nullptr);
 																~Default() = default;
 
-					virtual void								Create() override;
-					virtual void								Delete() override;
-					virtual void								Loop() override;
+					virtual bool								IsSelect() override;
+
+					virtual void								_win_WMPaint() override;
+				};
+				struct Trigger: public Interface::Button::Trigger
+				{
+				protected:
+				public:
+																Trigger(GUI* interface_,Item* parent_ = nullptr);
+																~Trigger() = default;
 
 					virtual bool								IsSelect() override;
 
@@ -517,6 +571,19 @@ void										TexProject::Interface::Item::FlushPointers()
 	pointer.clear();
 }
 
+inline void									TexProject::Interface::Item::LockMove()
+{
+	properties &= ~PropertyBits::Move;
+}
+inline void									TexProject::Interface::Item::UnlockMove()
+{
+	properties |= PropertyBits::Move;
+}
+inline bool									TexProject::Interface::Item::CanMove()
+{
+	return (properties & PropertyBits::Move) > 0;
+}
+
 
 // Interface::Panel::Basic
 void										TexProject::Interface::Panel::Basic::ToTop()
@@ -545,6 +612,14 @@ typename T*									TexProject::Interface::Panel::Basic::AddButton()
 	button.push_back((Button::Basic*)t);
 	return t;
 }
+
+
+// Interface::Panel::Image
+inline void									TexProject::Interface::Panel::Image::SetImage(Texture* texture_)
+{
+	texture = texture_;
+}
+
 
 
 // Interface::Button::Basic

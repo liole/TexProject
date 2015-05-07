@@ -3,6 +3,7 @@ using namespace TexProject;
 
 
 #include <TexProject/TexProject_Windows.h>
+#include <TexProject/TexProject_Textures.h>
 
 
 // Interface::Basic
@@ -25,7 +26,7 @@ void										TexProject::Interface::Basic::RefreshSelected()
 	{
 		if(mouse.stateL)
 		{
-			selected->AddPos(vec2(mouse.dPos));
+			if(selected->CanMove()) selected->AddPos(vec2(mouse.dPos));
 		}
 		else
 		{
@@ -130,10 +131,13 @@ TexProject::Interface::Item::Item(GUI* interface_,Item* parent_):
 	Helper::Size2(vec2(128.0f)),
 	inter(interface_)
 {
-	for(auto i: action) i = nullptr;
+	//for(auto i: action) i = nullptr;
+	for(auto i = 0; i < ActionTypes::count; ++i) action[i] = nullptr;
 }
 TexProject::Interface::Item::~Item()
 {
+	CallAction(ActionTypes::Free);
+
 	ResetPointers();
 
 	if(inter->GetPicked() == this) inter->ResetPicked();
@@ -148,6 +152,13 @@ void					TexProject::Interface::Item::Delete()
 }
 void					TexProject::Interface::Item::Loop()
 {
+	if(IsSelect() && GetBase() == inter->GetPicked())
+	{
+		if(inter->mouse.stateL && !inter->mouse.stateOL)
+		{
+			CallAction(ActionType::Click);
+		}
+	}
 }
 
 Interface::GUIItem*		TexProject::Interface::Item::GetBase()
@@ -188,7 +199,7 @@ void					TexProject::Interface::Item::_win_WMPaint()
 #endif
 
 
-// Interface::Basic::Panel::Basic
+// Interface::Panel::Basic
 TexProject::Interface::Panel::Basic::Basic(GUI* interface_,Item* parent_):
 	Item(interface_,parent_)
 {
@@ -205,6 +216,7 @@ void										TexProject::Interface::Panel::Basic::Delete()
 }
 void										TexProject::Interface::Panel::Basic::Loop()
 {
+	Item::Loop();
 	{
 		auto i = panel.begin();
 		while(i != panel.end())
@@ -241,8 +253,6 @@ void										TexProject::Interface::Panel::Basic::Loop()
 			++i;
 		}
 	}
-	//for(auto i: panel) i->Loop();
-	//for(auto i: button) i->Loop();
 }
 Interface::GUIPanel*						TexProject::Interface::Panel::Basic::AddPanel(const PanelType& type_)
 {
@@ -269,18 +279,16 @@ TexProject::Interface::Panel::Default::Default(GUI* interface_,Item* parent_):
 }
 
 
-// Interface::Basic::Button::Basic
+// Interface::Basic::Panel::Image
+TexProject::Interface::Panel::Image::Image(GUI* interface_,Item* parent_):
+	Basic(interface_,parent_)
+{
+}
+
+
+// Interface::Button::Basic
 TexProject::Interface::Button::Basic::Basic(GUI* interface_,Item* parent_):
 	Item(interface_,parent_)
-{
-}
-void					TexProject::Interface::Button::Basic::Create()
-{
-}
-void					TexProject::Interface::Button::Basic::Delete()
-{
-}
-void					TexProject::Interface::Button::Basic::Loop()
 {
 }
 
@@ -292,6 +300,23 @@ TexProject::Interface::Button::Default::Default(GUI* interface_,Item* parent_):
 }
 
 
+// Interface::Basic::Button::Trigger
+TexProject::Interface::Button::Trigger::Trigger(GUI* interface_,Item* parent_):
+	Basic(interface_,parent_)
+{
+}
+void					TexProject::Interface::Button::Trigger::Loop()
+{
+	Basic::Loop();
+	if(IsSelect() && GetBase() == inter->GetPicked())
+	{
+		if(inter->mouse.stateL && !inter->mouse.stateOL)
+		{
+			state = !state;
+		}
+	}
+}
+
 
 
 // Interface::Default::Panel::Default
@@ -299,19 +324,9 @@ TexProject::Interface::Default::Panel::Default::Default(GUI* interface_,Item* pa
 	Interface::Panel::Default(interface_,parent_)
 {
 }
-void										TexProject::Interface::Default::Panel::Default::Create()
-{
-}
-void										TexProject::Interface::Default::Panel::Default::Delete()
-{
-}
-void										TexProject::Interface::Default::Panel::Default::Loop()
-{
-	Basic::Loop();
-}
 bool										TexProject::Interface::Default::Panel::Default::IsSelect()
 {
-	if(parent) return parent->IsSelect();
+	//if(parent) return parent->IsSelect();
 
 	auto m_ = MousePos();
 
@@ -392,6 +407,10 @@ Interface::GUIPanel*						TexProject::Interface::Default::Panel::Default::AddPan
 		{
 			return Interface::Panel::Default::AddPanel<Interface::Default::Panel::Default>();
 		}
+		case PanelTypes::Image:
+		{
+			return Interface::Panel::Default::AddPanel<Interface::Default::Panel::Image>();
+		}
 		default:
 		{
 			return nullptr;
@@ -429,6 +448,10 @@ Interface::GUIButton*						TexProject::Interface::Default::Panel::Default::AddBu
 			);
 			return t;
 		}
+		case ButtonTypes::Trigger:
+		{
+			return Interface::Panel::Default::AddButton<Interface::Default::Button::Trigger>();
+		}
 		default:
 		{
 			return nullptr;
@@ -437,26 +460,89 @@ Interface::GUIButton*						TexProject::Interface::Default::Panel::Default::AddBu
 }
 
 
+// Interface::Default::Panel::Image
+TexProject::Interface::Default::Panel::Image::Image(GUI* interface_,Item* parent_):
+	Interface::Panel::Image(interface_,parent_)
+{
+}
+bool										TexProject::Interface::Default::Panel::Image::IsSelect()
+{
+	//if(parent) return parent->IsSelect();
+
+	auto m_ = MousePos();
+
+	auto pos_ = GetPos();
+	pos_.x += inter->GetWindow()->GetPos().x;
+	pos_.y += inter->GetWindow()->GetPos().y;
+	auto hsize_ = GetSize()*0.5f;
+
+	if((m_.x >= pos_.x - hsize_.x) && (m_.x <= pos_.x + hsize_.x) && (m_.y >= pos_.y - hsize_.y) && (m_.y <= pos_.y + hsize_.y))
+	{
+		return true;
+	}
+	/*else
+	{
+		for(auto i: panel) if(i->IsSelect()) return true;
+	}*/
+	return false;
+}
+void										TexProject::Interface::Default::Panel::Image::_win_WMPaint()
+{
+	auto window = inter->GetWindow();
+	auto &hDC = ((Interface::Default*)(inter))->renderDeviceContextHandle;
+	auto &rect = ((Interface::Default*)(inter))->renderRect;
+
+	auto pos_ = GetPos();
+	auto hsize_ = GetSize()*0.5f;
+
+	if(!parent)
+	{	// shadow
+		rect.left = LONG(pos_.x - hsize_.x + 4.0f);
+		rect.bottom = LONG(pos_.y + hsize_.y + 4.0f);
+		rect.right = LONG(pos_.x + hsize_.x + 4.0f);
+		rect.top = LONG(pos_.y - hsize_.y + 4.0f);
+
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(BLACK_BRUSH));
+	}
+
+	float32 border = 1.0f;
+
+	rect.left = LONG(pos_.x - (hsize_.x+border));
+	rect.bottom = LONG(pos_.y + (hsize_.y+border));
+	rect.right = LONG(pos_.x + (hsize_.x+border));
+	rect.top = LONG(pos_.y - (hsize_.y+border));
+
+	SelectObject(hDC,(HBRUSH)GetStockObject(WHITE_PEN));
+	SelectObject(hDC,(HBRUSH)GetStockObject(GRAY_BRUSH));
+	Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
+
+	rect.left = LONG(pos_.x - hsize_.x);
+	rect.bottom = LONG(pos_.y + hsize_.y);
+	rect.right = LONG(pos_.x + hsize_.x);
+	rect.top = LONG(pos_.y - hsize_.y);
+
+	if(texture)
+	{
+		SetStretchBltMode(hDC,STRETCH_HALFTONE);
+		StretchDIBits
+		(
+			hDC,
+			rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
+			0,0,texture->GetSize().x,texture->GetSize().y,
+			texture->winTextureData,(BITMAPINFO*)&texture->winInfoHeader,
+			DIB_RGB_COLORS,SRCCOPY
+		);
+	}
+
+	Basic::_win_WMPaint();
+}
+
+
+
 // Interface::Default::Button::Default
 TexProject::Interface::Default::Button::Default::Default(GUI* interface_,Item* parent_):
 	Interface::Button::Default(interface_,parent_)
 {
-}
-void										TexProject::Interface::Default::Button::Default::Create()
-{
-}
-void										TexProject::Interface::Default::Button::Default::Delete()
-{
-}
-void										TexProject::Interface::Default::Button::Default::Loop()
-{
-	if(IsSelect() && GetBase() == inter->GetPicked())
-	{
-		if(inter->mouse.stateL && !inter->mouse.stateOL)
-		{
-			CallAction(ActionType::Click);			
-		}
-	}
 }
 bool										TexProject::Interface::Default::Button::Default::IsSelect()
 {
@@ -514,6 +600,75 @@ void										TexProject::Interface::Default::Button::Default::_win_WMPaint()
 }
 
 
+// Interface::Default::Button::Trigger
+TexProject::Interface::Default::Button::Trigger::Trigger(GUI* interface_,Item* parent_):
+	Interface::Button::Trigger(interface_,parent_)
+{
+}
+/*void										TexProject::Interface::Default::Button::Trigger::Create()
+{
+}
+void										TexProject::Interface::Default::Button::Trigger::Delete()
+{
+}
+void										TexProject::Interface::Default::Button::Trigger::Loop()
+{
+	if(IsSelect() && GetBase() == inter->GetPicked())
+	{
+		if(inter->mouse.stateL && !inter->mouse.stateOL)
+		{
+			state = !state;
+			//CallAction(ActionType::Click);
+		}
+	}
+}*/
+bool										TexProject::Interface::Default::Button::Trigger::IsSelect()
+{
+	auto m_ = MousePos();
+
+	auto pos_ = GetPos();
+	pos_.x += inter->GetWindow()->GetPos().x;
+	pos_.y += inter->GetWindow()->GetPos().y;
+	auto hsize_ = GetSize()*0.5f;
+
+	return	(
+				(m_.x >= pos_.x - hsize_.x) &&
+				(m_.x <= pos_.x + hsize_.x) &&
+				(m_.y >= pos_.y - hsize_.y) &&
+				(m_.y <= pos_.y + hsize_.y)
+			);
+}
+void										TexProject::Interface::Default::Button::Trigger::_win_WMPaint()
+{
+	auto &hDC = ((Interface::Default*)(inter))->renderDeviceContextHandle;
+	auto &rect = ((Interface::Default*)(inter))->renderRect;
+	auto &redBrush = ((Interface::Default*)(inter))->renderBrushRed;
+	auto &greenBrush = ((Interface::Default*)(inter))->renderBrushGreen;
+	auto &blueBrush = ((Interface::Default*)(inter))->renderBrushBlue;
+
+	auto pos_ = GetPos();
+	auto hsize_ = GetSize()*0.5f;
+
+	rect.left = LONG(pos_.x - hsize_.x);
+	rect.bottom = LONG(pos_.y + hsize_.y);
+	rect.right = LONG(pos_.x + hsize_.x);
+	rect.top = LONG(pos_.y - hsize_.y);
+
+	SelectObject(hDC,(HPEN)GetStockObject(WHITE_PEN));
+
+	if(IsSelect() && GetBase() == inter->GetPicked())
+	{
+		SelectObject(hDC,redBrush);
+	}
+	else
+	{
+		if(state) SelectObject(hDC,blueBrush);
+		else SelectObject(hDC,greenBrush);
+	}
+	Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
+}
+
+
 // Interface::Default
 TexProject::Interface::Default::Default(PWindow window_):
 	Basic(window_)
@@ -543,6 +698,10 @@ Interface::GUIPanel*						TexProject::Interface::Default::AddPanel(const PanelTy
 		case PanelTypes::Default:
 		{
 			return AddItem<Panel::Default>();
+		}
+		case PanelTypes::Image:
+		{
+			return AddItem<Panel::Image>();
 		}
 		default:
 		{

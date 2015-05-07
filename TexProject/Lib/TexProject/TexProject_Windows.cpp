@@ -2,6 +2,9 @@
 using namespace TexProject;
 
 
+#include <TexProject/TexProject_Textures.h>
+
+
 // Window
 void					TexProject::Window::Init()
 {
@@ -39,52 +42,36 @@ bool					TexProject::Window::Process()
 	return res;
 }
 
-static CHAR *                      //   return error message
-getLastErrorText(                  // converts "Lasr Error" code into text
-CHAR *pBuf,                        //   message buffer
-ULONG bufSize)                     //   buffer size
-{
-	DWORD retSize;
-	LPTSTR pTemp = NULL;
-
-	if (bufSize < 16) {
-		if (bufSize > 0) {
-			pBuf[0] = '\0';
-		}
-		return(pBuf);
-	}
-	retSize = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_ARGUMENT_ARRAY,
-		NULL,
-		GetLastError(),
-		LANG_NEUTRAL,
-		(LPTSTR)&pTemp,
-		0,
-		NULL);
-	if (!retSize || pTemp == NULL) {
-		pBuf[0] = '\0';
-	}
-	else {
-		pTemp[strlen(pTemp) - 2] = '\0'; //remove cr and newline character
-		sprintf_s(pBuf, bufSize, "%0.*s (0x%x)", bufSize - 16, pTemp, GetLastError());
-		LocalFree((HLOCAL)pTemp);
-	}
-	return(pBuf);
-}
-
 bool					TexProject::Window::ErrorTest()
 {
 	auto error = GetLastError();
 	if(error != NO_ERROR)
 	{
-		string text = "[Windows]\n";
-		CHAR msgText[256];
-		getLastErrorText(msgText,sizeof(msgText));
-		text += msgText;
-		Message(text);
-		return true;
+		do
+		{
+			string text = "[Windows]\n";
+			{
+				char *t = "\0";
+				FormatMessage
+				(
+					FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+					NULL,
+					error,
+					LANG_NEUTRAL,
+					(LPTSTR)&t,
+					0,
+					NULL
+				);
+				text += t;
+				LocalFree(t);
+			}
+			Message(text);
+			error = GetLastError();
+		}
+		while(error != NO_ERROR);
 	}
+	return true;
+
 	return false;
 }
 
@@ -348,6 +335,10 @@ bool					TexProject::Window::RenderContext::Basic::Use()
 	return false;
 }
 
+void					TexProject::Window::RenderContext::Basic::Build(Texture* tex)
+{
+}
+
 #if __TEXPROJECT_WIN__
 void					TexProject::Window::RenderContext::Basic::_win_WMPaint(HDC hDC)
 {
@@ -413,100 +404,6 @@ bool					TexProject::Window::RenderContext::Default::Use()
 	if(init && window->IsInit())
 	{
 		SetROP2(window->wndDeviceContextHandle,R2_COPYPEN);
-		/*
-		R2_BLACK
-		R2_NOTMERGEPEN
-		R2_MASKNOTPEN
-		R2_NOTCOPYPEN
-		R2_MASKPENNOT
-		R2_NOT
-		R2_XORPEN
-		R2_NOTMASKPEN
-		R2_MASKPEN
-		R2_NOTXORPEN
-		R2_NOP
-		R2_MERGENOTPEN
-		R2_COPYPEN
-		R2_MERGEPENNOT
-		R2_MERGEPEN
-		R2_WHITE
-		R2_LAST
-		*/
-
-		//HPEN tPen = CreatePen();
-
-		{
-			/*auto newPen = (HPEN)GetStockObject(WHITE_PEN);
-			auto oldPen = (HPEN)SelectObject(window->wndDeviceContextHandle,newPen);
-			auto newBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
-			auto ondBrush = (HBRUSH)SelectObject(window->wndDeviceContextHandle,newBrush);
-
-			auto tBMP = (HBITMAP)LoadImage(NULL,"Media/Images/Test.bmp",IMAGE_BITMAP,0,0,LR_LOADFROMFILE);			
-			auto tBrush = CreatePatternBrush(tBMP);
-			SelectObject(window->wndDeviceContextHandle,tBrush);*/
-			{
-				//SetDCPenColor(window->wndDeviceContextHandle,RGB(255,0,255));
-				//SetDCBrushColor(window->wndDeviceContextHandle,RGB(0,255,255));
-			}
-			{
-				/*MoveToEx(window->wndDeviceContextHandle,100,100,NULL);
-				LineTo(window->wndDeviceContextHandle,200,200);*/
-			}
-			{
-				//Rectangle(window->wndDeviceContextHandle,100,200,200,100);
-				/*RECT tRect;
-				tRect.bottom = 100;
-				tRect.top = 200;
-				tRect.left = 100;
-				tRect.right = 400;
-				FillRect(window->wndDeviceContextHandle,&tRect,tBrush);*/
-			}
-			{
-				/*PAINTSTRUCT ps;
-				auto hdc = BeginPaint(window->wndHandle,&ps);
-
-				auto hdcMem = CreateCompatibleDC(hdc);
-
-				BITMAP bitmap;
-
-				SelectObject(hdcMem,tBMP);
-				GetObject(tBMP,sizeof(bitmap),&bitmap);
-
-				BitBlt(window->wndDeviceContextHandle,50,50,64,64,hdcMem,0,0,SRCCOPY);
-				DeleteObject(hdcMem);
-
-				EndPaint(window->wndHandle,&ps);*/
-			}
-			{
-				/*RECT tRect;
-				tRect.bottom = 100;
-				tRect.top = 200;
-				tRect.left = 100;
-				tRect.right = 400;
-				DrawText(window->wndDeviceContextHandle,"lol",-1,&tRect,DT_SINGLELINE | DT_CENTER | DT_VCENTER);*/
-				/*
-				DT_TOP
-				DT_LEFT
-				DT_CENTER
-				DT_RIGHT
-				DT_VCENTER
-				DT_BOTTOM
-				DT_WORDBREAK
-				DT_SINGLELINE
-				DT_EXPANDTABS
-				DT_TABSTOP
-				DT_NOCLIP
-				DT_EXTERNALLEADING
-				DT_CALCRECT
-				DT_NOPREFIX
-				DT_INTERNAL
-				*/
-			}
-			/*SelectObject(window->wndDeviceContextHandle,oldPen);
-
-			DeleteObject(tBrush);
-			DeleteObject(tBMP);*/
-		}
 
 #if __TEXPROJECT_DEBUG__
 		Window::ErrorTest();
@@ -515,6 +412,13 @@ bool					TexProject::Window::RenderContext::Default::Use()
 		return true;
 	}
 	return false;
+}
+
+void					TexProject::Window::RenderContext::Default::Build(Texture* tex)
+{
+#if __TEXPROJECT_WIN__
+	tex->winBuild();
+#endif
 }
 
 void					TexProject::Window::RenderContext::Default::_win_WMPaint(HDC hDC)
@@ -555,6 +459,10 @@ void					TexProject::Window::RenderContext::OpenGL::Init()
 		tempWinClass.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
 		tempWinClass.lpszMenuName	= NULL;
 		tempWinClass.lpszClassName	= "Temp Window Class";
+
+#if __TEXPROJECT_DEBUG__
+		Window::ErrorTest();
+#endif
 
 		if(!RegisterClass(&tempWinClass))
 		{
@@ -710,6 +618,14 @@ bool					TexProject::Window::RenderContext::OpenGL::Use()
 		return true;
 	}
 	return false;
+}
+
+void					TexProject::Window::RenderContext::OpenGL::Build(Texture* tex)
+{
+	if(Use())
+	{
+		tex->glBuild();
+	}
 }
 #endif
 
@@ -1179,7 +1095,7 @@ void					TexProject::Window::Render::Init()
 		CS_SAVEBITS
 		CS_VREDRAW
 		*/
-		wndClassEx.lpfnWndProc		= callbackDefault;//WndProc_Default;
+		wndClassEx.lpfnWndProc		= callbackDefault;
 		wndClassEx.cbClsExtra		= 0;
 		wndClassEx.cbWndExtra		= 0;
 		wndClassEx.hInstance		= EntryPointData::hInstance;
@@ -1193,6 +1109,9 @@ void					TexProject::Window::Render::Init()
 
 	if(!RegisterClassEx(&wndClassEx))
 	{
+#if __TEXPROJECT_DEBUG__
+		Window::ErrorTest();
+#endif
 		Message("Failed To register window class.");
 		return;
 	}
@@ -1362,13 +1281,17 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 			wndRect.top,
 			wndRect.right - wndRect.left,
 			wndRect.bottom - wndRect.top,
-			(HWND)(parent ? parent->GetHandle() : nullptr),	//nullptr,
+			(HWND)(parent ? parent->GetHandle() : NULL),	//NULL,
 			(HMENU)NULL,
 			wndClassEx.hInstance,
 			NULL
 		);
+
 	if(!wndHandle)
 	{
+#if __TEXPROJECT_DEBUG__
+		Window::ErrorTest();
+#endif
 		Message("Can't create window.");
 		return;
 	}
@@ -1378,6 +1301,9 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 	}
 	if(!wndDeviceContextHandle)
 	{
+#if __TEXPROJECT_DEBUG__
+		Window::ErrorTest();
+#endif
 		Message("Cannot create device context.");
 		return;
 	}
@@ -1386,11 +1312,17 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 		auto pixelFormat = ChoosePixelFormat(wndDeviceContextHandle,&wndPixelFormatDescriptor);
 		if(!pixelFormat)
 		{
+#if __TEXPROJECT_DEBUG__
+			Window::ErrorTest();
+#endif
 			Message("Can't chose pixel format.");
 			return;
 		}
 		if(!SetPixelFormat(wndDeviceContextHandle,pixelFormat,&wndPixelFormatDescriptor))
 		{
+#if __TEXPROJECT_DEBUG__
+			Window::ErrorTest();
+#endif
 			Message("Can't set pixel format.");
 			return;
 		}
@@ -1412,9 +1344,10 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 		dbBitmap = CreateCompatibleBitmap(wndDeviceContextHandle,size.x,size.y);
 	}
 
+#endif
 
-	//ShowWindow(wndHandle,SW_SHOW);
-	//SetFocus(wndHandle);
+#if __TEXPROJECT_DEBUG__
+	Window::ErrorTest();
 #endif
 
 	init = true;
@@ -1654,6 +1587,31 @@ void					TexProject::Window::Render::ResetFuncs()
 	for(uint32 i = 0; i < FuncTypes::count; ++i) func[i] = nullptr;
 }
 
+void					TexProject::Window::Render::Draw(Texture* tex)
+{
+	wndDeviceContextHandle;
+	StretchDIBits
+	(
+		wndDeviceContextHandle,
+		0,0,size.x, size.y,	//tex->GetSize().x,tex->GetSize().y,
+		0,0,tex->GetSize().x,tex->GetSize().y,
+		tex->winTextureData,(BITMAPINFO*)&tex->winInfoHeader,
+		DIB_RGB_COLORS,SRCCOPY
+	);
+}
+void					TexProject::Window::Render::Build(Texture* tex)
+{
+	renderContext->Build(tex);
+/*#if __TEXPROJECT_OPENGL__
+	if(renderContext && renderContext->Use())
+	{
+		tex->glBuild();
+	}
+#endif*/
+/*#if __TEXPROJECT_WIN__
+	tex->winBuild();
+#endif*/
+}
 
 
 

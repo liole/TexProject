@@ -237,6 +237,8 @@ namespace TexProject
 				inline Interface::GUIButton*					AddButton(const Interface::ButtonType& type_);
 				inline void										RemoveItem(Interface::GUIItem* source);
 
+				virtual void				Build(Texture* tex);
+
 				/*Методи, специфічні для ОС Windows*/
 #if __TEXPROJECT_WIN__
 				/*
@@ -272,6 +274,8 @@ namespace TexProject
 				virtual void				Delete() override;
 				virtual void				Loop() override;
 				virtual bool				Use() override;
+
+				virtual void				Build(Texture* tex) override;
 
 				virtual void									_win_WMPaint(HDC hDC) override;
 			};
@@ -316,6 +320,8 @@ namespace TexProject
 				virtual void				Delete() override;
 				virtual void				Loop() override;
 				virtual bool				Use() override;
+
+				virtual void				Build(Texture* tex) override;
 			};
 #endif
 
@@ -529,6 +535,9 @@ namespace TexProject
 			inline Interface::GUIPanel*		AddPanel(const Interface::PanelType& type_);
 			inline Interface::GUIButton*	AddButton(const Interface::ButtonType& type_);
 			inline void						RemoveItem(Interface::GUIItem* source);
+
+			void							Draw(Texture* tex);
+			void							Build(Texture* tex);
 		};
 
 		void								Init();
@@ -737,7 +746,6 @@ void										TexProject::Window::Render::RemoveItem(Interface::GUIItem* source)
 {
 	renderContext->RemoveItem(source);
 }
-
 
 
 

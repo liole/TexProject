@@ -34,8 +34,6 @@ Texture*	texGenFunc()
 		}
 	}
 
-	tex->Build();
-
 	return tex;
 }
 
@@ -56,6 +54,7 @@ void TexInitFunc(Window::Render* window)
 		tTexture = nullptr;
 	}
 	tTexture = texGenFunc();
+	tTexture->Build(window);	// Тепер побудова текстури вимагає вікно, як аргумент
 
 }
 void TexRenderFunc(Window::Render* window)

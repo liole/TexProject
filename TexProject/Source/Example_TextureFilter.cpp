@@ -25,7 +25,6 @@ Texture* filterFunc(Texture* sourceTexture)
 		}
 	}
 
-	tex->Build();
 	return tex;
 }
 
@@ -38,10 +37,12 @@ void TexInitFunc(Window::Render* window)
 	{
 		tInputTexture = new Texture;
 		tInputTexture->Load("Media/Images/3.PNG");	// Завантажуємо вхідну текстуру
+		tInputTexture->Build(window);
 	}
 	if(!tOutputTexture)
 	{
 		tOutputTexture = filterFunc(tInputTexture);
+		tOutputTexture->Build(window);
 	}
 }
 void TexRenderFunc(Window::Render* window)
