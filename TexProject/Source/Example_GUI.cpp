@@ -10,43 +10,151 @@ using namespace TexProject;
 Texture* tex;
 
 
+namespace Tool
+{
+	struct Basic
+	{
+	protected:
+		Interface::GUIPanel**				panel = nullptr;
+		Interface::GUIButton**				button = nullptr;
+
+	public:
+		virtual void						Create(Window::Render* window);
+		//virtual void						Delete();
+		//virtual void						Loop();
+	};
+	namespace Generator
+	{
+		namespace Noise
+		{
+			struct Default: public Tool::Basic
+			{
+			protected:
+				static void					RegenerateTexture(Default* gen,Window::Render* window);
+
+				Texture*					texture = nullptr;
+			public:
+				virtual void				Create(Window::Render* window) override;
+			};
+		}
+	}
+	namespace Filter
+	{
+		namespace Correction
+		{
+			struct ChannelMixer: public Tool::Basic
+			{
+			public:
+				virtual void				Create(Window::Render* window) override;
+			};
+		}
+	}
+}
+
+void					Tool::Basic::Create(Window::Render* window)
+{
+}
+
+void					Tool::Generator::Noise::Default::RegenerateTexture(Default* gen,Window::Render* window)
+{
+	if(gen)
+	{
+		((Interface::GUIPanelImage*)gen->panel[1])->SetImage(nullptr);
+
+		if(gen->texture) delete gen->texture;
+
+		gen->texture = new Texture;
+		gen->texture = TexProject::Generator::Noise::SimpleMono(uvec3(128,128,1));
+
+		if(gen->texture)
+		{
+			gen->texture->Build(window);
+			((Interface::GUIPanelImage*)gen->panel[1])->SetImage(gen->texture);
+		}
+	}
+}
+void					Tool::Generator::Noise::Default::Create(Window::Render* window)
+{
+	panel = new Interface::GUIPanel*[2];
+	button = new Interface::GUIButton*[3];
+
+	auto p1 = (Interface::GUIPanelDefault*)window->AddPanel(Interface::PanelTypes::Default); panel[0] = p1;
+	p1->SetSize(vec2(200.0f));
+	p1->SetPos(vec2(150.0f,200.0f));
+
+	auto p2 = (Interface::GUIPanelImage*)p1->AddPanel(Interface::PanelTypes::Image); panel[1] = p2;
+	p2->SetSize(vec2(128.0f));
+
+	auto bClose = p1->AddButton(Interface::ButtonTypes::Close); button[0] = bClose;
+
+	auto b1 = (Interface::GUIButtonConnector*)p1->AddButton(Interface::ButtonTypes::OutputConnector); button[1] = b1;
+	b1->SetSize(vec2(8.0f));
+	b1->SetPos(vec2(((p1->GetSize().x - b1->GetSize().x)*0.5f - 4.0f),0.0f));
+	b1->connectDirection = vec2(100.0f,0.0f);
+
+	auto b2 = (Interface::GUIButtonDefault*)p1->AddButton(Interface::ButtonTypes::Default); button[2] = b2;
+	b2->SetSize(vec2(60.0f,24.0f));
+	b2->SetPos(vec2(0.0f,p1->GetSize().y*0.5f-16.0f));
+	b2->SetUserData(this);
+	b2->SetAction(Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			auto gen = (Tool::Generator::Noise::Default*)item->GetUserData();
+			if(gen) RegenerateTexture(gen,item->GetWindow());
+			//Message("Action finished.");
+		});
+
+	/*for(uint32 i = 0; i < 5; ++i)
+	{
+		auto b1 = (Interface::GUIButtonConnector*)p1->AddButton(Interface::ButtonTypes::OutputConnector); //button[0] = b1;
+		b1->SetSize(vec2(8.0f));
+		b1->SetPos(vec2( ((p1->GetSize().x - b1->GetSize().x)*0.5f - 4.0f) , i*12.0f ));
+		b1->connectDirection = vec2(100.0f,0.0f);
+	}
+
+	{
+		auto b2 = p1->AddButton(Interface::ButtonTypes::Close);
+
+		p1->AddButton(Interface::ButtonTypes::Slider);
+	}
+
+	{
+		auto p2 = p1->AddPanel(Interface::PanelTypes::Default);
+		p2->SetPos(vec2(0.0f,200.0f));
+
+		auto b3 = p2->AddButton(Interface::ButtonTypes::Trigger);
+	}*/
+}
+void					Tool::Filter::Correction::ChannelMixer::Create(Window::Render* window)
+{
+	panel = new Interface::GUIPanel*[1];
+	button = new Interface::GUIButton*[1];
+
+	auto p1 = (Interface::GUIPanelDefault*)window->AddPanel(Interface::PanelTypes::Default); panel[0] = p1;
+	p1->SetSize(vec2(200.0f));
+
+	for(uint32 i = 0; i < 5; ++i)
+	{
+		auto b1 = (Interface::GUIButtonConnector*)p1->AddButton(Interface::ButtonTypes::InputConnector); //button[0] = b1;
+		b1->SetSize(vec2(8.0f));
+		b1->SetPos(vec2( -((p1->GetSize().x - b1->GetSize().x)*0.5f - 4.0f) , i*12.0f ));
+		b1->connectDirection = vec2(-100.0f,0.0f);
+
+		auto b2 = (Interface::GUIButtonConnector*)p1->AddButton(Interface::ButtonTypes::OutputConnector); //button[0] = b2;
+		b2->SetSize(vec2(8.0f));
+		b2->SetPos(vec2( ((p1->GetSize().x - b2->GetSize().x)*0.5f - 4.0f) , i*12.0f ));
+		b2->connectDirection = vec2(100.0f,0.0f);
+	}
+}
+
+
 void windowInit(Window::Render* window)
 {
-	auto p1 = window->AddPanel(Interface::PanelTypes::Default);
-	p1->SetPos(vec2(400.0f,200.0f));
-	p1->SetSize(vec2(200.0f,100.0f));
+	auto t1 = new Tool::Generator::Noise::Default;
+	t1->Create(window);
 
-	auto b1 = p1->AddButton(Interface::ButtonTypes::Close);	// Add Button to panel p1
-	b1->SetPos(vec2(100.0f-15.0f,-50.0f+15.0f));
-	b1->SetSize(vec2(24.0f));
-
-	auto p2 = window->AddPanel(Interface::PanelTypes::Default);
-	p2->SetPos(vec2(200.0f,50.0f));
-	p2->SetSize(vec2(150.0f));
-
-	auto b2 = p2->AddButton(Interface::ButtonTypes::Close);	// Add Button to panel p2
-	b2->SetPos(vec2(75.0f-15.0f,-75.0f+15.0f));
-	b2->SetSize(vec2(24.0f));
-
-	auto b3 = p2->AddButton(Interface::ButtonTypes::Default);
-	b3->SetSize(vec2(80.0f,24.0f));
-	b3->SetAction(Interface::Item::ActionTypes::Click,[](Interface::Item*){Message("Action occured.");});
-	
-
-	auto basicPropertyPanel = window->AddPanel(Interface::PanelTypes::Default);
-	basicPropertyPanel->SetSize(vec2(200.0f,window->GetSize().y));
-	basicPropertyPanel->SetPos(vec2(100.0f,window->GetSize().y*0.5f));
-	basicPropertyPanel->LockMove();
-
-
-	//tex = new Texture;
-	//tex->Load("Media/Images/3.png");
-	tex = Generator::Noise::Perlin(uvec3(uvec2(256),1));
-	tex->Build(window);
-
-	auto panelImage = (Interface::GUIPanelImage*)window->AddPanel(Interface::PanelTypes::Image);
-	panelImage->SetSize(vec2(tex->GetSize().xy()));
-	panelImage->SetImage(tex);
+	auto t2 = new Tool::Filter::Correction::ChannelMixer;
+	t2->Create(window);
 }
 
 

@@ -526,7 +526,28 @@ namespace TexProject
 	inline float32							getAng(const vec2& a,const vec2& b);
 
 	/*Криві Безьє*/
+	/*Функція Безьє порядку 2*/
+	inline float32							bezier(float32 t1,float32 t2,float32 t);
+	inline vec2								bezier(const vec2& t1,const vec2& t2,float32 t);
+	inline vec3								bezier(const vec3& t1,const vec3& t2,float32 t);
 	inline vec4								bezier(const vec4& t1,const vec4& t2,float32 t);
+	/*Функція Безьє порядку 3*/
+	inline float32							bezier(float32 t1,float32 t2,float32 t3,float32 t);
+	inline vec2								bezier(const vec2& t1,const vec2& t2,const vec2& t3,float32 t);
+	inline vec3								bezier(const vec3& t1,const vec3& t2,const vec3& t3,float32 t);
+	inline vec4								bezier(const vec4& t1,const vec4& t2,const vec4& t3,float32 t);
+	/*Функція Безьє порядку 4*/
+	inline float32							bezier(float32 t1,float32 t2,float32 t3,float32 t4,float32 t);
+	inline vec2								bezier(const vec2& t1,const vec2& t2,const vec2& t3,const vec2& t4,float32 t);
+	inline vec3								bezier(const vec3& t1,const vec3& t2,const vec3& t3,const vec3& t4,float32 t);
+	inline vec4								bezier(const vec4& t1,const vec4& t2,const vec4& t3,const vec4& t4,float32 t);
+	/*Виводить криву Безьє з точністю accuracy за допомогою func*/
+	template <class _Pr>
+	void									bezier(const vec2& t1,const vec2& t2,_Pr pred,const uint32 accuracy = 32);
+	template <class _Pr>
+	void									bezier(const vec2& t1,const vec2& t2,const vec2& t3,_Pr pred,const uint32 accuracy = 32);
+	template <class _Pr>
+	void									bezier(const vec2& t1,const vec2& t2,const vec2& t3,const vec2& t4,_Pr pred,const uint32 accuracy = 32);
 
 }
 
@@ -2732,11 +2753,91 @@ inline TexProject::float32					TexProject::getAng(const vec2& a, const vec2& b)
 	return acosDg(dot(a,b) / (length(a)*length(b)));
 }
 
+
+inline TexProject::float32					TexProject::bezier(float32 t1,float32 t2,float32 t)
+{
+	return t1*(1.0f-t) + t2*t;
+}
+inline TexProject::vec2						TexProject::bezier(const vec2& t1,const vec2& t2,float32 t)
+{
+	return t1*(1.0f-t) + t2*t;
+}
+inline TexProject::vec3						TexProject::bezier(const vec3& t1,const vec3& t2,float32 t)
+{
+	return t1*(1.0f-t) + t2*t;
+}
 inline TexProject::vec4						TexProject::bezier(const vec4& t1,const vec4& t2,float32 t)
 {
 	return t1*(1.0f-t) + t2*t;
 }
+inline TexProject::float32					TexProject::bezier(float32 t1,float32 t2,float32 t3,float32 t)
+{
+	return bezier(bezier(t1,t2,t),bezier(t2,t3,t),t);
+}
+inline TexProject::vec2						TexProject::bezier(const vec2& t1,const vec2& t2,const vec2& t3,float32 t)
+{
+	return bezier(bezier(t1,t2,t),bezier(t2,t3,t),t);
+}
+inline TexProject::vec3						TexProject::bezier(const vec3& t1,const vec3& t2,const vec3& t3,float32 t)
+{
+	return bezier(bezier(t1,t2,t),bezier(t2,t3,t),t);
+}
+inline TexProject::vec4						TexProject::bezier(const vec4& t1,const vec4& t2,const vec4& t3,float32 t)
+{
+	return bezier(bezier(t1,t2,t),bezier(t2,t3,t),t);
+}
+inline TexProject::float32					TexProject::bezier(float32 t1,float32 t2,float32 t3,float32 t4,float32 t)
+{
+	return bezier(bezier(t1,t2,t3,t),bezier(t2,t3,t4,t),t);
+}
+inline TexProject::vec2						TexProject::bezier(const vec2& t1,const vec2& t2,const vec2& t3,const vec2& t4,float32 t)
+{
+	return bezier(bezier(t1,t2,t3,t),bezier(t2,t3,t4,t),t);
+}
+inline TexProject::vec3						TexProject::bezier(const vec3& t1,const vec3& t2,const vec3& t3,const vec3& t4,float32 t)
+{
+	return bezier(bezier(t1,t2,t3,t),bezier(t2,t3,t4,t),t);
+}
+inline TexProject::vec4						TexProject::bezier(const vec4& t1,const vec4& t2,const vec4& t3,const vec4& t4,float32 t)
+{
+	return bezier(bezier(t1,t2,t3,t),bezier(t2,t3,t4,t),t);
+}
+template <class _Pr>
+void										TexProject::bezier(const vec2& t1,const vec2& t2,_Pr pred,const uint32 accuracy)
+{
+	float32 t,nt;
+	for(uint32 i = 0; i < accuracy; ++i)
+	{
+		t = float32(i)/accuracy;
+		nt = float32(i+1)/accuracy;
 
+		pred(bezier(t1,t2,t),bezier(t1,t2,nt));
+	}
+}
+template <class _Pr>
+void										TexProject::bezier(const vec2& t1,const vec2& t2,const vec2& t3,_Pr pred,const uint32 accuracy)
+{
+	float32 t,nt;
+	for(uint32 i = 0; i < accuracy; ++i)
+	{
+		t = float32(i)/accuracy;
+		nt = float32(i+1)/accuracy;
+
+		pred(bezier(t1,t2,t3,t),bezier(t1,t2,t3,nt));
+	}
+}
+template <class _Pr>
+void										TexProject::bezier(const vec2& t1,const vec2& t2,const vec2& t3,const vec2& t4,_Pr pred,const uint32 accuracy)
+{
+	float32 t,nt;
+	for(uint32 i = 0; i < accuracy; ++i)
+	{
+		t = float32(i)/accuracy;
+		nt = float32(i+1)/accuracy;
+
+		pred(bezier(t1,t2,t3,t4,t),bezier(t1,t2,t3,t4,nt));
+	}
+}
 
 
 

@@ -354,10 +354,10 @@ bool					TexProject::Texture::winCreate()
 			for(uint32 y = 0; y < size.y; ++y)
 			{
 				uint32 id = (y*winBytesPerLine + x*4);
-				winTextureData[id+0] = Get(x,y).x*255.0f;
-				winTextureData[id+1] = Get(x,y).y*255.0f;
-				winTextureData[id+2] = Get(x,y).z*255.0f;
-				winTextureData[id+3] = Get(x,y).w*255.0f;
+				winTextureData[id+0] = BYTE(Get(x,y).x*255.0f);
+				winTextureData[id+1] = BYTE(Get(x,y).y*255.0f);
+				winTextureData[id+2] = BYTE(Get(x,y).z*255.0f);
+				winTextureData[id+3] = BYTE(Get(x,y).w*255.0f);
 			}
 		}
 
@@ -677,7 +677,7 @@ TexProject::Texture*			TexProject::Generator::Noise::Perlin(const uvec3& size)
 				block
 				(
 					tex->GetPixel(uvec3(x,y,z)) +
-					block(noiseTex->GetPixelCosine(vec3(x,y,z)*t)*v,vec4(0.0f),vec4(1.0f)),
+					block(noiseTex->GetPixelCosine(vec3(float32(x),float32(y),float32(z))*t)*v,vec4(0.0f),vec4(1.0f)),
 					vec4(0.0f),
 					vec4(1.0f)
 				)

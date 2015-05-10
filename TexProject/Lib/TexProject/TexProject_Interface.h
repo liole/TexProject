@@ -5,13 +5,11 @@
 #include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Math.h>
 #include <TexProject/TexProject_Helpers.h>
-//#include <TexProject/TexProject_OpenGL.h>
-//#include <TexProject/TexProject_Shaders.h>
-//#include <TexProject/TexProject_Textures.h>
 
 
-#include<list>
-#include<vector>
+#include <list>
+#include <vector>
+#include <algorithm>
 
 
 namespace TexProject
@@ -54,6 +52,7 @@ namespace TexProject
 			struct Default;					// Звичайна
 			struct Trigger;					// Перемикач
 			struct Slider;					// Повзунок
+			struct Connector;				// З'єднувач
 		}
 
 
@@ -65,6 +64,7 @@ namespace TexProject
 		typedef Button::Default				GUIButtonDefault;
 		typedef Button::Trigger				GUIButtonTrigger;
 		typedef Button::Slider				GUIButtonSlider;
+		typedef Button::Connector			GUIButtonConnector;
 
 
 		struct PanelTypes
@@ -84,7 +84,9 @@ namespace TexProject
 				Default,
 				Trigger,
 				Slider,
-				Close
+				Close,
+				InputConnector,				// З'єднувач з входом
+				OutputConnector				// З'єднувач з виходом
 			};
 		};
 		typedef ButtonTypes::Enum			ButtonType;
@@ -140,6 +142,7 @@ namespace TexProject
 			Item*							parent = nullptr;
 			GUI * const						inter = nullptr;
 			std::list<Item**>				pointer;
+			void*							userData = nullptr;
 			Action*							action[ActionTypes::count];
 			uint32							properties = PropertyBits::Default;
 
@@ -167,6 +170,8 @@ namespace TexProject
 #endif
 		public:
 
+			virtual bool					IsConnector();
+
 			GUIItem*						GetBase();
 
 			virtual vec2					GetPos();
@@ -174,12 +179,16 @@ namespace TexProject
 			virtual int32					GetPriority();
 			virtual int32					GetLocalPriority();
 
-			virtual bool					IsSelect();
-			virtual bool					IsAnyButtonSelect();				// Без урахування поверхні кнопок
+			virtual GUIItem*				IsSelect();
+			virtual bool					IsLocalSelect();
+			virtual bool					IsAnyButtonSelect();
 
 			inline void						ToTop();
 
 			inline void						SetAction(const ActionType& type_,Action* action_);
+
+			inline void						SetUserData(void* data);
+			inline void*					GetUserData();
 
 			inline void						AddPointer(void*& pointer_);					// Додаємо у список керований вказівник
 			inline void						RemovePointer(void*& pointer_);					// Видаляємо зі списку керований вказівник і занулюємо його
@@ -188,7 +197,9 @@ namespace TexProject
 
 			inline void						LockMove();
 			inline void						UnlockMove();
-			inline bool						CanMove();
+			bool							CanMove();
+
+			inline Window::Render*			GetWindow();
 		};
 		namespace Panel
 		{
@@ -212,6 +223,9 @@ namespace TexProject
 				virtual void				Delete() override;
 				virtual void				Loop() override;
 
+				virtual GUIItem*			IsSelect() override;
+				virtual bool				IsAnyButtonSelect() override;
+
 				template <typename T>
 				T*							AddPanel();
 				template <typename T>
@@ -234,13 +248,13 @@ namespace TexProject
 				friend Item;
 				friend Interface::Basic;
 			protected:
-										Default(GUI* interface_,Item* parent_ = nullptr);
-										Default(const Basic&) = delete;
-										Default(Default&&) = delete;
-				virtual					~Default() = default;
+											Default(GUI* interface_,Item* parent_ = nullptr);
+											Default(const Basic&) = delete;
+											Default(Default&&) = delete;
+				virtual						~Default() = default;
 
-				Default&				operator = (const Default&) = delete;
-				Default&				operator = (Default&&) = delete;
+				Default&					operator = (const Default&) = delete;
+				Default&					operator = (Default&&) = delete;
 			};
 			struct Image: public Panel::Basic
 			{
@@ -261,7 +275,6 @@ namespace TexProject
 			public:
 
 				inline void				SetImage(Texture* texture_);
-
 			};
 		}
 		namespace Button
@@ -279,11 +292,6 @@ namespace TexProject
 
 				Basic&					operator = (const Basic&) = delete;
 				Basic&					operator = (Basic&&) = delete;
-
-			public:
-
-				inline void				ToTop();
-
 			};
 			struct Default: public Button::Basic
 			{
@@ -318,6 +326,56 @@ namespace TexProject
 			};
 			struct Slider: public Button::Basic
 			{
+				friend Item;
+				friend Interface::Basic;
+			protected:
+
+				bool					selected = false;
+				float32					slide = 0.0f;
+				vec2					border = vec2(4.0f,2.0f);
+
+										Slider(GUI* interface_,Item* parent_ = nullptr);
+										Slider(const Slider&) = delete;
+										Slider(Slider&&) = delete;
+				virtual					~Slider() = default;
+
+				Slider&					operator = (const Slider&) = delete;
+				Slider&					operator = (Slider&&) = delete;
+
+				virtual void			Loop() override;
+			};
+			struct Connector: public Button::Basic
+			{
+				friend Item;
+				friend Interface::Basic;
+			public:
+				vec2					connectDirection = vec2(0.0f);
+			protected:
+				bool					recipient = false;
+				Connector*				target = nullptr;
+				std::list<Connector*>	observers;
+
+				static Connector*		selected;
+				static Connector*		binder;
+				static Connector*		oBinder;
+
+										Connector(GUI* interface_,Item* parent_ = nullptr);
+										Connector(const Connector&) = delete;
+										Connector(Connector&&) = delete;
+				virtual					~Connector();
+
+				Connector&				operator = (const Connector&) = delete;
+				Connector&				operator = (Connector&&) = delete;
+
+				virtual void			Loop() override;
+			public:
+				virtual bool			IsConnector() override;
+
+				inline void				SetTarget(GUIButtonConnector* connector);
+				inline void				UnsetTarget();
+				inline void				SetRecipient();
+				inline void				UnsetRecipient();
+				inline void				FlushTargeting();
 			};
 		}
 
@@ -411,13 +469,9 @@ namespace TexProject
 			{
 				struct Default: public Interface::Panel::Default
 				{
-				protected:
 				public:
 																Default(GUI* interface_,Item* parent_ = nullptr);
 																~Default() = default;
-
-					virtual bool								IsSelect() override;
-					virtual bool								IsAnyButtonSelect() override;
 
 					virtual void								_win_WMPaint() override;
 
@@ -426,12 +480,9 @@ namespace TexProject
 				};
 				struct Image: public Interface::Panel::Image
 				{
-				protected:
 				public:
 																Image(GUI* interface_,Item* parent_ = nullptr);
 																~Image() = default;
-
-					virtual bool								IsSelect() override;
 
 					virtual void								_win_WMPaint() override;
 				};
@@ -440,23 +491,33 @@ namespace TexProject
 			{
 				struct Default: public Interface::Button::Default
 				{
-				protected:
 				public:
 																Default(GUI* interface_,Item* parent_ = nullptr);
 																~Default() = default;
-
-					virtual bool								IsSelect() override;
 
 					virtual void								_win_WMPaint() override;
 				};
 				struct Trigger: public Interface::Button::Trigger
 				{
-				protected:
 				public:
 																Trigger(GUI* interface_,Item* parent_ = nullptr);
 																~Trigger() = default;
 
-					virtual bool								IsSelect() override;
+					virtual void								_win_WMPaint() override;
+				};
+				struct Slider: public Interface::Button::Slider
+				{
+				public:
+																Slider(GUI* interface_,Item* parent_ = nullptr);
+																~Slider() = default;
+
+					virtual void								_win_WMPaint() override;
+				};
+				struct Connector: public Interface::Button::Connector
+				{
+				public:
+																Connector(GUI* interface_,Item* parent_ = nullptr);
+																~Connector() = default;
 
 					virtual void								_win_WMPaint() override;
 				};
@@ -541,12 +602,21 @@ void										TexProject::Interface::Item::SetAction(const ActionType& type_,Act
 	action[type_] = action_;
 }
 
-void										TexProject::Interface::Item::AddPointer(void*& pointer_)
+inline void									TexProject::Interface::Item::SetUserData(void* data)
+{
+	userData = data;
+}
+inline void*								TexProject::Interface::Item::GetUserData()
+{
+	return userData;
+}
+
+inline void									TexProject::Interface::Item::AddPointer(void*& pointer_)
 {
 	pointer_ = this;
 	pointer.push_back((Item**)(&pointer_));
 }
-void										TexProject::Interface::Item::RemovePointer(void*& pointer_)
+inline void									TexProject::Interface::Item::RemovePointer(void*& pointer_)
 {
 	auto i = pointer.begin();
 	while(i != pointer.end())
@@ -561,12 +631,12 @@ void										TexProject::Interface::Item::RemovePointer(void*& pointer_)
 		++i;
 	}
 }
-void										TexProject::Interface::Item::ResetPointers()
+inline void									TexProject::Interface::Item::ResetPointers()
 {
 	for(auto i: pointer) *i = nullptr;
 	pointer.clear();
 }
-void										TexProject::Interface::Item::FlushPointers()
+inline void									TexProject::Interface::Item::FlushPointers()
 {
 	pointer.clear();
 }
@@ -579,9 +649,10 @@ inline void									TexProject::Interface::Item::UnlockMove()
 {
 	properties |= PropertyBits::Move;
 }
-inline bool									TexProject::Interface::Item::CanMove()
+
+inline TexProject::Window::Render*			TexProject::Interface::Item::GetWindow()
 {
-	return (properties & PropertyBits::Move) > 0;
+	return (Window::Render*)inter->GetWindow();
 }
 
 
@@ -621,18 +692,56 @@ inline void									TexProject::Interface::Panel::Image::SetImage(Texture* textu
 }
 
 
-
-// Interface::Button::Basic
-void										TexProject::Interface::Button::Basic::ToTop()
+// Interface::Button::Connector
+inline void									TexProject::Interface::Button::Connector::SetTarget(GUIButtonConnector* connector)
 {
-	if(parent)
+	if(target)
 	{
-		parent->ToTop();
+		auto i = target->observers.begin();
+		while(i != target->observers.end())
+		{
+			if(*i == this)
+			{
+				i = target->observers.erase(i);
+				continue;
+			}
+			++i;
+		}
 	}
-	else
+	target = connector;
+	if(target) target->observers.push_back(this);
+}
+inline void									TexProject::Interface::Button::Connector::UnsetTarget()
+{
+	if(target)
 	{
-		inter->ToTop(this);
+		auto i = target->observers.begin();
+		while(i != target->observers.end())
+		{
+			if(*i == this)
+			{
+				i = target->observers.erase(i);
+				continue;
+			}
+			++i;
+		}
 	}
+	target = nullptr;
+}
+inline void									TexProject::Interface::Button::Connector::SetRecipient()
+{
+	recipient = true;
+	SetTarget(nullptr);
+}
+inline void									TexProject::Interface::Button::Connector::UnsetRecipient()
+{
+	recipient = false;
+	FlushTargeting();
+}
+inline void									TexProject::Interface::Button::Connector::FlushTargeting()
+{
+	for(auto i: observers) i->target = nullptr;
+	observers.clear();
 }
 
 
@@ -653,22 +762,7 @@ void										TexProject::Interface::Basic::DeleteInterface(GUI* interface_)
 	}
 }
 
-/*
-template <typename T>
-typename T*									TexProject::Interface::Basic::AddPanel()
-{
-	auto t = Interface::Item::CreateItem<T>(this);
-	panel.push_back(t);
-	return t;
-}
-template <typename T>
-typename T*									TexProject::Interface::Basic::AddButton()
-{
-	auto t = Interface::Basic::CreateItem<T>();
-	button.push_back(t);
-	return t;
-}
-*/
+
 template <typename T>
 typename T*									TexProject::Interface::Basic::AddItem()
 {
