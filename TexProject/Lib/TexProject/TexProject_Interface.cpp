@@ -186,6 +186,11 @@ bool					TexProject::Interface::Item::IsConnector()
 	return false;
 }
 
+void					TexProject::Interface::Item::Refresh()
+{
+	CallAction(ActionTypes::Refresh);
+}
+
 Interface::GUIItem*		TexProject::Interface::Item::GetBase()
 {
 	return parent ? parent->GetBase() : this;
@@ -319,6 +324,12 @@ Interface::GUIPanel*						TexProject::Interface::Panel::Basic::AddPanel(const Pa
 Interface::GUIButton*						TexProject::Interface::Panel::Basic::AddButton(const ButtonType& type_)
 {
 	throw TexProject::Exception("Forbidden [TexProject::Interface::Basic::AddButton[");
+}
+void										TexProject::Interface::Panel::Basic::Refresh()
+{
+	Item::Refresh();
+	for(auto i: button) i->Refresh();
+	for(auto i: panel) i->Refresh();
 }
 
 #if __TEXPROJECT_WIN__
@@ -857,10 +868,10 @@ void										TexProject::Interface::Default::Button::Connector::_win_WMPaint()
 		if(IsLocalSelect() && inter->GetPicked() && inter->GetPicked()->GetBase() == GetBase()) SelectObject(hDC,whiteBrush);
 		else if(recipient)
 		{
-			if(observers.size() > 0) SelectObject(hDC,blueBrush);
+			if(target) SelectObject(hDC,blueBrush);
 			else SelectObject(hDC,redBrush);
 		}
-		else if(target) SelectObject(hDC,greenBrush);
+		else if(observers.size() > 0) SelectObject(hDC,greenBrush);
 		else SelectObject(hDC,blackBrush);
 
 		Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
@@ -881,9 +892,10 @@ void										TexProject::Interface::Default::Button::Connector::_win_WMPaint()
 	if(target && target->GetPriority() < GetPriority() )
 	{
 		vec2 t1 = GetPos();
-		vec2 t2 = t1 + connectDirection;
 		vec2 t4 = target->GetPos();
-		vec2 t3 = t4 + target->connectDirection;
+		float32 t = block(dist(t1,t4)/100.0f,0.0f,1.0f);
+		vec2 t2 = t1 + connectDirection*t;
+		vec2 t3 = t4 + target->connectDirection*t;
 
 		bezier(t1,t2,t3,t4,[&hDC](const vec2& a,const vec2& b){ MoveToEx(hDC,a.x,a.y,NULL); LineTo(hDC,b.x,b.y); });
 	}
@@ -892,9 +904,10 @@ void										TexProject::Interface::Default::Button::Connector::_win_WMPaint()
 		if(i && i->GetPriority() < GetPriority())
 		{
 			vec2 t1 = GetPos();
-			vec2 t2 = t1 + connectDirection;
 			vec2 t4 = i->GetPos();
-			vec2 t3 = t4 + i->connectDirection;
+			float32 t = block(dist(t1,t4)/100.0f,0.0f,1.0f);
+			vec2 t2 = t1 + connectDirection*t;
+			vec2 t3 = t4 + i->connectDirection*t;
 
 			bezier(t1,t2,t3,t4,[&hDC](const vec2& a,const vec2& b){ MoveToEx(hDC,a.x,a.y,NULL); LineTo(hDC,b.x,b.y); });
 		}

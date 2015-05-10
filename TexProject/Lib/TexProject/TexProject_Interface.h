@@ -108,10 +108,10 @@ namespace TexProject
 				static const uint32			count = 4;
 				enum Enum
 				{
-					Select					= 0,
-					Unselect				= 1,
-					Click					= 2,
-					Free					= 3
+					Click					= 0,
+					Free					= 1,
+					Refresh					= 2,
+					Reserved				= 3
 				};
 			};
 			typedef ActionTypes::Enum		ActionType;
@@ -171,6 +171,8 @@ namespace TexProject
 		public:
 
 			virtual bool					IsConnector();
+
+			virtual void					Refresh();
 
 			GUIItem*						GetBase();
 
@@ -236,6 +238,8 @@ namespace TexProject
 #endif
 
 			public:
+
+				virtual void				Refresh();
 
 				inline void					ToTop();
 
@@ -349,33 +353,37 @@ namespace TexProject
 				friend Item;
 				friend Interface::Basic;
 			public:
-				vec2					connectDirection = vec2(0.0f);
+				vec2						connectDirection = vec2(0.0f);
 			protected:
-				bool					recipient = false;
-				Connector*				target = nullptr;
-				std::list<Connector*>	observers;
+				bool						recipient = false;
+				Connector*					target = nullptr;
+				std::list<Connector*>		observers;
 
-				static Connector*		selected;
-				static Connector*		binder;
-				static Connector*		oBinder;
+				static Connector*			selected;
+				static Connector*			binder;
+				static Connector*			oBinder;
 
-										Connector(GUI* interface_,Item* parent_ = nullptr);
-										Connector(const Connector&) = delete;
-										Connector(Connector&&) = delete;
-				virtual					~Connector();
+											Connector(GUI* interface_,Item* parent_ = nullptr);
+											Connector(const Connector&) = delete;
+											Connector(Connector&&) = delete;
+				virtual						~Connector();
 
-				Connector&				operator = (const Connector&) = delete;
-				Connector&				operator = (Connector&&) = delete;
+				Connector&					operator = (const Connector&) = delete;
+				Connector&					operator = (Connector&&) = delete;
 
-				virtual void			Loop() override;
+				virtual void				Loop() override;
 			public:
-				virtual bool			IsConnector() override;
+				virtual bool				IsConnector() override;
 
-				inline void				SetTarget(GUIButtonConnector* connector);
-				inline void				UnsetTarget();
-				inline void				SetRecipient();
-				inline void				UnsetRecipient();
-				inline void				FlushTargeting();
+				inline void					SetTarget(GUIButtonConnector* connector);
+				inline void					UnsetTarget();
+				inline void					SetRecipient();
+				inline void					UnsetRecipient();
+				inline void					FlushTargeting();
+				inline GUIButtonConnector*	GetTarget()
+				{
+					return target;
+				}
 			};
 		}
 

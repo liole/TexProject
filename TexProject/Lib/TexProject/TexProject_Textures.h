@@ -231,6 +231,11 @@ namespace TexProject
 	/*Неймспейс фільтрів*/
 	namespace Filter
 	{
+		/*Неймспейс шумів-фільтрів*/
+		namespace Noise
+		{
+			Texture*						Perlin(Texture* in);
+		}
 	}
 }
 

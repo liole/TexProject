@@ -688,6 +688,39 @@ TexProject::Texture*			TexProject::Generator::Noise::Perlin(const uvec3& size)
 	return tex;
 }
 
+// Generator::Filter
+TexProject::Texture*			TexProject::Filter::Noise::Perlin(Texture* in)
+{
+	auto noiseTex = in;
+	auto tex = new Texture; tex->Resize(noiseTex->GetSize());
+
+	const uint32 iterations = 8;
+
+	for(uint32 i = 1; i < iterations; ++i)
+	{
+		float32 v = pow(float32(i)/iterations*(3.0f/5.0f), 1.5f);
+		vec3 t = (1.0f / pow(2.0f,float32(i))) / vec3(noiseTex->GetSize());
+		for(uint32 x = 0; x < tex->GetSize().x; ++x)
+		for(uint32 y = 0; y < tex->GetSize().y; ++y)
+		for(uint32 z = 0; z < tex->GetSize().z; ++z)
+		{
+			tex->SetPixel
+			(
+				uvec3(x,y,z), 
+				block
+				(
+					tex->GetPixel(uvec3(x,y,z)) +
+					block(noiseTex->GetPixelCosine(vec3(float32(x),float32(y),float32(z))*t)*v,vec4(0.0f),vec4(1.0f)),
+					vec4(0.0f),
+					vec4(1.0f)
+				)
+			);
+		}
+	}
+
+	return tex;
+}
+
 
 
 
