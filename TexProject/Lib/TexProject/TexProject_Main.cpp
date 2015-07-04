@@ -55,7 +55,6 @@ void					TexProject::EntryPointSafeCall()
 
 	DevIL::Init();
 	Window::Init();
-	Texture::Init();
 
 	ErrorException::SecureCall(Main);
 

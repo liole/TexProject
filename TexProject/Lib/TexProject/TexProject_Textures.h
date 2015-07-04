@@ -17,7 +17,7 @@
 
 namespace TexProject
 {
-	struct Texture
+	/*struct Texture
 	{
 		friend Window::Render;
 		friend Window::RenderContext::Default;
@@ -66,11 +66,6 @@ namespace TexProject
 				RGBA16							= GL_RGBA16,
 				RGBA16F							= GL_RGBA16F,
 				RGBA32F							= GL_RGBA32F,
-
-				/*Depth16							= GL_DEPTH_COMPONENT16,
-				Depth24							= GL_DEPTH_COMPONENT24,
-				Depth32							= GL_DEPTH_COMPONENT32,
-				Depth32F						= GL_DEPTH_COMPONENT32F*/
 			};
 		};
 		struct GLFormats
@@ -146,7 +141,12 @@ namespace TexProject
 		void								Delete();
 
 											Texture() = default;
+											Texture(const Texture& source) = delete;
+											Texture(Texture&&) = delete;
 											~Texture();
+
+		Texture&							operator = (const Texture&) = delete;
+		Texture&							operator = (Texture&&) = delete;
 
 		bool								Load(const string& filename);
 		inline vec4&						Get(uint32 x,uint32 y);
@@ -159,6 +159,8 @@ namespace TexProject
 		void								Resize(uvec3 size_);
 		void								Build(Window::Render* window);
 		void								Draw();
+
+		Texture*							Copy() const;
 
 #if __TEXPROJECT_DEVIL__
 		bool								_devIL_Load2D(const string& filename);
@@ -215,7 +217,245 @@ namespace TexProject
 		inline void							glUse(uint32 slot_ = 0);
 #endif
 
-	};
+	};*/
+
+
+	namespace Texture
+	{
+		namespace Exception
+		{
+			class InvalidTextureCoord: public Exception {};
+		}
+
+		struct D2
+		{
+		protected:
+
+			vec4* data = nullptr;
+			uvec2 size = uvec2(0);
+
+		public:
+
+			inline D2();
+			inline ~D2();
+
+			inline void						Create(const uvec2& size_);
+			inline void						Delete();
+			bool							Load(const string& filename);
+			inline void						Fill(const vec4& color_);
+
+			inline uvec2					GetSize() const;
+
+			// Direct storage access
+			inline void						SetPixel(const uvec2& pos_,const vec4& color_);
+			inline vec4						GetPixel(const uvec2& pos_);
+			inline vec4*					GetData() const;
+			inline void*					GetDataRGBA32F() const;
+
+#if __TEXPROJECT_DEVIL__
+			bool							_DevIL_Load2D(const string& filename);
+#endif
+		};
+	}
+
+
+#if __TEXPROJECT_WIN__
+	namespace Windows
+	{
+		struct Texture
+		{
+			friend Interface::Default::Panel::Image;
+		protected:
+
+			uvec2												size = uvec2(0);
+			Window::RenderContext::Default* const				renderContext;
+			uint32												bitCount = 32;
+			uint32												bytesPerLine = 0;
+			HBITMAP												bitmap = NULL;
+			BITMAPINFOHEADER									infoHeader;
+			BYTE*												textureData = nullptr;
+
+		public:
+
+			Texture(Window::Render* window);
+			~Texture();
+
+			inline Texture&						operator = (const TexProject::Texture::D2& source);
+
+			inline bool							Create(uvec2 size_,vec4* data_);
+			inline void							Delete();
+
+			inline uvec2					GetSize() const;
+
+			inline Window::RenderContext::Default*				GetRenderContext() const;
+
+		};
+	}
+#endif
+
+
+#if __TEXPROJECT_OPENGL__
+	namespace OpenGL
+	{
+		struct Texture
+		{
+		public:
+
+			enum class Type: GLenum
+			{
+				D1								= GL_TEXTURE_1D,
+				D1Array							= GL_TEXTURE_1D_ARRAY,
+				D2								= GL_TEXTURE_2D,
+				D2Array							= GL_TEXTURE_2D_ARRAY,
+				D3								= GL_TEXTURE_3D,
+				Cube							= GL_TEXTURE_CUBE_MAP,
+				CubeArray						= GL_TEXTURE_CUBE_MAP_ARRAY
+			};
+			enum class InternalFormat: GLint
+			{
+				R8								= GL_R8,
+				R16								= GL_R16,
+				R16F							= GL_R16F,
+				R32F							= GL_R32F,
+				RG8								= GL_RG8,
+				RG16							= GL_RG16,
+				RG16F							= GL_RG16F,
+				RG32F							= GL_RG32F,
+				RGB8							= GL_RGB8,
+				RGB16							= GL_RGB16,
+				RGB16F							= GL_RGB16F,
+				RGB32F							= GL_RGB32F,
+				RGBA8							= GL_RGBA8,
+				RGBA16							= GL_RGBA16,
+				RGBA16F							= GL_RGBA16F,
+				RGBA32F							= GL_RGBA32F,
+
+				Depth16							= GL_DEPTH_COMPONENT16,
+				Depth24							= GL_DEPTH_COMPONENT24,
+				Depth32							= GL_DEPTH_COMPONENT32,
+				Depth32F						= GL_DEPTH_COMPONENT32F
+			};
+			enum class Format: GLenum
+			{
+				R								= GL_RED,
+				G								= GL_GREEN,
+				B								= GL_BLUE,
+				A								= GL_ALPHA,
+				L								= GL_LUMINANCE,
+				RG								= GL_RG,
+				RGB								= GL_RGB,
+				BGR								= GL_BGR,
+				RGBA							= GL_RGBA,
+				BGRA							= GL_BGRA,
+
+				Depth							= GL_DEPTH_COMPONENT
+			};
+			enum class Component: GLenum
+			{
+				UByte							= GL_UNSIGNED_BYTE,
+				UInt8							= GL_UNSIGNED_BYTE,
+				UShort							= GL_UNSIGNED_SHORT,
+				UInt16							= GL_UNSIGNED_SHORT,
+				UInt							= GL_UNSIGNED_INT,
+				UInt32							= GL_UNSIGNED_INT,
+				Byte							= GL_BYTE,
+				Int8							= GL_BYTE,
+				Short							= GL_SHORT,
+				Int16							= GL_SHORT,
+				Int								= GL_INT,
+				Int32							= GL_INT,
+				Half							= GL_HALF_FLOAT,
+				Float16							= GL_HALF_FLOAT,
+				Float							= GL_FLOAT,
+				Float32							= GL_FLOAT
+			};
+			enum class Wrap: GLint
+			{
+				Clamp							= GL_CLAMP_TO_EDGE,
+				Repeat							= GL_REPEAT,
+				Border							= GL_CLAMP_TO_BORDER,
+				Mirror							= GL_MIRRORED_REPEAT
+			};
+			struct Filter
+			{
+			public:
+
+				enum class Minification: GLint
+				{
+					Off						= GL_NEAREST,
+					Linear					= GL_LINEAR,
+					MipmapNearestNearest	= GL_NEAREST_MIPMAP_NEAREST,
+					MipmapLinearNearest		= GL_LINEAR_MIPMAP_NEAREST,
+					MipmapNearestLinear		= GL_NEAREST_MIPMAP_LINEAR,
+					MipmapLinearLinear		= GL_LINEAR_MIPMAP_LINEAR,
+					Mipmap					= MipmapLinearLinear
+				};
+				enum class Magnification: GLint
+				{
+					Off						= GL_NEAREST,
+					Linear					= GL_LINEAR
+				};
+
+				typedef Minification		Min;
+				typedef Magnification		Mag;
+
+				Minification				min = Minification::Mipmap;
+				Magnification				mag = Magnification::Linear;
+
+				inline Filter() = default;
+				inline Filter(const Filter&) = default;
+				inline Filter(const Minification& min_,const Magnification& mag_):
+					min(min_),mag(mag_)
+				{
+				}
+
+				static const Filter			Off;
+				static const Filter			Linear;
+				static const Filter			Mipmap;
+			};
+
+			typedef InternalFormat			IFormat;
+
+			static inline int32			GetSlotCount()
+			{
+				static GLint result;
+				glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,&result);
+				return (int32)result;
+			}
+
+		protected:
+
+			Window::RenderContext::OpenGL* const			renderContext;
+
+			Type							type = Type::D2;
+			InternalFormat					internalFormat = InternalFormat::RGBA32F;
+			Format							format = Format::BGRA;
+			Component						component = Component::Float32;
+			Wrap							wrap = Wrap::Repeat;
+			Filter							filter = Filter::Mipmap;
+
+			uvec3							size = uvec3(0);
+			GLuint							texture = 0;
+			vec4							border = vec4(0.0f);
+
+		public:
+
+			inline Texture(Window::Render* window);
+			inline ~Texture();
+
+			inline Texture&					operator = (const TexProject::Texture::D2& source);
+
+			inline void						Create(Type type_,InternalFormat internalFormat_,Format format_,Component component_,Wrap wrap_,Filter filter_,uvec3 size_,void* data_);
+			inline void						Delete();
+			inline void						Use(uint32 level = 0);
+			inline void						Unuse(uint32 level);
+			inline void						Unuse();
+			inline Window::RenderContext::OpenGL*			GetRenderContext() const;
+
+		};
+	}
+#endif
+
 
 	/*Неймспейс генераторів*/
 	namespace Generator
@@ -224,8 +464,10 @@ namespace TexProject
 		namespace Noise
 		{
 			/*Монохромний шум*/
+			/*
 			Texture*						SimpleMono(const uvec3& size);
 			Texture*						Perlin(const uvec3& size);
+			*/
 		}
 	}
 	/*Неймспейс фільтрів*/
@@ -234,165 +476,368 @@ namespace TexProject
 		/*Неймспейс шумів-фільтрів*/
 		namespace Noise
 		{
-			Texture*						Perlin(Texture* in);
+			/*
+			Texture*						Perlin(Texture* in,uint32 iterations);
+			*/
 		}
 	}
 }
 
 
-void										TexProject::Texture::glUse(uint32 slot_)
+inline TexProject::Texture::D2::D2()
 {
-#ifdef __TEXPROJECT_OPENGL__
-	if( slot_ < glMaxTextureSlots && init && glTexture )
-	{
-		glCurrent[slot_] = this;
-		OpenGL::glActiveTexture(GL_TEXTURE0+slot_); glBindTexture(glType,glTexture);
-	}
-	else
-	{
-		Message("Error while seting a texture");
-	}
-#else
-	glCurrent[slot_] = this;
-	OpenGL::glActiveTexture(GL_TEXTURE0+slot_); glBindTexture(glType,glTexture);
-#endif
 }
-
-
-inline TexProject::vec4&					TexProject::Texture::Get(uint32 x,uint32 y)
+inline TexProject::Texture::D2::~D2()
 {
-#if __TEXPROJECT_DEBUG__
-	if(x < size.x && y < size.y && size.z > 0)
-	{
-		return data[size.x*(0*size.y + y) + x];
-	}
-	else
-	{
-		throw Exception("Out of texture data array.");
-	}
-#else
-	return data[size.x*(0*size.y + y) + x];
-#endif
+	Delete();
 }
-inline TexProject::vec4&					TexProject::Texture::Get(uint32 x,uint32 y,uint32 z)
+inline void									TexProject::Texture::D2::Create(const uvec2& size_)
 {
-#if __TEXPROJECT_DEBUG__
-	if(x < size.x && y < size.y && z < size.z)
-	{
-		return data[size.x*(z*size.y + y) + x];
-	}
-	else
-	{
-		throw Exception("Out of texture data array.");
-	}
-#else
-	return data[size.x*(z*size.y + y) + x];
-#endif
+	Delete();
+
+	size = size_;
+
+	data = new vec4[size.x*size.y];
 }
-inline void									TexProject::Texture::SetPixel(const uvec3& texCoord,const vec4& val)
+inline void									TexProject::Texture::D2::Delete()
 {
-#if __TEXPROJECT_DEBUG__
-	if(texCoord.x >= size.x || texCoord.y >= size.y || texCoord.z >= size.z)
+	if(size.x > 0 && size.y > 0)
 	{
-		throw Exception("Out of texture data array.");
+		if(data) delete[] data;
+		size = uvec2(0);
 	}
-#endif
-	data[size.x*(texCoord.z*size.y + texCoord.y) + texCoord.x] = val;
 }
-inline TexProject::vec4						TexProject::Texture::GetPixel(const uvec3& texCoord) const
+inline void									TexProject::Texture::D2::Fill(const vec4& color_)
 {
-#if __TEXPROJECT_DEBUG__
-	if(texCoord.x >= size.x || texCoord.y >= size.y || texCoord.z >= size.z)
-	{
-		throw Exception("Out of texture data array.");
-	}
-#endif
-	return data[size.x*(texCoord.z*size.y + texCoord.y) + texCoord.x];
+	for(uint32 i = 0; i < size.x*size.y; ++i) data[i] = color_;
 }
-inline TexProject::vec4						TexProject::Texture::GetPixelLinear(const vec3& texCoord) const
-{
-	uvec3 minT,maxT;
-	vec3 difT;
-
-	difT = texCoord * vec3(size);
-	minT = uvec3( uint32(floor(difT.x)), uint32(floor(difT.y)), uint32(floor(difT.z)) );
-	maxT = uvec3( uint32(ceil(difT.x)), uint32(ceil(difT.y)), uint32(ceil(difT.z)) );
-	difT = difT - vec3(minT);
-
-
-	vec4 v000 = GetPixel(uvec3(minT.x,minT.y,minT.z));
-	vec4 v100 = GetPixel(uvec3(maxT.x,minT.y,minT.z));
-	vec4 v010 = GetPixel(uvec3(minT.x,maxT.y,minT.z));
-	vec4 v110 = GetPixel(uvec3(maxT.x,maxT.y,minT.z));
-	vec4 v001 = GetPixel(uvec3(minT.x,minT.y,maxT.z));
-	vec4 v101 = GetPixel(uvec3(maxT.x,minT.y,maxT.z));
-	vec4 v011 = GetPixel(uvec3(minT.x,maxT.y,maxT.z));
-	vec4 v111 = GetPixel(uvec3(maxT.x,maxT.y,maxT.z));
-
-	return	bezier
-			(
-				bezier
-				(
-					bezier(v000,v100,difT.x),
-					bezier(v010,v110,difT.x),
-					difT.y
-				),
-				bezier
-				(
-					bezier(v001,v101,difT.x),
-					bezier(v011,v111,difT.x),
-					difT.y
-				),
-				difT.z
-			);
-
-}
-inline TexProject::vec4						TexProject::Texture::GetPixelCosine(const vec3& texCoord) const
-{
-	uvec3 minT,maxT;
-	vec3 difT;
-
-	difT = texCoord * vec3(size);
-	minT = uvec3( uint32(floor(difT.x)), uint32(floor(difT.y)), uint32(floor(difT.z)) );
-	maxT = uvec3( uint32(ceil(difT.x)), uint32(ceil(difT.y)), uint32(ceil(difT.z)) );
-	difT = difT - vec3(minT);
-	difT = (vec3(1.0f) - vec3(cos(difT.x*_PIf),cos(difT.y*_PIf),cos(difT.z*_PIf))) * 0.5f;
-	//float32 t = 1.5f;
-	//difT = vec3(pow(difT.x,t),pow(difT.y,t),pow(difT.z,t));
-
-
-	vec4 v000 = GetPixel(uvec3(minT.x,minT.y,minT.z));
-	vec4 v100 = GetPixel(uvec3(maxT.x,minT.y,minT.z));
-	vec4 v010 = GetPixel(uvec3(minT.x,maxT.y,minT.z));
-	vec4 v110 = GetPixel(uvec3(maxT.x,maxT.y,minT.z));
-	vec4 v001 = GetPixel(uvec3(minT.x,minT.y,maxT.z));
-	vec4 v101 = GetPixel(uvec3(maxT.x,minT.y,maxT.z));
-	vec4 v011 = GetPixel(uvec3(minT.x,maxT.y,maxT.z));
-	vec4 v111 = GetPixel(uvec3(maxT.x,maxT.y,maxT.z));
-
-	return	bezier
-			(
-				bezier
-				(
-					bezier(v000,v100,difT.x),
-					bezier(v010,v110,difT.x),
-					difT.y
-				),
-				bezier
-				(
-					bezier(v001,v101,difT.x),
-					bezier(v011,v111,difT.x),
-					difT.y
-				),
-				difT.z
-			);
-
-}
-inline TexProject::uvec3					TexProject::Texture::GetSize() const
+inline TexProject::uvec2					TexProject::Texture::D2::GetSize() const
 {
 	return size;
 }
+inline void									TexProject::Texture::D2::SetPixel(const uvec2& pos_,const vec4& color_)
+{
+	if(pos_.x < size.x && pos_.y < size.y)
+	{
+		data[pos_.y*size.x + pos_.x] = color_;
+	}
+	else
+	{
+		throw Exception::InvalidTextureCoord();
+	}
+}
+inline TexProject::vec4						TexProject::Texture::D2::GetPixel(const uvec2& pos_)
+{
+	if(pos_.x < size.x && pos_.y < size.y)
+	{
+		return data[pos_.y*size.x + pos_.x];
+	}
+	else
+	{
+		throw Exception::InvalidTextureCoord();
+	}
+}
+inline TexProject::vec4*					TexProject::Texture::D2::GetData() const
+{
+	auto data_ = new vec4[size.x*size.y];
+	for(uint32 i = 0; i < size.x*size.y; ++i)
+	{
+		data_[i] = data[i];
+	}
+	return data_;
+}
+inline void*								TexProject::Texture::D2::GetDataRGBA32F() const
+{
+	auto data_ = new float32[size.x*size.y*4];
+	for(uint32 i = 0; i < size.x*size.y; ++i)
+	{
+		data_[i*4+0] = data[i].x;
+		data_[i*4+1] = data[i].y;
+		data_[i*4+2] = data[i].z;
+		data_[i*4+3] = data[i].w;
+	}
+	return data_;
+}
 
+
+#if __TEXPROJECT_WIN__
+
+inline										TexProject::Windows::Texture::Texture(Window::Render* window):
+	renderContext
+	(	nullptr
+		/*window->GetRenderContext()->GetType() == Window::RenderContext::Type::Default ?
+		(Window::RenderContext::Default*)window->GetRenderContext()->GetData() :
+		throw Exception()*/
+	)
+{
+}
+inline										TexProject::Windows::Texture::~Texture()
+{
+	Delete();
+}
+inline TexProject::Windows::Texture&		TexProject::Windows::Texture::operator = (const TexProject::Texture::D2& source)
+{
+	auto data_ = source.GetData();
+	Create(source.GetSize(),data_);
+	delete[] data_;
+	return *this;
+}
+inline bool									TexProject::Windows::Texture::Create(uvec2 size_,vec4* data_)
+{
+	Delete();
+	{
+		size = size_;
+		bitCount = 32;
+		bytesPerLine = ((size.x * bitCount + 31)/32) * 4;
+	}
+	{
+		infoHeader.biSize = sizeof(BITMAPINFOHEADER);
+		infoHeader.biWidth = size.x;
+		infoHeader.biHeight = size.y;
+		infoHeader.biPlanes = 1;
+		infoHeader.biBitCount = 32;
+		infoHeader.biCompression = BI_RGB;
+		infoHeader.biSizeImage = 0; //for BI_RGB
+		infoHeader.biXPelsPerMeter = 0;
+		infoHeader.biYPelsPerMeter = 0;
+		infoHeader.biClrUsed = 0;
+		infoHeader.biClrImportant = 0;
+	}
+	{
+		textureData = new BYTE[bytesPerLine*size.y];
+		for(uint32 x = 0; x < size.x; ++x)
+		for(uint32 y = 0; y < size.y; ++y)
+		{
+			uint32 id1 = (y*bytesPerLine + x*4);
+			uint32 id2 = y*size_.x + x;
+			textureData[id1+0] = BYTE(data_[id2].z*255.0f);
+			textureData[id1+1] = BYTE(data_[id2].y*255.0f);
+			textureData[id1+2] = BYTE(data_[id2].x*255.0f);
+			textureData[id1+3] = BYTE(data_[id2].w*255.0f);
+		}
+	}
+
+	bitmap = CreateBitmap(size.x,size.y,1,bitCount,textureData);
+
+	return bitmap != NULL;
+}
+inline void									TexProject::Windows::Texture::Delete()
+{
+	if(bitmap)
+	{
+		//delete bitmap
+		bitmap = NULL;
+	}
+}
+inline TexProject::uvec2					TexProject::Windows::Texture::GetSize() const
+{
+	return size;
+}
+inline TexProject::Window::RenderContext::Default*				TexProject::Windows::Texture::GetRenderContext() const
+{
+	return renderContext;
+}
+
+#endif
+
+
+
+
+#if __TEXPROJECT_OPENGL__
+
+inline										TexProject::OpenGL::Texture::Texture(Window::Render* window):
+	renderContext
+	(
+		window->GetRenderContext()->GetType() == Window::RenderContext::Type::OpenGL ?
+		(Window::RenderContext::OpenGL*)window->GetRenderContext()->GetData() :
+		throw Exception()
+	)
+{
+}
+inline										TexProject::OpenGL::Texture::~Texture()
+{
+	Delete();
+}
+inline TexProject::OpenGL::Texture&			TexProject::OpenGL::Texture::operator = (const TexProject::Texture::D2& source)
+{
+	{
+		auto data_ = source.GetDataRGBA32F();
+		Create
+		(
+			Type::D2,
+			IFormat::RGBA32F,
+			Format::RGBA,
+			Component::Float32,
+			Wrap::Repeat,
+			Filter::Mipmap,
+			uvec3(source.GetSize(),0),
+			data_
+		);
+		delete[] data_;
+	}
+	return *this;
+}
+inline void									TexProject::OpenGL::Texture::Create(Type type_,InternalFormat internalFormat_,Format format_,Component component_,Wrap wrap_,Filter filter_,uvec3 size_,void* data_)
+{
+	Delete();
+	{
+		glActiveTexture(GL_TEXTURE0); renderContext->textureActiveSlot = 0;
+	}
+	{
+		type = type_;
+		glGenTextures(1,&texture);
+		glBindTexture((GLenum)type,texture); renderContext->textureCurrent[0] = this;
+	}
+	{
+		filter = filter_;
+		glTexParameteri((GLenum)type,GL_TEXTURE_MIN_FILTER,(GLint)filter.min);
+		glTexParameteri((GLenum)type,GL_TEXTURE_MAG_FILTER,(GLint)filter.mag);
+	}
+	{
+		wrap = wrap_;
+		border = vec4(0.0f);
+		glTexParameteri((GLenum)type,GL_TEXTURE_WRAP_S,(GLint)wrap);
+		glTexParameteri((GLenum)type,GL_TEXTURE_WRAP_T,(GLint)wrap);
+		glTexParameteri((GLenum)type,GL_TEXTURE_WRAP_R,(GLint)wrap);
+		static GLfloat borderColor_[4];
+		borderColor_[0] = border.x;
+		borderColor_[1] = border.y;
+		borderColor_[2] = border.z;
+		borderColor_[3] = border.w;
+		glTexParameterfv((GLenum)type,GL_TEXTURE_BORDER_COLOR,borderColor_);
+	}
+	{
+		internalFormat = internalFormat_;
+		format = format_;
+		component = component_;
+		size = size_;
+	}
+	switch(type)
+	{
+		case Type::D1: break;
+		case Type::D1Array: break;
+		case Type::D2:
+			glTexImage2D((GLenum)type,0,(GLint)internalFormat,size.x,size.y,0,(GLenum)format,(GLenum)component,data_);
+		break;
+		case Type::D2Array: break;
+		case Type::D3: break;
+		case Type::Cube: break;
+		case Type::CubeArray: break;
+		default: throw Exception(); break;
+	}
+	{
+		if(filter.min != Filter::Min::Off && filter.min != Filter::Min::Linear) glGenerateMipmap((GLenum)type);
+	}
+	/*{
+		glGenTextures(1,&texture);
+		glBindTexture(GL_TEXTURE_2D,texture);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,64,64,0,GL_RGBA,GL_FLOAT,data_);
+	}*/
+
+#if __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
+}
+inline void									TexProject::OpenGL::Texture::Delete()
+{
+	Unuse();
+	if(texture)
+	{
+		glDeleteTextures(1,&texture); //texture = 0;
+	}
+
+#if __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
+}
+inline void									TexProject::OpenGL::Texture::Use(uint32 level)
+{
+#if __TEXPROJECT_DEBUG__
+	if(texture)
+	{
+		if(int32(level) < GetSlotCount())
+		{
+			if(renderContext->textureActiveSlot != level)
+			{
+				renderContext->textureActiveSlot = level;
+				glActiveTexture(GL_TEXTURE0 + level);
+			}
+
+			renderContext->textureCurrent[level] = this;
+			glBindTexture((GLenum)type,texture);
+		}
+		else
+		{
+			throw Exception("");
+		}
+	}
+	else
+	{
+		throw Exception();
+	}
+#else
+	if(renderContext->textureActiveSlot != level)
+	{
+		renderContext->textureActiveSlot = level;
+		glActiveTexture(GL_TEXTURE0 + level);
+	}
+
+	renderContext->textureCurrent[level] = this;
+	glBindTexture((GLenum)type,texture);
+#endif
+}
+inline void									TexProject::OpenGL::Texture::Unuse(uint32 level)
+{
+#if __TEXPROJECT_DEBUG__
+	if(int32(level) < GetSlotCount())
+	{
+		if(renderContext->textureCurrent[level] == this)
+		{
+			if(texture)
+			{
+				if(renderContext->textureActiveSlot != level)
+				{
+					renderContext->textureActiveSlot = level;
+					glActiveTexture(GL_TEXTURE0 + level);
+				}
+				glBindTexture((GLenum)type,0);
+			}
+			renderContext->textureCurrent[level] = nullptr;
+		}
+	}
+	else
+	{
+		throw Exception("");
+	}
+#else
+	if(texture && renderContext->textureCurrent[level] == this)
+	{
+		if(renderContext->textureActiveSlot != level)
+		{
+			renderContext->textureActiveSlot = level;
+			glActiveTexture(GL_TEXTURE0 + level);
+		}
+
+		glBindTexture((GLenum)type,0);
+	}
+	renderContext->textureCurrent[level] = nullptr;
+#endif
+}
+inline void									TexProject::OpenGL::Texture::Unuse()
+{
+	for(int32 i = 0; i < GetSlotCount(); ++i) Unuse(i);
+}
+inline TexProject::Window::RenderContext::OpenGL*				TexProject::OpenGL::Texture::GetRenderContext() const
+{
+	return renderContext;
+}
+
+#endif
 
 
 

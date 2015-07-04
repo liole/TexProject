@@ -161,6 +161,11 @@ TexProject::Interface::Item::~Item()
 
 	ResetPointers();
 
+	if(userDataRemove && userData)
+	{
+		delete userData;
+	}
+
 	if(inter->GetPicked() == this) inter->ResetPicked();
 	if(inter->GetSelected() == this) inter->ResetSelected();
 	if(inter->GetTop() == this) inter->ResetTop();
@@ -341,6 +346,8 @@ void										TexProject::Interface::Panel::Basic::_win_WMPaint()
 #endif
 
 
+
+
 // Interface::Panel::Default
 TexProject::Interface::Panel::Default::Default(GUI* interface_,Item* parent_):
 	Basic(interface_,parent_)
@@ -351,6 +358,9 @@ TexProject::Interface::Panel::Default::Default(GUI* interface_,Item* parent_):
 // Interface::Panel::Image
 TexProject::Interface::Panel::Image::Image(GUI* interface_,Item* parent_):
 	Basic(interface_,parent_)
+{
+}
+void										TexProject::Interface::Panel::Image::SetImage(Texture::D2* texture_)
 {
 }
 
@@ -485,6 +495,11 @@ void					TexProject::Interface::Button::Connector::Loop()
 bool					TexProject::Interface::Button::Connector::IsConnector()
 {
 	return true;
+}
+void					TexProject::Interface::Button::Connector::Refresh()
+{
+	Button::Basic::Refresh();
+	if(target) target->Refresh();
 }
 
 
@@ -623,6 +638,15 @@ TexProject::Interface::Default::Panel::Image::Image(GUI* interface_,Item* parent
 	Interface::Panel::Image(interface_,parent_)
 {
 }
+void										TexProject::Interface::Default::Panel::Image::SetImage(Texture::D2* texture_)
+{
+	if(image) { delete image; image = nullptr; }
+	if(texture_)
+	{
+		image = new Windows::Texture(inter->GetWindow());
+		*image = *texture_;
+	}
+}
 void										TexProject::Interface::Default::Panel::Image::_win_WMPaint()
 {
 	auto window = inter->GetWindow();
@@ -658,15 +682,15 @@ void										TexProject::Interface::Default::Panel::Image::_win_WMPaint()
 	rect.right = LONG(pos_.x + hsize_.x);
 	rect.top = LONG(pos_.y - hsize_.y);
 
-	if(texture)
+	if(image)
 	{
 		SetStretchBltMode(hDC,STRETCH_HALFTONE);
 		StretchDIBits
 		(
 			hDC,
 			rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
-			0,0,texture->GetSize().x,texture->GetSize().y,
-			texture->winTextureData,(BITMAPINFO*)&texture->winInfoHeader,
+			0,0,image->GetSize().x,image->GetSize().y,
+			image->textureData,(BITMAPINFO*)&image->infoHeader,
 			DIB_RGB_COLORS,SRCCOPY
 		);
 	}
@@ -885,7 +909,13 @@ void										TexProject::Interface::Default::Button::Connector::_win_WMPaint()
 			vec2 t2 = t1 + connectDirection * block(dist(t1,t3)/100.0f,0.0f,1.0f);
 
 			SelectObject(hDC,whiteBrush);
-			bezier(t1,t2,t3,[&hDC](const vec2& a,const vec2& b){ MoveToEx(hDC,a.x,a.y,NULL); LineTo(hDC,b.x,b.y); });
+			bezier
+			(
+				t1,t2,t3,[&hDC](const vec2& a,const vec2& b)
+				{
+					MoveToEx(hDC,int32(a.x),int32(a.y),NULL); LineTo(hDC,int32(b.x),int32(b.y));
+				}
+			);
 		}
 	}
 
@@ -897,7 +927,13 @@ void										TexProject::Interface::Default::Button::Connector::_win_WMPaint()
 		vec2 t2 = t1 + connectDirection*t;
 		vec2 t3 = t4 + target->connectDirection*t;
 
-		bezier(t1,t2,t3,t4,[&hDC](const vec2& a,const vec2& b){ MoveToEx(hDC,a.x,a.y,NULL); LineTo(hDC,b.x,b.y); });
+		bezier
+		(
+			t1,t2,t3,t4,[&hDC](const vec2& a,const vec2& b)
+			{
+				MoveToEx(hDC,int32(a.x),int32(a.y),NULL); LineTo(hDC,int32(b.x),int32(b.y));
+			}
+		);
 	}
 	for(auto i: observers)
 	{
@@ -909,7 +945,13 @@ void										TexProject::Interface::Default::Button::Connector::_win_WMPaint()
 			vec2 t2 = t1 + connectDirection*t;
 			vec2 t3 = t4 + i->connectDirection*t;
 
-			bezier(t1,t2,t3,t4,[&hDC](const vec2& a,const vec2& b){ MoveToEx(hDC,a.x,a.y,NULL); LineTo(hDC,b.x,b.y); });
+			bezier
+			(
+				t1,t2,t3,t4,[&hDC](const vec2& a,const vec2& b)
+				{
+					MoveToEx(hDC,int32(a.x),int32(a.y),NULL); LineTo(hDC,int32(b.x),int32(b.y));
+				}
+			);
 		}
 	}
 

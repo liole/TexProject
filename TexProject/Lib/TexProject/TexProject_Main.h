@@ -103,11 +103,11 @@ namespace TexProject
 		inline								Exception() = default;
 		inline								Exception(const string& text_);
 		inline								Exception(const Exception& source) = default;
-		inline								Exception(Exception&& source) = delete;
+		//inline								Exception(Exception&& source) = delete;
 		inline								~Exception() = default;
 
 		inline Exception&					operator = (const Exception& source) = delete;
-		inline Exception&					operator = (Exception&& source) = delete;
+		//inline Exception&					operator = (Exception&& source) = delete;
 
 		inline string						Get() const;
 	};

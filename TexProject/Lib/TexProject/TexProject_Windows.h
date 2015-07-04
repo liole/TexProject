@@ -1,5 +1,3 @@
-/*
-*/
 #pragma once
 #include <TexProject/TexProject_Header.h>
 
@@ -7,6 +5,7 @@
 #include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Math.h>
 #include <TexProject/TexProject_OpenGL.h>
+#include <TexProject/TexProject_Direct3D.h>
 #include <TexProject/TexProject_Helpers.h>
 #include <TexProject/TexProject_Interface.h>
 
@@ -200,15 +199,12 @@ namespace TexProject
 		/*Контексти виводу*/
 		namespace RenderContext
 		{
-			struct Types
+			enum struct Type: uint32
 			{
-				enum Enum
-				{
-					Default,
-					OpenGL
-				};
+				Default,
+				OpenGL,
+				Direct3D
 			};
-			typedef Types::Enum				Type;
 
 			/*Базовий контекст виводу*/
 			struct Basic
@@ -228,6 +224,9 @@ namespace TexProject
 				Basic&						operator = (const Basic& source) = delete;
 				Basic&						operator = (Basic&& source) = delete;
 
+				virtual Type				GetType() const { throw Exception(); }
+				virtual void*				GetData() const { throw Exception(); }
+
 				virtual void				Create();
 				virtual void				Delete();
 				virtual void				Loop();
@@ -236,8 +235,6 @@ namespace TexProject
 				inline Interface::GUIPanel*						AddPanel(const Interface::PanelType& type_);
 				inline Interface::GUIButton*					AddButton(const Interface::ButtonType& type_);
 				inline void										RemoveItem(Interface::GUIItem* source);
-
-				virtual void				Build(Texture* tex);
 
 				/*Методи, специфічні для ОС Windows*/
 #if __TEXPROJECT_WIN__
@@ -248,8 +245,8 @@ namespace TexProject
 #endif
 			};
 
-			/*Контекст Windows*/
 #if __TEXPROJECT_WIN__
+			/*Контекст Windows*/
 			struct Default:
 				public Basic
 			{
@@ -270,24 +267,41 @@ namespace TexProject
 				Default&					operator = (const Default&) = delete;
 				Default&					operator = (Default&&) = delete;
 
+				virtual Type				GetType() const override { return Type::Default; }
+				virtual void*				GetData() const override;
+
 				virtual void				Create() override;
 				virtual void				Delete() override;
 				virtual void				Loop() override;
 				virtual bool				Use() override;
 
-				virtual void				Build(Texture* tex) override;
-
 				virtual void									_win_WMPaint(HDC hDC) override;
 			};
 #endif
-			/*Контекст OpenGL*/
+
 #ifdef __TEXPROJECT_OPENGL__
+			/*Контекст OpenGL*/
 			struct OpenGL:
 				public Basic
 			{
+				friend TexProject::OpenGL::Buffer::Data;
+				friend TexProject::OpenGL::Buffer::Index;
+				friend TexProject::OpenGL::Buffer::Array;
+				friend TexProject::OpenGL::Shader;
+				friend TexProject::OpenGL::Texture;
 			protected:
 
 				static PFNWGLCREATECONTEXTATTRIBSARBPROC		wglCreateContextAttribsARB;
+
+
+				TexProject::OpenGL::Buffer::Array*				bufferArrayCurrent = nullptr;
+				TexProject::OpenGL::Buffer::Data*				bufferDataCurrent = nullptr;
+				TexProject::OpenGL::Buffer::Index*				bufferIndexCurrent = nullptr;
+
+				TexProject::OpenGL::Shader*						shaderCurrent = nullptr;
+
+				uint32											textureActiveSlot = 0;
+				TexProject::OpenGL::Texture**const				textureCurrent;
 
 #ifdef __TEXPROJECT_WIN__
 
@@ -316,12 +330,70 @@ namespace TexProject
 				OpenGL&						operator = (const OpenGL&) = delete;
 				OpenGL&						operator = (OpenGL&&) = delete;
 
+				virtual Type				GetType() const override { return Type::OpenGL; }
+				virtual void*				GetData() const override;
+
 				virtual void				Create() override;
 				virtual void				Delete() override;
 				virtual void				Loop() override;
 				virtual bool				Use() override;
 
-				virtual void				Build(Texture* tex) override;
+				inline TexProject::OpenGL::Buffer::Array*		GetCurrentBufferArray() const
+				{
+					return bufferArrayCurrent;
+				}
+				inline TexProject::OpenGL::Buffer::Index*		GetCurrentBufferIndex() const
+				{
+					return bufferIndexCurrent;
+				}
+				inline TexProject::OpenGL::Buffer::Data*		GetCurrentBufferDara() const
+				{
+					return bufferDataCurrent;
+				}
+				inline TexProject::OpenGL::Shader*				GetCurrentShader() const
+				{
+					return shaderCurrent;
+				}
+				inline uint32									GetActiveTextureActiveSlot() const
+				{
+					return textureActiveSlot;
+				}
+				TexProject::OpenGL::Texture*				GetCurrentTexture(uint32 level = 0) const;
+
+			};
+#endif
+
+#ifdef __TEXPROJECT_DIRECT3D__
+			/*Контекст Direct3D*/
+			struct Direct3D:
+				public Basic
+			{
+			protected:
+
+				LPDIRECT3D9					d3d = nullptr;
+				LPDIRECT3DDEVICE9			d3ddev = nullptr;
+				D3DPRESENT_PARAMETERS		d3dpp;
+
+			public:
+
+				static void					Init();
+				static void					Free();
+
+											Direct3D(Window::Render* window_);
+											Direct3D(const Direct3D&) = delete;
+											Direct3D(Direct3D&& source) = delete;
+				virtual						~Direct3D();
+
+				Direct3D&					operator = (const OpenGL&) = delete;
+				Direct3D&					operator = (OpenGL&&) = delete;
+
+				virtual Type				GetType() const override { return Type::Direct3D; }
+				virtual void*				GetData() const override;
+
+				virtual void				Create() override;
+				virtual void				Delete() override;
+				virtual void				Loop() override;
+				virtual bool				Use() override;
 			};
 #endif
 
@@ -400,7 +472,7 @@ namespace TexProject
 			Basic&							operator = (Basic&& source) = delete;
 
 
-			virtual void					Create(Basic* parent_ = nullptr) = 0;
+			virtual void					Create(const string& title_ = "") = 0;
 			virtual void					Delete();
 			virtual void					Loop() = 0;
 
@@ -441,21 +513,20 @@ namespace TexProject
 			Main&							operator = (const Main& source) = delete;
 			Main&							operator = (Main&& source) = delete;
 
-			virtual void					Create(Basic* parent_ = nullptr) override;
+			virtual void					Create(const string& title_ = "") override;
 			virtual void					Delete() override;
 			virtual void					Loop() override;
 
 			virtual void 					SetSize(const uvec2 size_) override;
 			virtual void					SetPos(const ivec2 pos_) override;
 
-			virtual void*					GetHandle();
+			virtual void*					GetHandle() override;
 		};
 		/*Вікно з підтримкою виводу*/
 		struct Render:
 			public Basic,
 			public WindowStructures<Render>
 		{
-			friend RenderContext::Default;
 		public:
 
 			struct FuncTypes
@@ -480,6 +551,11 @@ namespace TexProject
 #if __TEXPROJECT_OPENGL__
 			friend RenderContext::OpenGL;
 #endif
+#if __TEXPROJECT_DIRECT3D__
+			friend RenderContext::Direct3D;
+#endif
+
+			virtual void*					GetHandle() override;
 
 			template <typename T>
 			T*								AddPanel();
@@ -521,7 +597,9 @@ namespace TexProject
 			Render&							operator = (const Render& source) = delete;
 			Render&							operator = (Render&& source) = delete;
 
-			virtual void					Create(Basic* parent_ = nullptr) override;
+			inline RenderContext::Basic*	GetRenderContext() { return renderContext; }
+
+			virtual void					Create(const string& title_ = "") override;
 			virtual void					Delete() override;
 			virtual void					Loop() override;
 
@@ -535,9 +613,6 @@ namespace TexProject
 			inline Interface::GUIPanel*		AddPanel(const Interface::PanelType& type_);
 			inline Interface::GUIButton*	AddButton(const Interface::ButtonType& type_);
 			inline void						RemoveItem(Interface::GUIItem* source);
-
-			void							Draw(Texture* tex);
-			void							Build(Texture* tex);
 		};
 
 		void								Init();

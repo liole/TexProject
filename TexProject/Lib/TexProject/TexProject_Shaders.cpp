@@ -4,12 +4,10 @@ using namespace TexProject;
 
 #ifdef __TEXPROJECT_OPENGL__
 
-TexProject::OpenGL::Shader*					TexProject::OpenGL::Shader::current = nullptr;
-
 
 bool					TexProject::OpenGL::Shader::LinkProgram(GLuint PRG)
 {
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
+	//if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
 
 #ifdef __TEXPROJECT_DEBUG__
 	OpenGL::ErrorTest();
@@ -61,8 +59,6 @@ bool					TexProject::OpenGL::Shader::LinkProgram(GLuint PRG)
 }
 bool					TexProject::OpenGL::Shader::CompileShader(GLuint SHD)
 {
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
-
 #ifdef __TEXPROJECT_DEBUG__
 	OpenGL::ErrorTest();
 #endif
@@ -99,8 +95,6 @@ bool					TexProject::OpenGL::Shader::CompileShader(GLuint SHD)
 }
 bool					TexProject::OpenGL::Shader::LoadFile(const string& fileName,bool binary,uint8 **buffer,uint32 *size)
 {
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
-
 	FILE		*input;
 	uint32		fileSize,readed;
 
@@ -139,96 +133,9 @@ bool					TexProject::OpenGL::Shader::LoadFile(const string& fileName,bool binary
 	return true;
 }
 
-void					TexProject::OpenGL::Shader::UseNull()
-{
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
-
-	current = nullptr;
-}
-
-void					TexProject::OpenGL::Shader::Create()
-{
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
-
-	Delete();
-
-	prog_	= glCreateProgram();
-	vs_		= glCreateShader(GL_VERTEX_SHADER);
-	ps_		= glCreateShader(GL_FRAGMENT_SHADER);
-
-	gs_		= glCreateShader(GL_GEOMETRY_SHADER);
-
-	tc_		= glCreateShader(GL_TESS_CONTROL_SHADER);
-	te_		= glCreateShader(GL_TESS_EVALUATION_SHADER);
-
-#ifdef __TEXPROJECT_DEBUG__
-	OpenGL::ErrorTest();
-#endif
-
-	init = true;
-}
-void					TexProject::OpenGL::Shader::Delete()
-{
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
-
-#ifdef __TEXPROJECT_DEBUG__
-	OpenGL::ErrorTest();
-#endif
-
-	if(init)
-	{
-		//if(CURRENT == this) UseNull();
-		if(prog_) { glDeleteProgram(prog_); prog_ = 0; }
-#ifdef __TEXPROJECT_DEBUG__
-		OpenGL::ErrorTest();
-#endif
-		if(vs_)	{ glDeleteShader(vs_); vs_ = 0; }
-#ifdef __TEXPROJECT_DEBUG__
-		OpenGL::ErrorTest();
-#endif
-		if(ps_)	{ glDeleteShader(ps_); ps_ = 0; }
-#ifdef __TEXPROJECT_DEBUG__
-		OpenGL::ErrorTest();
-#endif
-		if(gs_)	{ glDeleteShader(gs_); gs_ = 0; }
-#ifdef __TEXPROJECT_DEBUG__
-		OpenGL::ErrorTest();
-#endif
-		if(tc_)	{ glDeleteShader(tc_); tc_ = 0; }
-#ifdef __TEXPROJECT_DEBUG__
-		OpenGL::ErrorTest();
-#endif
-		if(te_)	{ glDeleteShader(te_); te_ = 0; }
-#ifdef __TEXPROJECT_DEBUG__
-		OpenGL::ErrorTest();
-#endif
-
-		init = false;
-	}
-}
-void					TexProject::OpenGL::Shader::Use()
-{
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
-
-	OpenGL::ErrorTest();
-
-	if(init)
-	{
-		current = this;
-		glUseProgram(prog_);
-
-		OpenGL::ErrorTest();
-	}
-	else
-	{
-		Message("Try To Use Uninit Shader.");
-	}
-}
 
 bool					TexProject::OpenGL::Shader::Load(const string& vsPath,const string& tcPath,const string& tePath,const string& gsPath,const string& psPath)
 {
-	if(!OpenGL::initFuncShader) throw Exception("OpenGL not supported.");
-
 	Delete();
 
 #ifdef __TEXPROJECT_DEBUG__
@@ -244,8 +151,8 @@ bool					TexProject::OpenGL::Shader::Load(const string& vsPath,const string& tcP
 	if(vsPath.length() > 0)
 	{
 		if(!LoadFile(vsPath,true,&shaderSource,&sourceLength)) { Message("Can't Load Vertex Shader.\npath: ''"+vsPath+"''"); return false; }
-		glShaderSource(vs_,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
-		if(!CompileShader(vs_)) return false;
+		glShaderSource(vs,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
+		if(!CompileShader(vs)) return false;
 		delete[] shaderSource;
 	}
 
@@ -253,8 +160,8 @@ bool					TexProject::OpenGL::Shader::Load(const string& vsPath,const string& tcP
 	if(tcPath.length() > 0)
 	{
 		if(!LoadFile(tcPath,true,&shaderSource,&sourceLength)) { Message("Can't Load Tesselation Control Shader.\npath: ''"+tcPath+"''"); return false; }
-		glShaderSource(tc_,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
-		if(!CompileShader(tc_)) return false;
+		glShaderSource(tc,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
+		if(!CompileShader(tc)) return false;
 		delete[] shaderSource;
 	}
 
@@ -262,8 +169,8 @@ bool					TexProject::OpenGL::Shader::Load(const string& vsPath,const string& tcP
 	if(tePath.length() > 0)
 	{
 		if(!LoadFile(tePath,true,&shaderSource,&sourceLength)) { Message("Can't Load Tesselation Evaluated Shader.\npath: ''"+tePath+"''"); return false; }
-		glShaderSource(te_,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
-		if(!CompileShader(te_)) return false;
+		glShaderSource(te,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
+		if(!CompileShader(te)) return false;
 		delete[] shaderSource;
 	}
 
@@ -271,8 +178,8 @@ bool					TexProject::OpenGL::Shader::Load(const string& vsPath,const string& tcP
 	if(gsPath.length() > 0)
 	{
 		if(!LoadFile(gsPath,true,&shaderSource,&sourceLength)) { Message("Can't Load Geometry Shader.\npath: ''"+gsPath+"''"); return false; }
-		glShaderSource(gs_,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
-		if(!CompileShader(gs_)) return false;
+		glShaderSource(gs,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
+		if(!CompileShader(gs)) return false;
 		delete[] shaderSource;
 	}
 
@@ -280,24 +187,22 @@ bool					TexProject::OpenGL::Shader::Load(const string& vsPath,const string& tcP
 	if(psPath.length() > 0)
 	{
 		if(!LoadFile(psPath,true,&shaderSource,&sourceLength)) { Message("Can't Load Pixel Shader.\npath: ''"+psPath+"''"); return false; }
-		glShaderSource(ps_,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
-		if(!CompileShader(ps_)) return false;
+		glShaderSource(ps,1,(const GLchar**)&shaderSource,(const GLint*)&sourceLength);
+		if(!CompileShader(ps)) return false;
 		delete[] shaderSource;
 	}
 
-	if(vsPath.length() > 0) glAttachShader(prog_,vs_);
-	if(tcPath.length() > 0) glAttachShader(prog_,tc_);
-	if(tePath.length() > 0) glAttachShader(prog_,te_);
-	if(gsPath.length() > 0) glAttachShader(prog_,gs_);
-	if(psPath.length() > 0) glAttachShader(prog_,ps_);
+	if(vsPath.length() > 0) glAttachShader(prog,vs);
+	if(tcPath.length() > 0) glAttachShader(prog,tc);
+	if(tePath.length() > 0) glAttachShader(prog,te);
+	if(gsPath.length() > 0) glAttachShader(prog,gs);
+	if(psPath.length() > 0) glAttachShader(prog,ps);
 
 #ifdef __TEXPROJECT_DEBUG__
 	OpenGL::ErrorTest();
 #endif
 
-	init = true;
-
-	return LinkProgram(prog_);
+	return LinkProgram(prog);
 }
 
 

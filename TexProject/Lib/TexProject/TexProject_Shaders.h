@@ -21,54 +21,54 @@ namespace TexProject
 		{
 		protected:
 
-			static Shader*					current;
-
 			static bool						LinkProgram(GLuint prog);
 			static bool						CompileShader(GLuint shader);
 			static bool						LoadFile(const string& fileName,bool binary,uint8 **buffer,uint32 *size);
 
 
-			bool							init = false;
-			GLuint							prog_ = 0,
-											vs_ = 0,
-											tc_ = 0,
-											te_ = 0,
-											gs_ = 0,
-											ps_ = 0;
+			Window::RenderContext::OpenGL* const			renderContext;
+			GLuint											prog = 0,
+															vs = 0,
+															tc = 0,
+															te = 0,
+															gs = 0,
+															ps = 0;
 
 		public:
 
-			static void						UseNull();
 
+			inline							Shader(Window::Render* window);
+			inline							Shader(const Shader&) = delete;
+			inline							Shader(Shader&&) = delete;
+			inline							~Shader();
 
-											Shader() = default;
-											Shader(const Shader&) = delete;
-											Shader(Shader&&) = delete;
+			inline Shader&					operator = (const Shader&) = delete;
+			inline Shader&					operator = (Shader&&) = delete;
 
-			Shader&							operator = (const Shader&) = delete;
-			Shader&							operator = (Shader&&) = delete;
-
-			void							Create();
-			void							Delete();
-			void							Use();
+			inline void						Create();
+			inline void						Delete();
+			inline void						Use();
+			inline void						Unuse();
 
 			bool							Load(const string& vsPath,const string& tcPath,const string& tePath,const string& gsPath,const string& psPath);
 
-			inline GLint						PrepareUniform(const string& uniformName);
-			inline void							SetInt(GLint slot_,int32 val_);
-			inline void							SetFloat(GLint slot_,float32 val_);
-			inline void							SetVec2(GLint slot_,const vec2& val_);
-			inline void							SetVec3(GLint slot_,const vec3& val_);
-			inline void							SetVec4(GLint slot_,const vec4& val_);
-			inline void							SetMat3(GLint slot_,const mat3& val_);
-			inline void							SetMat4(GLint slot_,const mat4& val_);
-			inline void							SetInt(const string& slot_,int32 val_);
-			inline void							SetFloat(const string& slot_,float32 val_);
-			inline void							SetVec2(const string& slot_,const vec2& val_);
-			inline void							SetVec3(const string& slot_,const vec3& val_);
-			inline void							SetVec4(const string& slot_,const vec4& val_);
-			inline void							SetMat3(const string& slot_,const mat3& val_);
-			inline void							SetMat4(const string& slot_,const mat4& val_);
+			inline GLint					PrepareAttribute(const string& attributeName);
+
+			inline GLint					PrepareUniform(const string& uniformName);
+			inline void						SetInt(GLint slot_,int32 val_);
+			inline void						SetFloat(GLint slot_,float32 val_);
+			inline void						SetVec2(GLint slot_,const vec2& val_);
+			inline void						SetVec3(GLint slot_,const vec3& val_);
+			inline void						SetVec4(GLint slot_,const vec4& val_);
+			inline void						SetMat3(GLint slot_,const mat3& val_);
+			inline void						SetMat4(GLint slot_,const mat4& val_);
+			inline void						SetInt(const string& slot_,int32 val_);
+			inline void						SetFloat(const string& slot_,float32 val_);
+			inline void						SetVec2(const string& slot_,const vec2& val_);
+			inline void						SetVec3(const string& slot_,const vec3& val_);
+			inline void						SetVec4(const string& slot_,const vec4& val_);
+			inline void						SetMat3(const string& slot_,const mat3& val_);
+			inline void						SetMat4(const string& slot_,const mat4& val_);
 
 		};
 	}
@@ -78,14 +78,105 @@ namespace TexProject
 
 #ifdef __TEXPROJECT_OPENGL__
 
+inline										TexProject::OpenGL::Shader::Shader(Window::Render* window):
+	renderContext
+	(
+		window->GetRenderContext()->GetType() == Window::RenderContext::Type::OpenGL ?
+		(Window::RenderContext::OpenGL*)window->GetRenderContext()->GetData() :
+		throw Exception()
+	)
+{
+}
+inline										TexProject::OpenGL::Shader::~Shader()
+{
+	Delete();
+}
+inline void									TexProject::OpenGL::Shader::Create()
+{
+	Delete();
+
+	prog	= glCreateProgram();
+	vs		= glCreateShader(GL_VERTEX_SHADER);
+	ps		= glCreateShader(GL_FRAGMENT_SHADER);
+
+	gs		= glCreateShader(GL_GEOMETRY_SHADER);
+
+	tc		= glCreateShader(GL_TESS_CONTROL_SHADER);
+	te		= glCreateShader(GL_TESS_EVALUATION_SHADER);
+
+#ifdef __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
+}
+inline void									TexProject::OpenGL::Shader::Delete()
+{
+	Unuse();
+
+	if(prog) { glDeleteProgram(prog); prog = 0; }
+	if(vs) { glDeleteShader(vs); vs = 0; }
+	if(ps) { glDeleteShader(ps); ps = 0; }
+	if(gs) { glDeleteShader(gs); gs = 0; }
+	if(tc) { glDeleteShader(tc); tc = 0; }
+	if(te) { glDeleteShader(te); te = 0; }
+
+#ifdef __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
+}
+inline void									TexProject::OpenGL::Shader::Use()
+{
+	if(prog)
+	{
+		renderContext->shaderCurrent = this;
+		glUseProgram(prog);
+	}
+	else
+	{
+		throw Exception("Try To Use Uninit Shader.");
+	}
+
+#ifdef __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
+}
+inline void									TexProject::OpenGL::Shader::Unuse()
+{
+	if(renderContext->shaderCurrent == this)
+	{
+		renderContext->shaderCurrent = nullptr;
+		glUseProgram(0);
+	}
+
+#ifdef __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
+}
+inline GLint								TexProject::OpenGL::Shader::PrepareAttribute(const string& attributeName)
+{
+#ifdef __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+
+	if(prog && renderContext->shaderCurrent == this)
+	{
+		return glGetAttribLocation(prog,attributeName.c_str());
+	}
+	else
+	{
+		Message("Failed To Get Attribute.");
+		return -1;
+	}
+#else
+	return glGetAttribLocation(prog,attributeName.c_str());
+#endif
+}
 inline GLint								TexProject::OpenGL::Shader::PrepareUniform(const string& uniformName)
 {
 #ifdef __TEXPROJECT_DEBUG__
 	OpenGL::ErrorTest();
 
-	if(init && current == this)
+	if(prog && renderContext->shaderCurrent == this)
 	{
-		return glGetUniformLocation(prog_,uniformName.c_str());
+		return glGetUniformLocation(prog,uniformName.c_str());
 	}
 	else
 	{
@@ -93,9 +184,8 @@ inline GLint								TexProject::OpenGL::Shader::PrepareUniform(const string& uni
 		return -1;
 	}
 #else
-	return glGetUniformLocation(prog_,uniformName.c_str());
+	return glGetUniformLocation(prog,uniformName.c_str());
 #endif
-
 }
 inline void									TexProject::OpenGL::Shader::SetInt(GLint slot_,int32 val_)
 {
@@ -149,12 +239,14 @@ inline void									TexProject::OpenGL::Shader::SetMat4(GLint slot_,const mat4& 
 inline void									TexProject::OpenGL::Shader::SetInt(const string& slot_,int32 val_)
 {
 	Use();
-	SetInt(PrepareUniform(slot_),val_);
+	auto uni = PrepareUniform(slot_);
+	if(uni != -1) SetInt(uni,val_);
 }
 inline void									TexProject::OpenGL::Shader::SetFloat(const string& slot_,float32 val_)
 {
 	Use();
-	SetFloat(PrepareUniform(slot_),val_);
+	auto uni = PrepareUniform(slot_);
+	if(uni != -1) SetFloat(uni,val_);
 }
 inline void									TexProject::OpenGL::Shader::SetVec2(const string& slot_,const vec2& val_)
 {

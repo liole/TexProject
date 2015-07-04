@@ -39,6 +39,29 @@ PFNGLGETUNIFORMBLOCKINDEXPROC				TexProject::OpenGL::glGetUniformBlockIndex = nu
 PFNGLGETACTIVEUNIFORMBLOCKIVPROC			TexProject::OpenGL::glGetActiveUniformBlockiv = nullptr;
 PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC			TexProject::OpenGL::glGetActiveUniformBlockName = nullptr;
 PFNGLUNIFORMBLOCKBINDINGPROC				TexProject::OpenGL::glUniformBlockBinding = nullptr;
+PFNGLBINDATTRIBLOCATIONPROC					TexProject::OpenGL::glBindAttribLocation;
+PFNGLGETACTIVEATTRIBPROC					TexProject::OpenGL::glGetActiveAttrib;
+PFNGLGETACTIVEUNIFORMPROC					TexProject::OpenGL::glGetActiveUniform;
+PFNGLGETATTRIBLOCATIONPROC					TexProject::OpenGL::glGetAttribLocation;
+PFNGLVERTEXATTRIBPOINTERPROC				TexProject::OpenGL::glVertexAttribPointer;
+PFNGLENABLEVERTEXATTRIBARRAYPROC			TexProject::OpenGL::glEnableVertexAttribArray;
+PFNGLDISABLEVERTEXATTRIBARRAYPROC			TexProject::OpenGL::glDisableVertexAttribArray;
+// Buffer Func
+bool										TexProject::OpenGL::initFuncBuffer = false;
+PFNGLGENVERTEXARRAYSPROC					TexProject::OpenGL::glGenVertexArrays = nullptr;
+PFNGLDELETEVERTEXARRAYSPROC					TexProject::OpenGL::glDeleteVertexArrays = nullptr;
+PFNGLBINDVERTEXARRAYPROC					TexProject::OpenGL::glBindVertexArray = nullptr;
+PFNGLBINDBUFFERPROC							TexProject::OpenGL::glBindBuffer = nullptr;
+PFNGLDELETEBUFFERSPROC						TexProject::OpenGL::glDeleteBuffers = nullptr;
+PFNGLGENBUFFERSPROC							TexProject::OpenGL::glGenBuffers = nullptr;
+PFNGLISBUFFERPROC							TexProject::OpenGL::glIsBuffer = nullptr;
+PFNGLBUFFERDATAPROC							TexProject::OpenGL::glBufferData = nullptr;
+PFNGLBUFFERSUBDATAPROC						TexProject::OpenGL::glBufferSubData = nullptr;
+PFNGLGETBUFFERSUBDATAPROC					TexProject::OpenGL::glGetBufferSubData = nullptr;
+PFNGLMAPBUFFERPROC							TexProject::OpenGL::glMapBuffer = nullptr;
+PFNGLUNMAPBUFFERPROC						TexProject::OpenGL::glUnmapBuffer = nullptr;
+PFNGLGETBUFFERPARAMETERIVPROC				TexProject::OpenGL::glGetBufferParameteriv = nullptr;
+PFNGLGETBUFFERPOINTERVPROC					TexProject::OpenGL::glGetBufferPointerv = nullptr;
 
 
 bool										TexProject::OpenGL::isInit = false;
@@ -54,11 +77,11 @@ bool										TexProject::OpenGL::Init()
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETTEXPARAMETERIIVPROC,glGetTexParameterIiv);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGENERATEMIPMAPPROC,glGenerateMipmap);
 	initFuncTexture =
-		(
-			glActiveTexture != nullptr &&
-			glGetTexParameterIiv != nullptr &&
-			glGenerateMipmap != nullptr
-		);
+	(
+		glActiveTexture != nullptr &&
+		glGetTexParameterIiv != nullptr &&
+		glGenerateMipmap != nullptr
+	);
 	// Shader Func
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLCREATEPROGRAMPROC,glCreateProgram);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLDELETEPROGRAMPROC,glDeleteProgram);
@@ -87,38 +110,80 @@ bool										TexProject::OpenGL::Init()
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETACTIVEUNIFORMBLOCKIVPROC,glGetActiveUniformBlockiv);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC,glGetActiveUniformBlockName);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLUNIFORMBLOCKBINDINGPROC,glUniformBlockBinding);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLBINDATTRIBLOCATIONPROC,glBindAttribLocation);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETACTIVEATTRIBPROC,glGetActiveAttrib);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETACTIVEUNIFORMPROC,glGetActiveUniform);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETATTRIBLOCATIONPROC,glGetAttribLocation);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLVERTEXATTRIBPOINTERPROC,glVertexAttribPointer);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLENABLEVERTEXATTRIBARRAYPROC,glEnableVertexAttribArray);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLDISABLEVERTEXATTRIBARRAYPROC,glDisableVertexAttribArray);
 	initFuncShader =
-		(
-			glCreateProgram != nullptr &&
-			glDeleteProgram != nullptr &&
-			glLinkProgram != nullptr &&
-			glValidateProgram != nullptr &&
-			glUseProgram != nullptr &&
-			glGetProgramiv != nullptr &&
-			glGetProgramInfoLog != nullptr &&
-			glCreateShader != nullptr &&
-			glDeleteShader != nullptr &&
-			glShaderSource != nullptr &&
-			glCompileShader != nullptr &&
-			glAttachShader != nullptr &&
-			glDetachShader != nullptr &&
-			glGetShaderiv != nullptr &&
-			glGetShaderInfoLog != nullptr &&
-			glGetUniformLocation != nullptr &&
-			glUniform1i != nullptr &&
-			glUniform1f != nullptr &&
-			glUniform2f != nullptr &&
-			glUniform3f != nullptr &&
-			glUniform4f != nullptr &&
-			glUniformMatrix3fv != nullptr &&
-			glUniformMatrix4fv != nullptr &&
-			glGetUniformBlockIndex != nullptr &&
-			glGetActiveUniformBlockiv != nullptr &&
-			glGetActiveUniformBlockName != nullptr &&
-			glUniformBlockBinding != nullptr
-		);
+	(
+		glCreateProgram != nullptr &&
+		glDeleteProgram != nullptr &&
+		glLinkProgram != nullptr &&
+		glValidateProgram != nullptr &&
+		glUseProgram != nullptr &&
+		glGetProgramiv != nullptr &&
+		glGetProgramInfoLog != nullptr &&
+		glCreateShader != nullptr &&
+		glDeleteShader != nullptr &&
+		glShaderSource != nullptr &&
+		glCompileShader != nullptr &&
+		glAttachShader != nullptr &&
+		glDetachShader != nullptr &&
+		glGetShaderiv != nullptr &&
+		glGetShaderInfoLog != nullptr &&
+		glGetUniformLocation != nullptr &&
+		glUniform1i != nullptr &&
+		glUniform1f != nullptr &&
+		glUniform2f != nullptr &&
+		glUniform3f != nullptr &&
+		glUniform4f != nullptr &&
+		glUniformMatrix3fv != nullptr &&
+		glUniformMatrix4fv != nullptr &&
+		glGetUniformBlockIndex != nullptr &&
+		glGetActiveUniformBlockiv != nullptr &&
+		glGetActiveUniformBlockName != nullptr &&
+		glUniformBlockBinding != nullptr
+	);
 
-	initFunc = initFuncShader;
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGENVERTEXARRAYSPROC,glGenVertexArrays);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLDELETEVERTEXARRAYSPROC,glDeleteVertexArrays);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLBINDVERTEXARRAYPROC,glBindVertexArray);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLBINDBUFFERPROC,glBindBuffer);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLDELETEBUFFERSPROC,glDeleteBuffers);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGENBUFFERSPROC,glGenBuffers);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLISBUFFERPROC,glIsBuffer);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLBUFFERDATAPROC,glBufferData);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLBUFFERSUBDATAPROC,glBufferSubData);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETBUFFERSUBDATAPROC,glGetBufferSubData);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLMAPBUFFERPROC,glMapBuffer);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLUNMAPBUFFERPROC,glUnmapBuffer);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETBUFFERPARAMETERIVPROC,glGetBufferParameteriv);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETBUFFERPOINTERVPROC,glGetBufferPointerv);
+	initFuncShader =
+	(
+		glGenVertexArrays != nullptr &&
+		glDeleteVertexArrays != nullptr &&
+		glBindVertexArray != nullptr &&
+		glBindBuffer != nullptr &&
+		glDeleteBuffers != nullptr &&
+		glGenBuffers != nullptr &&
+		glIsBuffer != nullptr &&
+		glBufferData != nullptr &&
+		glBufferSubData != nullptr &&
+		glGetBufferSubData != nullptr &&
+		glMapBuffer != nullptr &&
+		glUnmapBuffer != nullptr &&
+		glGetBufferParameteriv != nullptr &&
+		glGetBufferPointerv != nullptr
+	);
+
+
+	initFunc =	initFuncShader &&
+				initFuncTexture &&
+				initFuncShader;
 
 	//glGetString​(GL_VERSION​);
 	isInit = true;

@@ -40,44 +40,51 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\include\;$(SolutionDir)TexProject\Lib\Direct3D\Include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;$(SolutionDir)TexProject\Lib\Direct3D\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\include\;$(SolutionDir)TexProject\Lib\Direct3D\Include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;$(SolutionDir)TexProject\Lib\Direct3D\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Lib\TexProject\Empty\TexProject_Empty.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_DevIL.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Buffers.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Geometry.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Shaders.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Textures.cpp" />
@@ -86,13 +93,16 @@
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Main.cpp" />
-    <ClCompile Include="Source\Example_GUI.cpp" />
+    <ClCompile Include="Source\Examples\Generator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
     <ClInclude Include="Lib\HalfFloat\half.hpp" />
     <ClInclude Include="Lib\TexProject\TexProject.h" />
     <ClInclude Include="Lib\TexProject\TexProject_DevIL.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Buffers.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Direct3D.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Geometry.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Interface.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Shaders.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Textures.h" />
@@ -104,11 +114,25 @@
     <ClInclude Include="Lib\TexProject\TexProject_Header.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Media\Shaders\1.gs" />
-    <None Include="Media\Shaders\1.ps" />
-    <None Include="Media\Shaders\1.vs" />
+    <None Include="Media\Shaders\GLSL\1.gs" />
+    <None Include="Media\Shaders\GLSL\1.ps" />
+    <None Include="Media\Shaders\GLSL\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.vs" />
+    <None Include="Media\Shaders\GLSL\Simple Texture\1.ps" />
+    <None Include="Media\Shaders\GLSL\Simple Texture\1.vs" />
+    <None Include="Media\Shaders\GLSL\Simple\1.ps" />
+    <None Include="Media\Shaders\GLSL\Simple\1.vs" />
+    <None Include="Media\Shaders\HLSL\1.fx" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Media\Images\3.png" />
+    <Image Include="Media\Images\Brick1_D.png" />
+    <Image Include="Media\Images\Brick1_M.png" />
+    <Image Include="Media\Images\Brick1_N.png" />
+    <Image Include="Media\Images\Example.jpg" />
+    <Image Include="Media\Images\Stone_HeightMap.png" />
+    <Image Include="Media\Images\Stone_NormalMap.png" />
     <Image Include="Media\Images\Test.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -39,10 +39,10 @@ Texture* cellularTexGenFunc(uint32 dotNumber, uint32 width, uint32 height)
 			}
 
 
-			color.x = 1.0f - mindist / 100.0f;
-			color.y = 1.0f - mindist / 100.0f;
-			color.z = 1.0f - mindist / 100.0f;
-			color.w = 1.0f - mindist / 100.0f;
+			color.x = (1.0f - mindist / 100.0f)*0.45f;
+			color.y = (1.0f - mindist / 100.0f)*0.88f;
+			color.z = (1.0f - mindist / 100.0f)*0.50;
+			color.w = (1.0f - mindist / 100.0f)*1.0f;
 
 			tex->Get(x, y) = color;
 		}
@@ -66,7 +66,7 @@ void TexInitFunc(Window::Render* window)
 		delete tTexture;
 		tTexture = nullptr;
 	}
-	tTexture = cellularTexGenFunc(100, 1024, 1024);
+	tTexture = cellularTexGenFunc(100, 128, 128);
 	tTexture->Build(window);	
 }
 void TexRenderFunc(Window::Render* window)
@@ -103,7 +103,7 @@ void TexProject::Main()
 	Window::Render tWindow;
 
 	tWindow.Create();
-	tWindow.SetSize(uvec2(521, 512));
+	tWindow.SetSize(uvec2(512, 512));
 	tWindow.SetFunc(Window::Render::FuncTypes::Init, TexInitFunc);		// Встановлюємо функції ініціалізації
 	tWindow.SetFunc(Window::Render::FuncTypes::Loop, TexRenderFunc);		// Рендеру (обробки)
 	tWindow.SetFunc(Window::Render::FuncTypes::Free, TexFreeFunc);		// І звільнення ресурсів

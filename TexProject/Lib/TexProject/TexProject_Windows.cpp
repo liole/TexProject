@@ -297,6 +297,10 @@ void					TexProject::Window::RenderContext::Init()
 #if __TEXPROJECT_OPENGL__
 	OpenGL::Init();
 #endif
+
+#if __TEXPROJECT_DIRECT3D__
+	Direct3D::Init();
+#endif
 }
 void					TexProject::Window::RenderContext::Free()
 {
@@ -306,6 +310,10 @@ void					TexProject::Window::RenderContext::Free()
 
 #ifdef __TEXPROJECT_OPENGL__
 	OpenGL::Free();
+#endif
+
+#if __TEXPROJECT_DIRECT3D__
+	Direct3D::Free();
 #endif
 }
 
@@ -335,10 +343,6 @@ bool					TexProject::Window::RenderContext::Basic::Use()
 	return false;
 }
 
-void					TexProject::Window::RenderContext::Basic::Build(Texture* tex)
-{
-}
-
 #if __TEXPROJECT_WIN__
 void					TexProject::Window::RenderContext::Basic::_win_WMPaint(HDC hDC)
 {
@@ -349,13 +353,13 @@ void					TexProject::Window::RenderContext::Basic::_win_WMPaint(HDC hDC)
 
 // Window::RenderContext::Default
 #if __TEXPROJECT_WIN__
+
 void					TexProject::Window::RenderContext::Default::Init()
 {
 }
 void					TexProject::Window::RenderContext::Default::Free()
 {
 }
-
 TexProject::Window::RenderContext::Default::Default(Window::Render* window_):
 	Basic(window_)
 {
@@ -363,6 +367,10 @@ TexProject::Window::RenderContext::Default::Default(Window::Render* window_):
 TexProject::Window::RenderContext::Default::~Default()
 {
 	Delete();
+}
+void*					TexProject::Window::RenderContext::Default::GetData() const
+{
+	return nullptr;
 }
 void					TexProject::Window::RenderContext::Default::Create()
 {
@@ -413,14 +421,6 @@ bool					TexProject::Window::RenderContext::Default::Use()
 	}
 	return false;
 }
-
-void					TexProject::Window::RenderContext::Default::Build(Texture* tex)
-{
-#if __TEXPROJECT_WIN__
-	tex->winBuild();
-#endif
-}
-
 void					TexProject::Window::RenderContext::Default::_win_WMPaint(HDC hDC)
 {
 	RECT rc;
@@ -433,6 +433,7 @@ void					TexProject::Window::RenderContext::Default::_win_WMPaint(HDC hDC)
 
 	inter->_win_WMPaint(hDC);
 }
+
 #endif
 
 
@@ -558,14 +559,36 @@ void					TexProject::Window::RenderContext::OpenGL::Init()
 void					TexProject::Window::RenderContext::OpenGL::Free()
 {
 }
-
 TexProject::Window::RenderContext::OpenGL::OpenGL(Window::Render* window_):
-	Basic(window_)
+	Basic(window_),
+	textureCurrent(new TexProject::OpenGL::Texture*[TexProject::OpenGL::Texture::GetSlotCount()])
 {
+	for(int32 i = 0; i < TexProject::OpenGL::Texture::GetSlotCount(); ++i)
+	{
+		textureCurrent[i] = nullptr;
+	}
 }
 TexProject::Window::RenderContext::OpenGL::~OpenGL()
 {
-	Delete();
+}
+TexProject::OpenGL::Texture*				TexProject::Window::RenderContext::OpenGL::GetCurrentTexture(uint32 level) const
+{
+#if __TEXPROJECT_DEBUG__
+	if(int32(level) < TexProject::OpenGL::Texture::GetSlotCount())
+	{
+		return textureCurrent[level];
+	}
+	else
+	{
+		throw Exception("");
+	}
+#else
+	return textureCurrent[level];
+#endif
+}
+void*					TexProject::Window::RenderContext::OpenGL::GetData() const
+{
+	return reinterpret_cast<void*>(const_cast<RenderContext::OpenGL * const>(this));
 }
 void					TexProject::Window::RenderContext::OpenGL::Create()
 {
@@ -620,13 +643,232 @@ bool					TexProject::Window::RenderContext::OpenGL::Use()
 	return false;
 }
 
-void					TexProject::Window::RenderContext::OpenGL::Build(Texture* tex)
+#endif
+
+
+// Window::RenderContext::Direct3D
+#if __TEXPROJECT_DIRECT3D__
+
+void					TexProject::Window::RenderContext::Direct3D::Init()
 {
-	if(Use())
+}
+void					TexProject::Window::RenderContext::Direct3D::Free()
+{
+}
+TexProject::Window::RenderContext::Direct3D::Direct3D(Window::Render* window_):
+	Basic(window_)
+{
+}
+TexProject::Window::RenderContext::Direct3D::~Direct3D()
+{
+}
+void*					TexProject::Window::RenderContext::Direct3D::GetData() const
+{
+	return reinterpret_cast<void*>(d3ddev);
+}
+
+LPDIRECT3DVERTEXBUFFER9 vb = NULL;
+LPDIRECT3DINDEXBUFFER9	ib = NULL;
+LPD3DXEFFECT			fx = NULL;
+struct CUSTOMVERTEX
+{
+	FLOAT x,y,z,rhw;
+	DWORD color;
+};
+#define D3DFVF_CUSTOMVERTEX (D3DFVF_XYZRHW|D3DFVF_DIFFUSE)
+
+
+void					TexProject::Window::RenderContext::Direct3D::Create()
+{
+	Delete();
+
+	//d3ddev = new IDirect3DDevice9();
+
+	d3d = Direct3DCreate9(D3D_SDK_VERSION);
+	if(!d3d) Error("Cant create direct device.");
+
+	ZeroMemory(&d3dpp,sizeof(d3dpp));
+	d3dpp.Windowed = TRUE;
+	d3dpp.BackBufferWidth = window->GetSize().x;
+	d3dpp.BackBufferHeight = window->GetSize().y;
+	d3dpp.BackBufferCount = 1;
+	d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE;
+	d3dpp.MultiSampleQuality = 0;
+	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	d3dpp.Flags = 0;
+	d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_DEFAULT;
+	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;	//D3DFMT_R8G8B8;	//D3DFMT_UNKNOWN
+	d3dpp.EnableAutoDepthStencil = FALSE;
+	d3dpp.hDeviceWindow = (HWND)window->GetHandle();	//hWnd;
+
 	{
-		tex->glBuild();
+		auto result = d3d->CreateDevice
+		(
+			D3DADAPTER_DEFAULT,
+			D3DDEVTYPE_HAL,
+			NULL,
+			D3DCREATE_SOFTWARE_VERTEXPROCESSING,	// D3DCREATE_HARDWARE_VERTEXPROCESSING
+			&d3dpp,
+			&d3ddev
+		);
+
+		switch(result)
+		{
+			case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+			case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+			case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+			case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+		}
+	}
+
+	if(!d3ddev) Error("");
+
+	{
+		auto result = d3ddev->CreateVertexBuffer
+		(
+			sizeof(CUSTOMVERTEX)*3,
+			0,
+			D3DFVF_CUSTOMVERTEX,
+			D3DPOOL_DEFAULT,
+			&vb,
+			NULL
+		);
+		switch(result)
+		{
+			case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+			case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+			case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+			case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+		}
+	}
+
+	{
+		CUSTOMVERTEX vArr[] =
+		{
+			{256.0f,0.0f,0.5f,1.0f,0xffff0000,},
+			{512.0f,512.0f,0.5f,1.0f,0xff00ff00,},
+			{0.0f,512.0f,0.5f,1.0f,0xff00ffff,},
+		};
+
+		void* tArr = nullptr;
+		{
+			auto result = vb->Lock(0,sizeof(CUSTOMVERTEX)*3,&tArr,0);
+			switch(result)
+			{
+				case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+				case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+				case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+				case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+			}
+		}
+		memcpy(tArr,vArr,sizeof(vArr));
+		{
+			auto result = vb->Unlock();
+			switch(result)
+			{
+				case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+				case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+				case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+				case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+			}
+		}
+	}
+
+	{
+		uint32 iArr[] = { 0,1,2 };
+
+		d3ddev->CreateIndexBuffer(sizeof(uint32)*3,0,D3DFMT_INDEX32,D3DPOOL_DEFAULT,&ib,NULL);
+		void* tArr = nullptr;
+		ib->Lock(0,sizeof(uint32)*3,&tArr,0);
+		memcpy(tArr,iArr,sizeof(iArr));
+		ib->Unlock();
+	}
+
+	{
+		auto result = D3DXCreateEffectFromFile(d3ddev,"Media/Shaders/HLSL/1.fx",NULL,NULL,D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY,NULL,&fx,NULL);
+		switch(result)
+		{
+			case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+			case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+			case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+			case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+		}
+	}
+
+	init = true;
+}
+void					TexProject::Window::RenderContext::Direct3D::Delete()
+{
+	if(init)
+	{
+		init = false;
 	}
 }
+void					TexProject::Window::RenderContext::Direct3D::Loop()
+{
+	SwapBuffers(window->wndDeviceContextHandle);
+}
+bool					TexProject::Window::RenderContext::Direct3D::Use()
+{
+	if(init && d3ddev)
+	{
+
+		//d3ddev->CreateVertexShader()
+
+		d3ddev->Clear(0,NULL,D3DCLEAR_TARGET,D3DCOLOR_XRGB(0,0,0),1.0f,0);
+		{
+			auto result = d3ddev->BeginScene();
+			switch(result)
+			{
+				case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+				case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+				case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+				case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+			}
+		}
+
+		uint32 passes = 0;
+		fx->Begin(&passes, 0);
+		for(uint32 uiPass = 0; uiPass < passes; ++uiPass)
+		{
+			fx->BeginPass(uiPass);
+
+			{
+				auto result = d3ddev->SetStreamSource(0,vb,0,sizeof(CUSTOMVERTEX));
+				switch(result)
+				{
+					case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+					case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+					case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+					case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+				}
+			}
+			d3ddev->SetIndices(ib);
+			d3ddev->SetFVF(D3DFVF_CUSTOMVERTEX);
+			{
+				//auto result = d3ddev->DrawPrimitive(D3DPT_TRIANGLELIST,0,1);
+				auto result = d3ddev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST,0,0,3,0,1);
+				switch(result)
+				{
+					case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
+					case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
+					case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
+					case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
+				}
+			}
+
+			fx->EndPass();
+		}
+		fx->End();
+
+		d3ddev->EndScene();
+		d3ddev->Present(NULL,NULL,NULL,NULL);
+		return true;
+	}
+	return false;
+}
+
 #endif
 
 
@@ -638,7 +880,6 @@ void					TexProject::Window::Basic::Delete()
 	for(auto i: child) i->Delete();
 	child.clear();
 }
-
 
 void					TexProject::Window::Basic::SetSize(const uvec2 size_)
 {
@@ -800,7 +1041,7 @@ void					TexProject::Window::Main::Free()
 }
 
 
-void					TexProject::Window::Main::Create(Basic* parent_)
+void					TexProject::Window::Main::Create(const string& title_)
 {
 #ifdef __TEXPROJECT_WIN__
 #ifdef __TEXPROJECT_DEBUG__
@@ -813,7 +1054,7 @@ void					TexProject::Window::Main::Create(Basic* parent_)
 	Delete();
 
 	{
-		parent = parent_;
+		parent = nullptr;	//parent_;
 		if(parent)
 		{
 			if(!parent->IsInit()) return;
@@ -824,7 +1065,7 @@ void					TexProject::Window::Main::Create(Basic* parent_)
 	{
 		size = uvec2(400, 300);
 		pos = GetDesktopSize()/2 - size/2;
-		title = "window";
+		title = title_;	//"window";
 	}
 
 	{
@@ -1183,7 +1424,7 @@ void					TexProject::Window::Render::Init()
 		memset(&wndPixelFormatDescriptor,0,sizeof(wndPixelFormatDescriptor));
 		wndPixelFormatDescriptor.nSize			= sizeof(wndPixelFormatDescriptor);
 		wndPixelFormatDescriptor.nVersion		= 1;
-		wndPixelFormatDescriptor.dwFlags		= PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+		wndPixelFormatDescriptor.dwFlags		= PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_SUPPORT_DIRECTDRAW | PFD_SUPPORT_GDI | PFD_DOUBLEBUFFER;
 		/*
 		PFD_DOUBLEBUFFER
 		PFD_STEREO
@@ -1234,7 +1475,7 @@ TexProject::Window::Render::~Render()
 	Delete();
 }
 
-void					TexProject::Window::Render::Create(Basic* parent_)
+void					TexProject::Window::Render::Create(const string& title_)
 {
 #if __TEXPROJECT_WIN__
 #if __TEXPROJECT_DEBUG__
@@ -1247,7 +1488,7 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 	Delete();
 
 	{
-		parent = parent_;
+		parent = nullptr;	//parent_;
 		if(parent && !parent->IsInit()) return;
 		if(parent)
 		{
@@ -1259,7 +1500,7 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 	{
 		size = uvec2(256);
 		pos = GetDesktopSize()/2 - size/2;
-		title = "window";
+		title = title_;	//"window";
 	}
 
 	{
@@ -1272,20 +1513,20 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 	AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
 
 	wndHandle =	CreateWindowEx
-		(
-			wndExStyle,
-			wndClassName.c_str(),
-			title.c_str(),
-			wndStyle | (parent ? WS_CHILD : 0),
-			wndRect.left,
-			wndRect.top,
-			wndRect.right - wndRect.left,
-			wndRect.bottom - wndRect.top,
-			(HWND)(parent ? parent->GetHandle() : NULL),	//NULL,
-			(HMENU)NULL,
-			wndClassEx.hInstance,
-			NULL
-		);
+	(
+		wndExStyle,
+		wndClassName.c_str(),
+		title.c_str(),
+		wndStyle | (parent ? WS_CHILD : 0),
+		wndRect.left,
+		wndRect.top,
+		wndRect.right - wndRect.left,
+		wndRect.bottom - wndRect.top,
+		(HWND)(parent ? parent->GetHandle() : NULL),	//NULL,
+		(HMENU)NULL,
+		wndClassEx.hInstance,
+		NULL
+	);
 
 	if(!wndHandle)
 	{
@@ -1295,6 +1536,8 @@ void					TexProject::Window::Render::Create(Basic* parent_)
 		Message("Can't create window.");
 		return;
 	}
+
+	UpdateWindow(wndHandle);
 
 	{
 		wndDeviceContextHandle = GetDC(wndHandle);		
@@ -1453,7 +1696,6 @@ void					TexProject::Window::Render::Loop()
 						while( difftime((vSyncTimer = clock()),oVSyncTimer) < 1.0/60.0f );
 						oVSyncTimer = vSyncTimer;
 					}
-					else
 					{
 						if(func[FuncTypes::Loop]) func[FuncTypes::Loop](this);
 						renderContext->Loop();
@@ -1488,7 +1730,7 @@ void					TexProject::Window::Render::SetSize(const uvec2 size_)
 			}
 			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
 			SetWindowPos
-				(
+			(
 				wndHandle,
 				HWND_NOTOPMOST,
 				wndRect.left,
@@ -1496,7 +1738,7 @@ void					TexProject::Window::Render::SetSize(const uvec2 size_)
 				wndRect.right-wndRect.left,
 				wndRect.bottom-wndRect.top,
 				SWP_NOMOVE
-				);
+			);
 			UpdateWindow(wndHandle);
 		}
 		{
@@ -1524,7 +1766,7 @@ void					TexProject::Window::Render::SetPos(const ivec2 pos_)
 			}
 			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
 			SetWindowPos
-				(
+			(
 				wndHandle,
 				HWND_NOTOPMOST,
 				wndRect.left,
@@ -1532,11 +1774,16 @@ void					TexProject::Window::Render::SetPos(const ivec2 pos_)
 				wndRect.right-wndRect.left,
 				wndRect.bottom-wndRect.top,
 				SWP_NOSIZE
-				);
+			);
 			UpdateWindow(wndHandle);
 		}
 #endif
 	}
+}
+
+void*					TexProject::Window::Render::GetHandle()
+{
+	return wndHandle;
 }
 
 void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type& type_)
@@ -1550,16 +1797,23 @@ void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type&
 	switch(type_)
 	{
 #ifdef __TEXPROJECT_WIN__
-		case RenderContext::Types::Default:
+		case RenderContext::Type::Default:
 		{
 			renderContext = new RenderContext::Default(this);
 			break;
 		}
 #endif
 #ifdef __TEXPROJECT_OPENGL__
-		case RenderContext::Types::OpenGL:
+		case RenderContext::Type::OpenGL:
 		{
 			renderContext = new RenderContext::OpenGL(this);
+			break;
+		}
+#endif
+#ifdef __TEXPROJECT_DIRECT3D__
+		case RenderContext::Type::Direct3D:
+		{
+			renderContext = new RenderContext::Direct3D(this);
 			break;
 		}
 #endif
@@ -1585,32 +1839,6 @@ void					TexProject::Window::Render::SetFunc(const FuncType& type_,Func func_)
 void					TexProject::Window::Render::ResetFuncs()
 {
 	for(uint32 i = 0; i < FuncTypes::count; ++i) func[i] = nullptr;
-}
-
-void					TexProject::Window::Render::Draw(Texture* tex)
-{
-	wndDeviceContextHandle;
-	StretchDIBits
-	(
-		wndDeviceContextHandle,
-		0,0,size.x, size.y,	//tex->GetSize().x,tex->GetSize().y,
-		0,0,tex->GetSize().x,tex->GetSize().y,
-		tex->winTextureData,(BITMAPINFO*)&tex->winInfoHeader,
-		DIB_RGB_COLORS,SRCCOPY
-	);
-}
-void					TexProject::Window::Render::Build(Texture* tex)
-{
-	renderContext->Build(tex);
-/*#if __TEXPROJECT_OPENGL__
-	if(renderContext && renderContext->Use())
-	{
-		tex->glBuild();
-	}
-#endif*/
-/*#if __TEXPROJECT_WIN__
-	tex->winBuild();
-#endif*/
 }
 
 

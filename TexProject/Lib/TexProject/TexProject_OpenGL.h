@@ -188,6 +188,29 @@ namespace TexProject
 		extern PFNGLGETACTIVEUNIFORMBLOCKIVPROC					glGetActiveUniformBlockiv;
 		extern PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC				glGetActiveUniformBlockName;
 		extern PFNGLUNIFORMBLOCKBINDINGPROC						glUniformBlockBinding;
+		extern PFNGLBINDATTRIBLOCATIONPROC						glBindAttribLocation;
+		extern PFNGLGETACTIVEATTRIBPROC							glGetActiveAttrib;
+		extern PFNGLGETACTIVEUNIFORMPROC						glGetActiveUniform;
+		extern PFNGLGETATTRIBLOCATIONPROC						glGetAttribLocation;
+		extern PFNGLVERTEXATTRIBPOINTERPROC						glVertexAttribPointer;
+		extern PFNGLENABLEVERTEXATTRIBARRAYPROC					glEnableVertexAttribArray;
+		extern PFNGLDISABLEVERTEXATTRIBARRAYPROC				glDisableVertexAttribArray;
+		// Buffer Func
+		extern bool												initFuncBuffer;
+		extern PFNGLGENVERTEXARRAYSPROC							glGenVertexArrays;
+		extern PFNGLDELETEVERTEXARRAYSPROC						glDeleteVertexArrays;
+		extern PFNGLBINDVERTEXARRAYPROC							glBindVertexArray;
+		extern PFNGLBINDBUFFERPROC								glBindBuffer;
+		extern PFNGLDELETEBUFFERSPROC							glDeleteBuffers;
+		extern PFNGLGENBUFFERSPROC								glGenBuffers;
+		extern PFNGLISBUFFERPROC								glIsBuffer;
+		extern PFNGLBUFFERDATAPROC								glBufferData;
+		extern PFNGLBUFFERSUBDATAPROC							glBufferSubData;
+		extern PFNGLGETBUFFERSUBDATAPROC						glGetBufferSubData;
+		extern PFNGLMAPBUFFERPROC								glMapBuffer;
+		extern PFNGLUNMAPBUFFERPROC								glUnmapBuffer;
+		extern PFNGLGETBUFFERPARAMETERIVPROC					glGetBufferParameteriv;
+		extern PFNGLGETBUFFERPOINTERVPROC						glGetBufferPointerv;
 
 
 		extern bool							isInit;

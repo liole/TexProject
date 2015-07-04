@@ -22,7 +22,7 @@ namespace TexProject
 		struct Basic;						// Базовий клас інтерфейсу
 		struct Default;						// Інтерфейс засобами ОС
 		struct OpenGL;						// Інтерфейс з підтримкою OpenGL
-		struct DirectX;						// Інтерфейс з підтримкою DirectX
+		struct Direct3D;					// Інтерфейс з підтримкою Direct3D
 		struct Mantle;						// Інтерфейс з підтримкою MantleAPI
 		struct Vulkan;						// Інтерфейс з підтримкою VulkanAPI
 
@@ -143,6 +143,7 @@ namespace TexProject
 			GUI * const						inter = nullptr;
 			std::list<Item**>				pointer;
 			void*							userData = nullptr;
+			bool							userDataRemove = false;
 			Action*							action[ActionTypes::count];
 			uint32							properties = PropertyBits::Default;
 
@@ -176,6 +177,8 @@ namespace TexProject
 
 			GUIItem*						GetBase();
 
+			//virtual void					SetPos(const vec2& pos_);
+
 			virtual vec2					GetPos();
 			virtual vec2					GetLocalPos();
 			virtual int32					GetPriority();
@@ -189,7 +192,7 @@ namespace TexProject
 
 			inline void						SetAction(const ActionType& type_,Action* action_);
 
-			inline void						SetUserData(void* data);
+			inline void						SetUserData(void* data_, bool remove_ = false);
 			inline void*					GetUserData();
 
 			inline void						AddPointer(void*& pointer_);					// Додаємо у список керований вказівник
@@ -266,19 +269,17 @@ namespace TexProject
 				friend Interface::Basic;
 			protected:
 
-				Texture*				texture = nullptr;
+											Image(GUI* interface_,Item* parent_ = nullptr);
+											Image(const Basic&) = delete;
+											Image(Image&&) = delete;
+				virtual						~Image() = default;
 
-										Image(GUI* interface_,Item* parent_ = nullptr);
-										Image(const Basic&) = delete;
-										Image(Image&&) = delete;
-				virtual					~Image() = default;
-
-				Default&				operator = (const Image&) = delete;
-				Default&				operator = (Image&&) = delete;
+				Default&					operator = (const Image&) = delete;
+				Default&					operator = (Image&&) = delete;
 
 			public:
 
-				inline void				SetImage(Texture* texture_);
+				virtual void				SetImage(Texture::D2* texture_);
 			};
 		}
 		namespace Button
@@ -375,6 +376,12 @@ namespace TexProject
 			public:
 				virtual bool				IsConnector() override;
 
+				virtual void				Refresh() override;
+				inline void					RefreshObservers()
+				{
+					for(auto i: observers) i->Refresh();
+				}
+
 				inline void					SetTarget(GUIButtonConnector* connector);
 				inline void					UnsetTarget();
 				inline void					SetRecipient();
@@ -467,10 +474,11 @@ namespace TexProject
 		};
 
 #if __TEXPROJECT_WIN__
-		struct Default: public Interface::Basic
+		struct Default:
+			public Interface::Basic
 		{
 			friend Creator;
-			friend Texture;
+			friend Windows::Texture;
 		protected:
 
 			struct Panel
@@ -488,9 +496,13 @@ namespace TexProject
 				};
 				struct Image: public Interface::Panel::Image
 				{
+					Windows::Texture*							image = nullptr;
+
 				public:
 																Image(GUI* interface_,Item* parent_ = nullptr);
 																~Image() = default;
+
+					virtual void								SetImage(Texture::D2* texture_) override;
 
 					virtual void								_win_WMPaint() override;
 				};
@@ -610,9 +622,14 @@ void										TexProject::Interface::Item::SetAction(const ActionType& type_,Act
 	action[type_] = action_;
 }
 
-inline void									TexProject::Interface::Item::SetUserData(void* data)
+inline void									TexProject::Interface::Item::SetUserData(void* data_,bool remove_)
 {
-	userData = data;
+	if(userDataRemove && userData)
+	{
+		delete userData;
+	}
+	userData = data_;
+	userDataRemove = remove_;
 }
 inline void*								TexProject::Interface::Item::GetUserData()
 {
@@ -690,13 +707,6 @@ typename T*									TexProject::Interface::Panel::Basic::AddButton()
 	auto t = Item::CreateItem<T>(inter,this);
 	button.push_back((Button::Basic*)t);
 	return t;
-}
-
-
-// Interface::Panel::Image
-inline void									TexProject::Interface::Panel::Image::SetImage(Texture* texture_)
-{
-	texture = texture_;
 }
 
 

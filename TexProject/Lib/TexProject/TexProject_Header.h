@@ -13,12 +13,23 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 для позначення збірок під Linux і MacOS відповідно.
 Бажано одночасно визначати лише один з них.
 */
-#define __TEXPROJECT_WIN__					1
-#define __TEXPROJECT_LIN__					0
-#define __TEXPROJECT_MAC__					0
+#define __TEXPROJECT_PLATFORM_NONE__		0
+#define __TEXPROJECT_PLATFORM_WIN__			1
+#define __TEXPROJECT_PLATFORM_LIN__			2
+#define __TEXPROJECT_PLATFORM_MAC__			3
+
+
+#define __TEXPROJECT_PLATFORM__				__TEXPROJECT_PLATFORM_WIN__
+
+
+#define __TEXPROJECT_WIN__					(__TEXPROJECT_PLATFORM__ == __TEXPROJECT_PLATFORM_WIN__)
+#define __TEXPROJECT_LIN__					(__TEXPROJECT_PLATFORM__ == __TEXPROJECT_PLATFORM_LIN__)
+#define __TEXPROJECT_MAC__					(__TEXPROJECT_PLATFORM__ == __TEXPROJECT_PLATFORM_MAC__)
+
 
 #define __TEXPROJECT_OPENGL__				1
 #define __TEXPROJECT_DEVIL__				1
+#define __TEXPROJECT_DIRECT3D__				1
 
 
 /*
@@ -215,6 +226,11 @@ namespace TexProject
 			/*Контекст OpenGL*/
 			struct OpenGL;
 #endif
+
+#ifdef __TEXPROJECT_DIRECT3D__
+			/*Контекст Direct3D*/
+			struct Direct3D;
+#endif
 		
 		};
 
@@ -227,6 +243,17 @@ namespace TexProject
 		bool								Process();
 	}
 
+
+#if __TEXPROJECT_WIN__
+	/*stuff fow windows*/
+	namespace Windows
+	{
+		/*Windows textures(Bitmaps)*/
+		struct Texture;
+	}
+#endif
+
+
 #if __TEXPROJECT_OPENGL__
 	/*Структури і методи бібліотеки OpenGL*/
 	// OpenGL
@@ -236,6 +263,35 @@ namespace TexProject
 		// Shader
 		/*Клас шейдера*/
 		struct Shader;
+
+		namespace Buffer
+		{
+			//enum struct Type;
+
+			namespace Attribute
+			{
+				//enum struct DataType;
+				struct Params;
+			}
+
+			struct Data;
+			struct Index;
+			struct Array;
+			struct Uniform;
+			struct Transform;
+
+			struct Frame;
+		}
+
+		struct Texture;
+	}
+#endif
+
+
+#ifdef __TEXPROJECT_DIRECT3D__
+	/*Головний неймспейс Direct3D*/
+	namespace Direct3D
+	{
 	}
 #endif
 
@@ -251,8 +307,11 @@ namespace TexProject
 
 
 	// Textures
-	/*Клас текстура*/
-	struct Texture;
+	/*Неймспейс текстур*/
+	namespace Texture
+	{
+		struct D2;
+	}
 
 }
 
