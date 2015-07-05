@@ -253,7 +253,47 @@ namespace TexProject
 			inline void*					GetDataRGBA32F() const;
 
 #if __TEXPROJECT_DEVIL__
-			bool							_DevIL_Load2D(const string& filename);
+			bool							_DevIL_Load(const string& filename);
+#endif
+		};
+		struct Cube
+		{
+		public:
+
+			enum class Face: uint32
+			{
+				Right						= 0,
+				Left						= 1,
+				Top							= 2,
+				Bottom						= 3,
+				Front						= 4,
+				Back						= 5
+			};
+
+		protected:
+			vec4*							data[6];
+			uint32							size = 0;
+
+		public:
+			inline							Cube();
+			inline							~Cube();
+
+			inline void						Create(uint32 size_);
+			bool							Load(const string& filename);
+			inline void						Fill(const vec4& color_);
+			inline void						Fill(Face face_,const vec4& color_);
+			inline void						Delete();
+
+			inline uint32					GetSize() const;
+
+			// Direct storage access
+			inline void						SetPixel(Face& face_,const uvec2& pos_,const vec4& color_);
+			inline vec4						GetPixel(Face& face_,const uvec2& pos_);
+			inline void*					GetDataRGBA32F() const;
+			inline void*					GetDataRGBA32F(Face face_) const;
+
+#if __TEXPROJECT_DEVIL__
+			bool							_DevIL_Load(const string& filename);
 #endif
 		};
 	}
@@ -444,6 +484,7 @@ namespace TexProject
 			inline ~Texture();
 
 			inline Texture&					operator = (const TexProject::Texture::D2& source);
+			inline Texture&					operator = (const TexProject::Texture::Cube& source);
 
 			inline void						Create(Type type_,InternalFormat internalFormat_,Format format_,Component component_,Wrap wrap_,Filter filter_,uvec3 size_,void* data_);
 			inline void						Delete();
@@ -517,25 +558,17 @@ inline TexProject::uvec2					TexProject::Texture::D2::GetSize() const
 }
 inline void									TexProject::Texture::D2::SetPixel(const uvec2& pos_,const vec4& color_)
 {
-	if(pos_.x < size.x && pos_.y < size.y)
-	{
-		data[pos_.y*size.x + pos_.x] = color_;
-	}
-	else
-	{
-		throw Exception::InvalidTextureCoord();
-	}
+#if __TEXPROJECT_DEBUG__
+	if(pos_.x >= size.x || pos_.y >= size.y) throw Exception::InvalidTextureCoord();
+#endif
+	data[pos_.y*size.x + pos_.x] = color_;
 }
 inline TexProject::vec4						TexProject::Texture::D2::GetPixel(const uvec2& pos_)
 {
-	if(pos_.x < size.x && pos_.y < size.y)
-	{
-		return data[pos_.y*size.x + pos_.x];
-	}
-	else
-	{
-		throw Exception::InvalidTextureCoord();
-	}
+#if __TEXPROJECT_DEBUG__
+	if(pos_.x >= size.x || pos_.y >= size.y) throw Exception::InvalidTextureCoord();
+#endif
+	return data[pos_.y*size.x + pos_.x];
 }
 inline TexProject::vec4*					TexProject::Texture::D2::GetData() const
 {
@@ -558,6 +591,96 @@ inline void*								TexProject::Texture::D2::GetDataRGBA32F() const
 	}
 	return data_;
 }
+
+
+inline										TexProject::Texture::Cube::Cube()
+{
+	for(uint32 i = 0; i < 6; ++i) data[i] = nullptr;
+}
+inline										TexProject::Texture::Cube::~Cube()
+{
+	Delete();
+}
+inline void									TexProject::Texture::Cube::Create(uint32 size_)
+{
+	Delete();
+
+	size = size_;
+
+	for(uint32 i = 0; i < 6; ++i)
+	{
+		data[i] = new vec4[size*size];
+	}
+}
+inline void									TexProject::Texture::Cube::Fill(const vec4& color_)
+{
+	for(uint32 i = 0; i < 6; ++i)
+	{
+		for(uint32 j = 0; j < size*size; ++j)
+		{
+			data[i][j] = color_;
+		}
+	}
+}
+inline void									TexProject::Texture::Cube::Fill(Face face_,const vec4& color_)
+{
+	for(uint32 j = 0; j < size*size; ++j)
+	{
+		data[(uint32)face_][j] = color_;
+	}
+}
+inline void									TexProject::Texture::Cube::Delete()
+{
+	for(uint32 i = 0; i < 6; ++i)
+	{
+		if(data[i]) { delete[] data[i]; data[i] = nullptr; }
+	}
+
+	size = 0;
+}
+inline TexProject::uint32					TexProject::Texture::Cube::GetSize() const
+{
+	return size;
+}
+inline void									TexProject::Texture::Cube::SetPixel(Face& face_,const uvec2& pos_,const vec4& color_)
+{
+#if __TEXPROJECT_DEBUG__
+	if(pos_.x >= size || pos_.y >= size) throw Exception::InvalidTextureCoord();
+#endif
+	data[(uint32)face_][pos_.y*size + pos_.x] = color_;
+}
+inline TexProject::vec4						TexProject::Texture::Cube::GetPixel(Face& face_,const uvec2& pos_)
+{
+#if __TEXPROJECT_DEBUG__
+	if(pos_.x >= size || pos_.y >= size) throw Exception::InvalidTextureCoord();
+#endif
+	return data[(uint32)face_][pos_.y*size + pos_.x];
+}
+inline void*								TexProject::Texture::Cube::GetDataRGBA32F() const
+{
+	return new void*[6]
+	{
+		GetDataRGBA32F(Face::Right),
+		GetDataRGBA32F(Face::Left),
+		GetDataRGBA32F(Face::Top),
+		GetDataRGBA32F(Face::Bottom),
+		GetDataRGBA32F(Face::Front),
+		GetDataRGBA32F(Face::Back)
+	};
+}
+inline void*								TexProject::Texture::Cube::GetDataRGBA32F(Face face_) const
+{
+	auto data_ = new float32[size*size*4];
+	for(uint32 i = 0; i < size*size; ++i)
+	{
+		data_[i*4+0] = data[(uint32)face_][i].x;
+		data_[i*4+1] = data[(uint32)face_][i].y;
+		data_[i*4+2] = data[(uint32)face_][i].z;
+		data_[i*4+3] = data[(uint32)face_][i].w;
+	}
+	return data_;
+}
+
 
 
 #if __TEXPROJECT_WIN__
@@ -677,6 +800,25 @@ inline TexProject::OpenGL::Texture&			TexProject::OpenGL::Texture::operator = (c
 	}
 	return *this;
 }
+inline TexProject::OpenGL::Texture&			TexProject::OpenGL::Texture::operator = (const TexProject::Texture::Cube& source)
+{
+	{
+		auto data_ = source.GetDataRGBA32F();
+		Create
+		(
+			Type::Cube,
+			IFormat::RGBA32F,
+			Format::RGBA,
+			Component::Float32,
+			Wrap::Clamp,
+			Filter::Mipmap,
+			uvec3(source.GetSize(),0,0),
+			data_
+		);
+		delete[] data_;
+	}
+	return *this;
+}
 inline void									TexProject::OpenGL::Texture::Create(Type type_,InternalFormat internalFormat_,Format format_,Component component_,Wrap wrap_,Filter filter_,uvec3 size_,void* data_)
 {
 	Delete();
@@ -721,7 +863,14 @@ inline void									TexProject::OpenGL::Texture::Create(Type type_,InternalForma
 		break;
 		case Type::D2Array: break;
 		case Type::D3: break;
-		case Type::Cube: break;
+		case Type::Cube:
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[0] : NULL);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[1] : NULL);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[2] : NULL);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[3] : NULL);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[4] : NULL);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[5] : NULL);
+		break;
 		case Type::CubeArray: break;
 		default: throw Exception(); break;
 	}

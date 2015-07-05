@@ -342,6 +342,10 @@ bool					TexProject::Window::RenderContext::Basic::Use()
 {
 	return false;
 }
+void					TexProject::Window::RenderContext::Basic::Unuse()
+{
+}
+
 
 #if __TEXPROJECT_WIN__
 void					TexProject::Window::RenderContext::Basic::_win_WMPaint(HDC hDC)
@@ -664,7 +668,8 @@ TexProject::Window::RenderContext::Direct3D::~Direct3D()
 }
 void*					TexProject::Window::RenderContext::Direct3D::GetData() const
 {
-	return reinterpret_cast<void*>(d3ddev);
+	//return reinterpret_cast<void*>(d3ddev);
+	return reinterpret_cast<void*>(const_cast<RenderContext::Direct3D * const>(this));
 }
 
 LPDIRECT3DVERTEXBUFFER9 vb = NULL;
@@ -712,19 +717,12 @@ void					TexProject::Window::RenderContext::Direct3D::Create()
 			&d3dpp,
 			&d3ddev
 		);
-
-		switch(result)
-		{
-			case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
-			case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
-			case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
-			case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
-		}
+		TexProject::Direct3D::ErrorTest(result);
 	}
 
 	if(!d3ddev) Error("");
 
-	{
+	/*{
 		auto result = d3ddev->CreateVertexBuffer
 		(
 			sizeof(CUSTOMVERTEX)*3,
@@ -734,13 +732,7 @@ void					TexProject::Window::RenderContext::Direct3D::Create()
 			&vb,
 			NULL
 		);
-		switch(result)
-		{
-			case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
-			case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
-			case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
-			case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
-		}
+		TexProject::Direct3D::ErrorTest(result);
 	}
 
 	{
@@ -752,27 +744,9 @@ void					TexProject::Window::RenderContext::Direct3D::Create()
 		};
 
 		void* tArr = nullptr;
-		{
-			auto result = vb->Lock(0,sizeof(CUSTOMVERTEX)*3,&tArr,0);
-			switch(result)
-			{
-				case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
-				case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
-				case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
-				case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
-			}
-		}
+		TexProject::Direct3D::ErrorTest(vb->Lock(0,sizeof(CUSTOMVERTEX)*3,&tArr,0));
 		memcpy(tArr,vArr,sizeof(vArr));
-		{
-			auto result = vb->Unlock();
-			switch(result)
-			{
-				case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
-				case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
-				case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
-				case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
-			}
-		}
+		TexProject::Direct3D::ErrorTest(vb->Unlock());
 	}
 
 	{
@@ -787,14 +761,8 @@ void					TexProject::Window::RenderContext::Direct3D::Create()
 
 	{
 		auto result = D3DXCreateEffectFromFile(d3ddev,"Media/Shaders/HLSL/1.fx",NULL,NULL,D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY,NULL,&fx,NULL);
-		switch(result)
-		{
-			case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
-			case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
-			case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
-			case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
-		}
-	}
+		TexProject::Direct3D::ErrorTest(result);
+	}*/
 
 	init = true;
 }
@@ -816,19 +784,10 @@ bool					TexProject::Window::RenderContext::Direct3D::Use()
 
 		//d3ddev->CreateVertexShader()
 
-		d3ddev->Clear(0,NULL,D3DCLEAR_TARGET,D3DCOLOR_XRGB(0,0,0),1.0f,0);
-		{
-			auto result = d3ddev->BeginScene();
-			switch(result)
-			{
-				case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); break;
-				case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); break;
-				case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); break;
-				case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); break;
-			}
-		}
+		TexProject::Direct3D::ErrorTest(d3ddev->Clear(0,NULL,D3DCLEAR_TARGET,D3DCOLOR_XRGB(0,0,0),1.0f,0));
+		TexProject::Direct3D::ErrorTest(d3ddev->BeginScene());
 
-		uint32 passes = 0;
+		/*uint32 passes = 0;
 		fx->Begin(&passes, 0);
 		for(uint32 uiPass = 0; uiPass < passes; ++uiPass)
 		{
@@ -860,13 +819,21 @@ bool					TexProject::Window::RenderContext::Direct3D::Use()
 
 			fx->EndPass();
 		}
-		fx->End();
+		fx->End();*/
 
-		d3ddev->EndScene();
-		d3ddev->Present(NULL,NULL,NULL,NULL);
+		/*d3ddev->EndScene();
+		d3ddev->Present(NULL,NULL,NULL,NULL);*/
 		return true;
 	}
 	return false;
+}
+void					TexProject::Window::RenderContext::Direct3D::Unuse()
+{
+	if(init && d3ddev)
+	{
+		d3ddev->EndScene();
+		d3ddev->Present(NULL,NULL,NULL,NULL);
+	}
 }
 
 #endif
@@ -1700,6 +1667,7 @@ void					TexProject::Window::Render::Loop()
 						if(func[FuncTypes::Loop]) func[FuncTypes::Loop](this);
 						renderContext->Loop();
 					}
+					renderContext->Unuse();
 				}
 			}
 		}

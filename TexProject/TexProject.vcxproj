@@ -93,7 +93,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Main.cpp" />
-    <ClCompile Include="Source\Examples\Generator.cpp" />
+    <ClCompile Include="Source\Test\Test_TextureCube.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
@@ -130,10 +130,14 @@
     <Image Include="Media\Images\Brick1_D.png" />
     <Image Include="Media\Images\Brick1_M.png" />
     <Image Include="Media\Images\Brick1_N.png" />
+    <Image Include="Media\Images\Cubemap1.dds" />
     <Image Include="Media\Images\Example.jpg" />
     <Image Include="Media\Images\Stone_HeightMap.png" />
     <Image Include="Media\Images\Stone_NormalMap.png" />
     <Image Include="Media\Images\Test.bmp" />
+    <Image Include="Media\Images\Tiles1_D.png" />
+    <Image Include="Media\Images\Tiles1_M.png" />
+    <Image Include="Media\Images\Tiles1_N.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

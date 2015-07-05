@@ -5,6 +5,7 @@
 #include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Math.h>
 #include <TexProject/TexProject_OpenGL.h>
+#include <TexProject/TexProject_Direct3D.h>
 #include <TexProject/TexProject_Windows.h>
 
 
@@ -14,7 +15,7 @@
 
 namespace TexProject
 {
-#ifdef __TEXPROJECT_OPENGL__
+#if __TEXPROJECT_OPENGL__
 	namespace OpenGL
 	{
 		struct Shader
@@ -73,10 +74,33 @@ namespace TexProject
 		};
 	}
 #endif
+#if __TEXPROJECT_OPENGL__
+	namespace Direct3D
+	{
+		struct Shader
+		{
+		protected:
+			Window::RenderContext::Direct3D* const				renderContext;
+			LPD3DXEFFECT										effect = NULL;
+
+		public:
+
+			inline							Shader(Window::Render* window);
+			inline							~Shader();
+
+			//inline void						Create();
+			inline void						Delete();
+			inline bool						Load(const string& filename);
+			inline void						Use();
+			inline void						Unuse();
+			inline Window::RenderContext::Direct3D*			GetRenderContext() const;
+		};
+	}
+#endif
 }
 
 
-#ifdef __TEXPROJECT_OPENGL__
+#if __TEXPROJECT_OPENGL__
 
 inline										TexProject::OpenGL::Shader::Shader(Window::Render* window):
 	renderContext
@@ -276,6 +300,68 @@ inline void									TexProject::OpenGL::Shader::SetMat4(const string& slot_,cons
 
 #endif
 
+
+#if __TEXPROJECT_DIRECT3D__
+
+inline					TexProject::Direct3D::Shader::Shader(Window::Render* window):
+	renderContext
+	(
+		window->GetRenderContext()->GetType() == Window::RenderContext::Type::Direct3D ?
+		(Window::RenderContext::Direct3D*)window->GetRenderContext()->GetData() :
+		throw Exception()
+	)
+{
+}
+inline					TexProject::Direct3D::Shader::~Shader()
+{
+	Delete();
+}
+/*inline void				TexProject::Direct3D::Shader::Create()
+{
+	Delete();
+
+}*/
+inline void				TexProject::Direct3D::Shader::Delete()
+{
+}
+inline bool				TexProject::Direct3D::Shader::Load(const string& filename)
+{
+	Delete();
+
+	if(Direct3D::ErrorTest
+	(
+		D3DXCreateEffectFromFile
+		(
+			renderContext->GetDevice(),
+			filename.c_str(),
+			NULL,
+			NULL,
+			D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY,
+			NULL,
+			&effect,
+			NULL
+		)
+	)) return false;
+
+	return true;
+}
+inline void									TexProject::Direct3D::Shader::Use()
+{
+	uint32 passes = 0;
+	Direct3D::ErrorTest(effect->Begin(&passes,0));
+	Direct3D::ErrorTest(effect->BeginPass(0));
+}
+inline void									TexProject::Direct3D::Shader::Unuse()
+{
+	effect->EndPass();
+	effect->End();
+}
+inline TexProject::Window::RenderContext::Direct3D*				TexProject::Direct3D::Shader::GetRenderContext() const
+{
+	return renderContext;
+}
+
+#endif
 
 
 

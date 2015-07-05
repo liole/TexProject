@@ -4,11 +4,13 @@
 #include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Geometry.h>
 #include <TexProject/TexProject_OpenGL.h>
+#include <TexProject/TexProject_Direct3D.h>
 #include <TexProject/TexProject_Shaders.h>
 
 
 namespace TexProject
 {
+#if __TEXPROJECT_OPENGL__
 	namespace OpenGL
 	{
 		namespace Buffer
@@ -209,8 +211,76 @@ namespace TexProject
 			}
 		};
 	}
+#endif
+#if __TEXPROJECT_DIRECT3D__
+	namespace Direct3D
+	{
+		namespace Buffer
+		{
+			struct Data
+			{
+			public:
+
+				enum class Format: DWORD
+				{
+					XYZ						= D3DFVF_XYZ,
+					XYZW					= D3DFVF_XYZW,
+					XYZRHW					= D3DFVF_XYZRHW
+				};
+
+			protected:
+				Window::RenderContext::Direct3D* const				renderContext;				
+				LPDIRECT3DVERTEXBUFFER9								buffer = NULL;
+				uint32												vCount = 0;
+				uint32												vSize = 0;
+				Format												format = Format::XYZ;				
+
+			public:
+
+				inline						Data(Window::Render* window);
+				inline						~Data();
+
+				inline void					Create(uint32 vCount_,uint32 vSize_,Format format_,void* data_);
+				inline void					Delete();
+				inline void					Use();
+				inline void					Unuse();
+				inline Window::RenderContext::Direct3D*			GetRenderContext() const;
+			};
+			struct Index
+			{
+			public:
+
+				enum class Format
+				{
+					UInt16					= D3DFMT_INDEX16,
+					UInt32					= D3DFMT_INDEX32
+				};
+
+			protected:
+				Window::RenderContext::Direct3D* const				renderContext;
+				LPDIRECT3DINDEXBUFFER9								buffer = NULL;
+				uint32												iCount = 0;
+				uint32												iSize = 0;
+				Format												format = Format::UInt32;
+
+			public:
+
+				inline						Index(Window::Render* window);
+				inline						~Index();
+
+				inline void					Create(uint32 iCount_,uint32 iSize_,Format format_,void* data_);
+				inline void					Delete();
+				inline void					Use();
+				inline void					Unuse();
+				inline Window::RenderContext::Direct3D*			GetRenderContext() const;
+			};
+		}
+	}
+#endif
 }
 
+
+#if __TEXPROJECT_OPENGL__
 
 // Buffer::Data
 inline															TexProject::OpenGL::Buffer::Data::Data(Window::Render* window):
@@ -460,8 +530,138 @@ inline TexProject::Window::RenderContext::OpenGL*				TexProject::OpenGL::Buffer:
 	return renderContext;
 }
 
+#endif
 
 
+#if __TEXPROJECT_DIRECT3D__
+
+// Buffer::Data
+inline					TexProject::Direct3D::Buffer::Data::Data(Window::Render* window):
+	renderContext
+	(
+		window->GetRenderContext()->GetType() == Window::RenderContext::Type::Direct3D ?
+		(Window::RenderContext::Direct3D*)window->GetRenderContext()->GetData() :
+		throw Exception()
+	)
+{
+}
+inline					TexProject::Direct3D::Buffer::Data::~Data()
+{
+	Delete();
+}
+inline void				TexProject::Direct3D::Buffer::Data::Create(uint32 vCount_,uint32 vSize_,Format format_,void* data_)
+{
+	Delete();
+
+	vCount = vCount_;
+	vSize = vSize_;
+	format = format_;
+
+	Direct3D::ErrorTest
+	(
+		renderContext->GetDevice()->CreateVertexBuffer
+		(
+			vSize*vCount,	//sizeof(CUSTOMVERTEX)*3,
+			0,
+			(DWORD)format,
+			D3DPOOL_DEFAULT,
+			&buffer,
+			NULL
+		)
+	);
+
+	if(data_)
+	{
+		static void* tData;
+		Direct3D::ErrorTest(buffer->Lock(0,vSize*vCount,&tData,0));
+		memcpy(tData,data_,vSize*vCount);
+		Direct3D::ErrorTest(buffer->Unlock());
+	}
+}
+inline void				TexProject::Direct3D::Buffer::Data::Delete()
+{
+	Unuse();
+
+	//buffer->Release();
+	//renderContext->GetDevice()->de
+}
+inline void				TexProject::Direct3D::Buffer::Data::Use()
+{
+	Direct3D::ErrorTest(renderContext->GetDevice()->SetStreamSource(0,buffer,0,vSize));
+	renderContext->GetDevice()->SetFVF((DWORD)format);
+}
+inline void				TexProject::Direct3D::Buffer::Data::Unuse()
+{
+}
+inline TexProject::Window::RenderContext::Direct3D*				TexProject::Direct3D::Buffer::Data::GetRenderContext() const
+{
+	return renderContext;
+}
+
+
+inline					TexProject::Direct3D::Buffer::Index::Index(Window::Render* window):
+	renderContext
+	(
+		window->GetRenderContext()->GetType() == Window::RenderContext::Type::Direct3D ?
+		(Window::RenderContext::Direct3D*)window->GetRenderContext()->GetData() :
+		throw Exception()
+	)
+{
+}
+inline					TexProject::Direct3D::Buffer::Index::~Index()
+{
+	Delete();
+}
+inline void				TexProject::Direct3D::Buffer::Index::Create(uint32 iCount_,uint32 iSize_,Format format_,void* data_)
+{
+	Delete();
+
+	iCount = iCount_;
+	iSize = iSize_;
+	format = format_;
+
+	Direct3D::ErrorTest
+	(
+		renderContext->GetDevice()->CreateIndexBuffer
+		(
+			iSize*iCount,
+			0,
+			(D3DFORMAT)format,
+			D3DPOOL_DEFAULT,
+			&buffer,
+			NULL
+		)
+	);
+
+	if(data_)
+	{
+		static void* tData;
+		Direct3D::ErrorTest(buffer->Lock(0,iSize*iCount,&tData,0));
+		memcpy(tData,data_,iSize*iCount);
+		Direct3D::ErrorTest(buffer->Unlock());
+	}
+}
+inline void				TexProject::Direct3D::Buffer::Index::Delete()
+{
+	Unuse();
+
+	//buffer->Release();
+}
+inline void				TexProject::Direct3D::Buffer::Index::Use()
+{
+	renderContext->GetDevice()->SetIndices(buffer);
+}
+inline void				TexProject::Direct3D::Buffer::Index::Unuse()
+{
+}
+
+inline TexProject::Window::RenderContext::Direct3D*				TexProject::Direct3D::Buffer::Index::GetRenderContext() const
+{
+	return renderContext;
+}
+
+
+#endif
 
 
 

@@ -20,6 +20,17 @@ namespace TexProject
 	namespace Direct3D
 	{
 		void test();
+		inline bool ErrorTest(HRESULT result)
+		{
+			switch(result)
+			{
+				case D3DERR_DEVICELOST: Message("D3DERR_DEVICELOST"); return true; break;
+				case D3DERR_INVALIDCALL: Message("D3DERR_INVALIDCALL"); return true; break;
+				case D3DERR_NOTAVAILABLE: Message("D3DERR_NOTAVAILABLE"); return true; break;
+				case D3DERR_OUTOFVIDEOMEMORY: Message("D3DERR_OUTOFVIDEOMEMORY"); return true; break;
+			}
+			return false;
+		}
 	}
 }
 

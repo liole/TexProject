@@ -54,7 +54,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Examples\Generator.cpp">
+    <ClCompile Include="Source\Test\Test_TextureCube.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,6 +143,16 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Media\Images\Stone_NormalMap.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Media\Images\Cubemap1.dds" />
+    <Image Include="Media\Images\Tiles1_D.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Media\Images\Tiles1_M.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Media\Images\Tiles1_N.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

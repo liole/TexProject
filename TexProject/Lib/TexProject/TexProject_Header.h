@@ -292,6 +292,13 @@ namespace TexProject
 	/*Головний неймспейс Direct3D*/
 	namespace Direct3D
 	{
+		namespace Buffer
+		{
+			struct Data;
+			struct Index;
+		}
+
+		struct Shader;
 	}
 #endif
 
@@ -310,7 +317,10 @@ namespace TexProject
 	/*Неймспейс текстур*/
 	namespace Texture
 	{
+		struct D1;
 		struct D2;
+		struct D3;
+		struct Cube;
 	}
 
 }

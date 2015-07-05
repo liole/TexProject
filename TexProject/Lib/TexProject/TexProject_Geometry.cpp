@@ -174,8 +174,8 @@ void					TexProject::Geometry::Mesh::CreateCylinder(float32 radius,float32 heigh
 
 	Create
 	(
-		(segSide.x+1)*(segSide.y+1) + ((segCap > 0) ? 2*segCap*(segSide.x+1) : 2*segSide.x),
-		6*segSide.x*segSide.y + ((segCap > 0) ? 0 : 3*(segSide.x-2)) // todo
+		(segSide.x+1)*(segSide.y+1) + ((segCap > 0) ? 2*(segCap*(segSide.x+1)+1) : 2*(segSide.x+1)),
+		6*segSide.x*segSide.y + ((segCap > 0) ? 2*(3*segSide.x + 6*segSide.x*(segCap-1)) : 2*3*(segSide.x-2)) // todo
 	);
 
 	uint32 offsetVertexCap = (segSide.x+1)*(segSide.y+1);
@@ -194,9 +194,81 @@ void					TexProject::Geometry::Mesh::CreateCylinder(float32 radius,float32 heigh
 		vNor[id] = vec3(sinDg(360.0f * dx),0.0f,cosDg(360.0f * dx));
 	}
 
+	for(uint32 x = 0; x < segSide.x; ++x)
+	for(uint32 y = 0; y < segSide.y; ++y)
+	{
+		uint32 i = y*segSide.x+x;
+		vInd[i*6 + 0] = (y+0)*(segSide.x+1)+x;
+		vInd[i*6 + 1] = (y+1)*(segSide.x+1)+x;
+		vInd[i*6 + 2] = (y+0)*(segSide.x+1)+x+1;
+		vInd[i*6 + 3] = vInd[i*6 + 2];
+		vInd[i*6 + 4] = vInd[i*6 + 1];
+		vInd[i*6 + 5] = (y+1)*(segSide.x+1)+x+1;
+	}
+
 	if(segCap > 0)
 	{
-		//vPos[offsetVertexCap] = vec3(0.0f,+height*0.5f,0.0f);
+		uint32 id = offsetVertexCap;
+		vPos[id] = vec3(0.0f,+height*0.5f,0.0f);
+		vTex[id] = vec2(0.5f);
+		vTan[id] = vec3(1.0f,0.0f,0.0f);
+		vBin[id] = vec3(0.0f,0.0f,1.0f);
+		vNor[id] = vec3(0.0f,1.0f,0.0f);
+		id = offsetVertexCap+(segCap*(segSide.x+1)+1);
+		vPos[id] = vec3(0.0f,-height*0.5f,0.0f);
+		vTex[id] = vec2(0.5f);
+		vTan[id] = vec3(-1.0f,0.0f,0.0f);
+		vBin[id] = vec3(0.0f,0.0f,-1.0f);
+		vNor[id] = vec3(0.0f,-1.0f,0.0f);
+		for(uint32 i = 0; i < segCap; ++i)
+		{
+			float32 di = float32(i+1) / float32(segCap);
+			for(uint32 x = 0; x <= segSide.x; ++x)
+			{
+				float32 dx = float32(x) / float32(segSide.x);
+				uint32 id = offsetVertexCap + 1 + i*(segSide.x+1) + x;
+				vPos[id] = vec3(sinDg(360.0f * dx)*di*radius,height*0.5f,cosDg(360.0f * dx)*di*radius);
+				vTex[id] = vec2(sinDg(360.0f * dx),cosDg(360.0f * dx))*texCap*di*0.5f + 0.5f;
+				vTan[id] = vec3(1.0f,0.0f,0.0f);
+				vBin[id] = vec3(0.0f,0.0f,1.0f);
+				vNor[id] = vec3(0.0f,1.0f,0.0f);
+				id = offsetVertexCap + (segCap*(segSide.x+1)+1) + 1 + i*(segSide.x+1) + x;
+				vPos[id] = vec3(sinDg(360.0f * -dx)*di*radius,-height*0.5f,cosDg(360.0f * -dx)*di*radius);
+				vTex[id] = vec2(sinDg(360.0f * -dx),cosDg(360.0f * -dx))*texCap*di*0.5f + 0.5f;
+				vTan[id] = vec3(-1.0f,0.0f,0.0f);
+				vBin[id] = vec3(0.0f,0.0f,-1.0f);
+				vNor[id] = vec3(0.0f,-1.0f,0.0f);
+			}
+		}
+		for(uint32 x = 0; x < segSide.x; ++x)
+		{
+			uint32 id = offsetIndexCap + 3*x;
+			vInd[id+0] = offsetVertexCap;
+			vInd[id+1] = offsetVertexCap + 1 + x + 1;
+			vInd[id+2] = offsetVertexCap + 1 + x;
+			id = offsetIndexCap + (3*segSide.x + 6*segSide.x*(segCap-1)) + 3*x;
+			vInd[id+0] = offsetVertexCap + (segCap*(segSide.x+1)+1);
+			vInd[id+1] = offsetVertexCap + (segCap*(segSide.x+1)+1) + 1 + x + 1;
+			vInd[id+2] = offsetVertexCap + (segCap*(segSide.x+1)+1) + 1 + x;
+			for(uint32 i = 1; i < segCap; ++i)
+			{
+				float32 di = float32(i+1) / float32(segCap);
+				id = offsetIndexCap + 3*segSide.x + (i-1)*6*segSide.x + x*6;
+				vInd[id+0] = offsetVertexCap + 1 + (i-1)*(segSide.x+1) + x;
+				vInd[id+1] = offsetVertexCap + 1 + (i-1)*(segSide.x+1) + (x+1);
+				vInd[id+2] = offsetVertexCap + 1 + i*(segSide.x+1) + x;
+				vInd[id+3] = vInd[id+1];
+				vInd[id+4] = offsetVertexCap + 1 + i*(segSide.x+1) + (x+1);
+				vInd[id+5] = vInd[id+2];
+				id = offsetIndexCap + (3*segSide.x + 6*segSide.x*(segCap-1)) + 3*segSide.x + (i-1)*6*segSide.x + x*6;
+				vInd[id+0] = offsetVertexCap + (segCap*(segSide.x+1)+1) + 1 + (i-1)*(segSide.x+1) + x;
+				vInd[id+1] = offsetVertexCap + (segCap*(segSide.x+1)+1) + 1 + (i-1)*(segSide.x+1) + (x+1);
+				vInd[id+2] = offsetVertexCap + (segCap*(segSide.x+1)+1) + 1 + i*(segSide.x+1) + x;
+				vInd[id+3] = vInd[id+1];
+				vInd[id+4] = offsetVertexCap + (segCap*(segSide.x+1)+1) + 1 + i*(segSide.x+1) + (x+1);
+				vInd[id+5] = vInd[id+2];
+			}
+		}
 	}
 	else
 	{
@@ -209,26 +281,24 @@ void					TexProject::Geometry::Mesh::CreateCylinder(float32 radius,float32 heigh
 			vTan[id] = vec3(1.0f,0.0f,0.0f);
 			vBin[id] = vec3(0.0f,0.0f,1.0f);
 			vNor[id] = vec3(0.0f,1.0f,0.0f);
+			id = offsetVertexCap + (segSide.x+1) + x;
+			vPos[id] = vec3(sinDg(360.0f * dx)*radius,-height*0.5f,cosDg(360.0f * dx)*radius);
+			vTex[id] = vec2(sinDg(360.0f * -dx),cosDg(360.0f * -dx))*texCap;
+			vTan[id] = vec3(-1.0f,0.0f,0.0f);
+			vBin[id] = vec3(0.0f,0.0f,-1.0f);
+			vNor[id] = vec3(0.0f,-1.0f,0.0f);
 		}
-		/*for(uint32 x = 0; x <= segSide.x-2; ++x)
+		for(uint32 x = 0; x < segSide.x-2; ++x)
 		{
 			uint32 i = offsetIndexCap + 3*x;
 			vInd[i+0] = offsetVertexCap + 0;
-			vInd[i+1] = offsetVertexCap + x + 1;
-			vInd[i+2] = offsetVertexCap + x + 2;
-		}*/
-	}
-
-	for(uint32 x = 0; x < segSide.x; ++x)
-	for(uint32 y = 0; y < segSide.y; ++y)
-	{
-		uint32 i = y*segSide.x+x;
-		vInd[i*6 + 0] = (y+0)*(segSide.x+1)+x;
-		vInd[i*6 + 1] = (y+0)*(segSide.x+1)+x+1;
-		vInd[i*6 + 2] = (y+1)*(segSide.x+1)+x;
-		vInd[i*6 + 3] = vInd[i*6 + 1];
-		vInd[i*6 + 4] = (y+1)*(segSide.x+1)+x+1;
-		vInd[i*6 + 5] = vInd[i*6 + 2];
+			vInd[i+1] = offsetVertexCap + x + 2;
+			vInd[i+2] = offsetVertexCap + x + 1;
+			i = offsetIndexCap + 3*((segSide.x-2) + x);
+			vInd[i+0] = offsetVertexCap + (segSide.x+1) + 0;
+			vInd[i+1] = offsetVertexCap + (segSide.x+1) + x + 1;
+			vInd[i+2] = offsetVertexCap + (segSide.x+1) + x + 2;
+		}
 	}
 
 }

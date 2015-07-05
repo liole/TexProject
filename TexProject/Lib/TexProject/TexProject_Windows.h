@@ -231,6 +231,7 @@ namespace TexProject
 				virtual void				Delete();
 				virtual void				Loop();
 				virtual bool				Use();
+				virtual void				Unuse();
 
 				inline Interface::GUIPanel*						AddPanel(const Interface::PanelType& type_);
 				inline Interface::GUIButton*					AddButton(const Interface::ButtonType& type_);
@@ -394,6 +395,12 @@ namespace TexProject
 				virtual void				Delete() override;
 				virtual void				Loop() override;
 				virtual bool				Use() override;
+				virtual void				Unuse() override;
+
+				inline LPDIRECT3DDEVICE9	GetDevice() const
+				{
+					return d3ddev;
+				}
 			};
 #endif
 
