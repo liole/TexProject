@@ -33,6 +33,7 @@ namespace TexProject
 
 			void							Create(uint32 vCount_,uint32 iCount_);
 			void							CreateBox(vec3 size, vec3 tex, uvec3 seg);
+			void							CreateSphere(float32 radius,vec2 tex, uvec2 seg);
 			void							CreateCylinder(float32 radius,float32 height,vec2 texSide,vec2 texCap,uvec2 segSide,uint32 segCap);
 			void							CreateCone(float32 radiusBottom,float32 radiusTop,float32 height,vec2 texSize,vec2 texCap,uvec2 segSize,uint32 segCap,bool cap = true);
 			void							CreateCapsule(float32 radius,float32 height,vec2 tex,uvec2 seg);

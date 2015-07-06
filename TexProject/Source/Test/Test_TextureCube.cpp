@@ -2,6 +2,14 @@
 using namespace TexProject;
 
 
+enum class PrimitiveType
+{
+	Cube,
+	Sphere,
+	Cylinder
+};
+PrimitiveType primitive;
+
 OpenGL::Texture*		tTexDif = nullptr;
 OpenGL::Texture*		tTexNor = nullptr;
 OpenGL::Texture*		tTexMat = nullptr;
@@ -14,6 +22,31 @@ Helper::MMat			tMMat;
 Helper::VMat			tVMat;
 
 
+void Refresh(Window::Render* window)
+{
+	auto mesh = new Geometry::Mesh;
+	switch(primitive)
+	{
+	case PrimitiveType::Cube:
+		mesh->CreateBox(vec3(10.0f),vec3(1.0f),uvec3(1));
+	break;
+	case PrimitiveType::Sphere:
+		mesh->CreateSphere(5.0f,vec2(2.0f),uvec2(32));
+	break;
+	case PrimitiveType::Cylinder:
+		mesh->CreateCylinder(5.0f,10.0f,vec2(6.0f,2.0f),vec2(2.0f),uvec2(32,4),4);
+	break;
+	default:
+	break;
+	}
+
+	if(tModel) { delete tModel; tModel = nullptr; }
+
+	tModel = new OpenGL::Model(window);
+	tModel->Create(mesh,tShader);
+
+	delete mesh;
+}
 void fInit(Window::Render* window)
 {
 	tVMat.SetPos(vec3(0.0f,0.0f,-20.0f));
@@ -24,9 +57,10 @@ void fInit(Window::Render* window)
 	tMMat.SetAng(vec3(0.0f));
 	tMMat.SetScale(vec3(1.0f));
 
-	auto mesh = new Geometry::Mesh;
-	//mesh->CreateBox(vec3(10.0f),vec3(1.0f),uvec3(1));
-	mesh->CreateCylinder(5.0f,10.0f,vec2(6.0f,2.0f),vec2(2.0f),uvec2(32,4),4);
+	/*auto mesh = new Geometry::Mesh;
+	mesh->CreateBox(vec3(10.0f),vec3(1.0f),uvec3(1));*/
+	//mesh->CreateSphere(5.0f,vec2(2.0f),uvec2(32));
+	//mesh->CreateCylinder(5.0f,10.0f,vec2(6.0f,2.0f),vec2(2.0f),uvec2(32,4),4);
 
 	{
 		skyboxShader = new OpenGL::Shader(window);
@@ -53,10 +87,13 @@ void fInit(Window::Render* window)
 	tUni2 = tShader->PrepareUniform("ModelMatrix");
 	tUni3 = tShader->PrepareUniform("ModelViewProjectionMatrix");
 
-	tModel = new OpenGL::Model(window);
-	tModel->Create(mesh,tShader);
+	/*tModel = new OpenGL::Model(window);
+	tModel->Create(mesh,tShader);*/
 
-	delete mesh;
+	//delete mesh;
+
+	primitive = PrimitiveType::Cube;
+	Refresh(window);
 
 	{
 		auto tex = new Texture::D2;
@@ -89,7 +126,12 @@ void fFree(Window::Render* window)
 void fLoop(Window::Render* window)
 {
 	{
-		tMMat.Rotate(vec3(0.0f,0.25f,0.0f));
+		auto oldprimitive = primitive;
+		if(KeyState(Keys::DIGIT1)) primitive = PrimitiveType::Cube;
+		if(KeyState(Keys::DIGIT2)) primitive = PrimitiveType::Sphere;
+		if(KeyState(Keys::DIGIT3)) primitive = PrimitiveType::Cylinder;
+		if(primitive != oldprimitive) Refresh(window);
+		tMMat.Rotate(vec3(0.0f,0.5f,0.0f));
 	}
 	{
 	float32 speed = 0.1f;

@@ -168,6 +168,38 @@ void					TexProject::Geometry::Mesh::CreateBox(vec3 size,vec3 tex,uvec3 seg)
 		vInd[id+5] = offsetVertexTop + (x+1)*(seg.z+1) + (z+1);
 	}
 }
+void					TexProject::Geometry::Mesh::CreateSphere(float32 radius,vec2 tex,uvec2 seg)
+{
+	if(seg.x < 3 || seg.y < 3) return;
+
+	Create((seg.x+1)*(seg.y+1),6*seg.x*seg.y);
+
+	for(uint32 x = 0; x <= seg.x; ++x)
+	for(uint32 y = 0; y <= seg.y; ++y)
+	{
+		float32 dx = float32(x) / float32(seg.x);
+		float32 dy = float32(y) / float32(seg.y);
+		uint32 id = y*(seg.x+1) + x;
+		mat3 rMat = mat3::rotateZXY(vec3(90.0f - dy*180.0f,180.0f - dx*360.0f,0.0f));
+		vPos[id] = rMat * vec3(0.0f,0.0f,radius);
+		vTex[id] = vec2(dx,dy)*tex;
+		vTan[id] = rMat * vec3(-1.0f,0.0f,0.0f);
+		vBin[id] = rMat * vec3(0.0f,1.0f,0.0f);
+		vNor[id] = rMat * vec3(0.0f,0.0f,1.0f);
+	}
+
+	for(uint32 x = 0; x < seg.x; ++x)
+	for(uint32 y = 0; y < seg.y; ++y)
+	{
+		uint32 id = 6*(y*seg.x + x);
+		vInd[id+0] = (y+0)*(seg.x+1) + (x+0);
+		vInd[id+1] = (y+0)*(seg.x+1) + (x+1);
+		vInd[id+2] = (y+1)*(seg.x+1) + (x+0);
+		vInd[id+3] = vInd[id+1];
+		vInd[id+4] = (y+1)*(seg.x+1) + (x+1);
+		vInd[id+5] = vInd[id+2];
+	}
+}
 void					TexProject::Geometry::Mesh::CreateCylinder(float32 radius,float32 height,vec2 texSide,vec2 texCap,uvec2 segSide,uint32 segCap)
 {
 	if(segSide.x < 3) return;
@@ -187,11 +219,11 @@ void					TexProject::Geometry::Mesh::CreateCylinder(float32 radius,float32 heigh
 		float32 dx = float32(x) / float32(segSide.x);
 		float32 dy = float32(y) / float32(segSide.y);
 		uint32 id = y*(segSide.x+1)+x;
-		vPos[id] = vec3(sinDg(360.0f * dx)*radius,-height*0.5f + height*dy,cosDg(360.0f * dx)*radius);
+		vPos[id] = vec3(sinDg(180.0f - 360.0f * dx)*radius,-height*0.5f + height*dy,cosDg(180.0f - 360.0f * dx)*radius);
 		vTex[id] = vec2(dx,dy)*texSide;
-		vTan[id] = vec3(sinDg(360.0f * dx + 90.0f),0.0f,cosDg(360.0f * dx + 90.0f));
+		vTan[id] = vec3(sinDg(180.0f - 360.0f * dx - 90.0f),0.0f,cosDg(180.0f - 360.0f * dx - 90.0f));
 		vBin[id] = vec3(0.0f,1.0f,0.0f);
-		vNor[id] = vec3(sinDg(360.0f * dx),0.0f,cosDg(360.0f * dx));
+		vNor[id] = vec3(sinDg(180.0f - 360.0f * dx),0.0f,cosDg(180.0f - 360.0f * dx));
 	}
 
 	for(uint32 x = 0; x < segSide.x; ++x)
@@ -199,8 +231,8 @@ void					TexProject::Geometry::Mesh::CreateCylinder(float32 radius,float32 heigh
 	{
 		uint32 i = y*segSide.x+x;
 		vInd[i*6 + 0] = (y+0)*(segSide.x+1)+x;
-		vInd[i*6 + 1] = (y+1)*(segSide.x+1)+x;
-		vInd[i*6 + 2] = (y+0)*(segSide.x+1)+x+1;
+		vInd[i*6 + 1] = (y+0)*(segSide.x+1)+x+1;
+		vInd[i*6 + 2] = (y+1)*(segSide.x+1)+x;
 		vInd[i*6 + 3] = vInd[i*6 + 2];
 		vInd[i*6 + 4] = vInd[i*6 + 1];
 		vInd[i*6 + 5] = (y+1)*(segSide.x+1)+x+1;

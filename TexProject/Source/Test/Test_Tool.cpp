@@ -95,10 +95,14 @@ namespace TexProject
 
 						Texture::D2*								texture = nullptr;
 
+						Texture::D2*								GetInput();
+
 					public:
 
 						Color(Window::Render* window_);
 						~Color();
+
+						virtual void								Refresh() override;
 					};
 				}
 			}
@@ -161,19 +165,22 @@ TexProject::Tool::Generator::D2::Blank::~Blank()
 }
 void					TexProject::Tool::Generator::D2::Blank::Refresh()
 {
-	//buttonConnectorOut->SetUserData(new OutputData(this,Texture::Type::D2,nullptr),true);
+	panelImage->SetImage(nullptr);
 	auto data_ = (OutputData*)buttonConnectorOut->GetUserData();
 	data_->texture = nullptr;
 
 	if(texture) { delete texture; texture = nullptr; }
 
 	texture = new Texture::D2;
-	texture->Create(uvec2(128));
+	texture->Create(uvec2(256));
 	texture->Fill(vec4(1.0f,0.5f,0.0f,1.0f));
 
 	data_->texture = texture;
 
 	panelImage->SetImage(texture);
+
+	//buttonConnectorOut->Refresh();
+	buttonConnectorOut->RefreshObservers();
 }
 
 
@@ -190,16 +197,35 @@ TexProject::Tool::Filter::D2::Correction::Color::Color(Window::Render* window_):
 	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
 	buttonRefresh->SetSize(vec2(64.0f,18.0f));
 	buttonRefresh->SetPos(vec2(0.0f,84.0f));
+	buttonRefresh->SetUserData(this);
+	buttonRefresh->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			((Tool::Filter::D2::Correction::Color*)item->GetUserData())->Refresh();
+		}
+	);
 
 	buttonConnectorIn = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::InputConnector);
 	buttonConnectorIn->SetSize(vec2(8.0f));
 	buttonConnectorIn->SetPos(vec2(-94.0f,0.0f));
 	buttonConnectorIn->connectDirection = vec2(-64.0f,0.0f);
+	buttonConnectorIn->SetUserData(this);
+	buttonConnectorIn->SetAction
+	(
+		Interface::Item::ActionTypes::Refresh,
+		[](Interface::Item* item)
+		{
+			((Tool::Filter::D2::Correction::Color*)item->GetUserData())->Refresh();
+		}
+	);
 
 	buttonConnectorOut = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::OutputConnector);
 	buttonConnectorOut->SetSize(vec2(8.0f));
 	buttonConnectorOut->SetPos(vec2(94.0f,0.0f));
 	buttonConnectorOut->connectDirection = vec2(64.0f,0.0f);
+	buttonConnectorOut->SetUserData(new OutputData(this,Texture::Type::D2,nullptr),true);
 
 	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
 	buttonClose->SetPos(vec2(84.0f,-84.0f));
@@ -207,6 +233,60 @@ TexProject::Tool::Filter::D2::Correction::Color::Color(Window::Render* window_):
 }
 TexProject::Tool::Filter::D2::Correction::Color::~Color()
 {
+}
+TexProject::Texture::D2*					TexProject::Tool::Filter::D2::Correction::Color::GetInput()
+{
+	if(buttonConnectorIn)
+	{
+		auto t = ((Interface::Button::Connector*)buttonConnectorIn)->GetTarget();
+		if(t)
+		{
+			auto data_ = (OutputData*)t->GetUserData();
+			if(data_->textureType == Texture::Type::D2)
+			{
+				return (Texture::D2*)data_->texture;
+			}
+		}
+	}
+	return nullptr;
+}
+void										TexProject::Tool::Filter::D2::Correction::Color::Refresh()
+{
+	panelImage->SetImage(nullptr);
+	auto data_ = (OutputData*)buttonConnectorOut->GetUserData();
+	data_->texture = nullptr;
+
+	if(texture) { delete texture; texture = nullptr; }
+
+	{
+		auto source = GetInput();
+		if(source)
+		{
+			auto sample = new Texture::D2(*source);
+
+			texture = new Texture::D2;
+			texture->Create(sample->GetSize());
+
+			for(uint32 x = 0; x < texture->GetSize().x; ++x)
+			for(uint32 y = 0; y < texture->GetSize().y; ++y)
+			{
+				auto sourcePixel = sample->GetPixel(uvec2(x,y));
+				texture->SetPixel(uvec2(x,y),vec4(vec3(1.0f) - sourcePixel.xyz(),1.0f));
+			}
+
+			delete sample;
+		}
+	}
+	/*texture = new Texture::D2;
+	texture->Create(uvec2(128));
+	texture->Fill(vec4(1.0f,0.5f,0.0f,1.0f));*/
+
+	data_->texture = texture;
+
+	panelImage->SetImage(texture);
+
+	//buttonConnectorOut->Refresh();
+	buttonConnectorOut->RefreshObservers();
 }
 
 
@@ -495,34 +575,41 @@ Texture*				Tool::Filter::Correction::ChannelMixer::GetInput(uint32 slot)
 
 void fInit(Window::Render* window)
 {
-	auto p1 = window->AddPanel(Interface::PanelTypes::Default);
-	p1->SetSize(vec2(200.0f,32.0f));
-	p1->SetPos(p1->GetSize()*0.5f);
-	p1->LockMove();
+	auto panelTollbar = window->AddPanel(Interface::PanelTypes::Default);
+	panelTollbar->SetSize(vec2(200.0f,32.0f));
+	panelTollbar->SetPos(vec2(180.0f + panelTollbar->GetSize().x*0.5f,window->GetSize().y - panelTollbar->GetSize().y*0.5f));
+	panelTollbar->LockMove();
 
-	auto b1 = (Interface::Button::Default*)p1->AddButton(Interface::ButtonTypes::Default);
-	b1->SetPos(vec2(-p1->GetSize().x*0.5f + 16.0f + 32.0f*0, 0.0f));
-	b1->SetSize(vec2(24.0f));
-	b1->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			auto t = new Tool::Generator::D2::Blank(item->GetWindow());
-		}
-	);
+	{
+		auto b1 = (Interface::Button::Default*)panelTollbar->AddButton(Interface::ButtonTypes::Default);
+		b1->SetPos(vec2(-panelTollbar->GetSize().x*0.5f + 16.0f + 32.0f*0,0.0f));
+		b1->SetSize(vec2(24.0f));
+		b1->SetAction
+		(
+			Interface::Item::ActionTypes::Click,
+			[](Interface::Item* item)
+			{
+				auto t = new Tool::Generator::D2::Blank(item->GetWindow());
+			}
+		);
 
-	auto b2 = (Interface::Button::Default*)p1->AddButton(Interface::ButtonTypes::Default);
-	b2->SetPos(vec2(-p1->GetSize().x*0.5f + 16.0f + 32.0f*1,0.0f));
-	b2->SetSize(vec2(24.0f));
-	b2->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			auto t = new Tool::Filter::D2::Correction::Color(item->GetWindow());
-		}
-	);
+		auto b2 = (Interface::Button::Default*)panelTollbar->AddButton(Interface::ButtonTypes::Default);
+		b2->SetPos(vec2(-panelTollbar->GetSize().x*0.5f + 16.0f + 32.0f*1,0.0f));
+		b2->SetSize(vec2(24.0f));
+		b2->SetAction
+		(
+			Interface::Item::ActionTypes::Click,
+			[](Interface::Item* item)
+			{
+				auto t = new Tool::Filter::D2::Correction::Color(item->GetWindow());
+			}
+		);
+	}
+
+	auto panelConfig = window->AddPanel(Interface::PanelTypes::Default);
+	panelConfig->SetSize(vec2(180.0f,window->GetSize().y));
+	panelConfig->SetPos(panelConfig->GetSize()*0.5f);
+	panelConfig->LockMove();
 }
 void fFree(Window::Render* window)
 {
