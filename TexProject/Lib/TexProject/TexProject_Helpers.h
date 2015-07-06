@@ -1377,7 +1377,8 @@ inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetV
 }
 inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetVPIMat() const
 {
-	return GetPIMat() * mat4::scale(vec3(1.0f,1.0f,-1.0f)) * GetVIMat();
+	//return GetPIMat() * mat4::scale(vec3(1.0f,1.0f,-1.0f)) * GetVMat();
+	return GetPIMat() * mat4::scale(vec3(1.0f,1.0f,-1.0f)) * mat4(GetRMat());
 }
 
 

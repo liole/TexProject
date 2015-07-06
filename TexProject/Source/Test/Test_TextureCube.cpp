@@ -8,6 +8,7 @@ OpenGL::Texture*		tTexMat = nullptr;
 OpenGL::Texture*		tTexEnv = nullptr;
 OpenGL::Model*			tModel = nullptr;
 OpenGL::Shader*			tShader = nullptr;
+OpenGL::Shader*			skyboxShader = nullptr;
 GLint					tUni1,tUni2,tUni3;
 Helper::MMat			tMMat;
 Helper::VMat			tVMat;
@@ -26,6 +27,20 @@ void fInit(Window::Render* window)
 	auto mesh = new Geometry::Mesh;
 	//mesh->CreateBox(vec3(10.0f),vec3(1.0f),uvec3(1));
 	mesh->CreateCylinder(5.0f,10.0f,vec2(6.0f,2.0f),vec2(2.0f),uvec2(32,4),4);
+
+	{
+		skyboxShader = new OpenGL::Shader(window);
+		skyboxShader->Load
+		(
+			"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.vs",
+			"",
+			"",
+			"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.gs",
+			"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.ps"
+		);
+		skyboxShader->Use();
+		skyboxShader->SetInt("Texture",3);
+	}
 
 	tShader = new OpenGL::Shader(window);
 	tShader->Load("Media/Shaders/GLSL/3D/Material/Basic/V1/1.vs","","","","Media/Shaders/GLSL/3D/Material/Basic/V1/1.ps");
@@ -102,6 +117,18 @@ void fLoop(Window::Render* window)
 	glClearColor(0.16f,0.16f,0.16f,1.0f);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	skyboxShader->Use();
+	skyboxShader->SetMat4("ViewProjectionInverseMatrix",tVMat.GetPIMat() * mat4::scale(vec3(1,1,-1)) * mat4(tVMat.GetRMat()));
+
+	tTexEnv->Use(3);
+
+	glDrawArrays(GL_POINTS,0,1);
+
 
 	glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LESS);
 	glDisable(GL_BLEND);
