@@ -11,8 +11,20 @@
 #include <Direct3D/include/d3d9.h>
 #include <Direct3D/include/d3dx9.h>
 
+
+#if __TEXPROJECT_ARCHITECTURE__ == __TEXPROJECT_ARCHITECTURE_X86__
+
 #pragma comment(lib, "Direct3D/lib/x86/d3d9.lib")
 #pragma comment(lib, "Direct3D/lib/x86/d3dx9.lib")
+
+#else
+
+#if __TEXPROJECT_ARCHITECTURE__ == __TEXPROJECT_ARCHITECTURE_X64__
+#pragma comment(lib, "Direct3D/lib/x64/d3d9.lib")
+#pragma comment(lib, "Direct3D/lib/x64/d3dx9.lib")
+#endif
+
+#endif
 
 
 namespace TexProject

@@ -1,5 +1,5 @@
 #version 330 core
-#define ParallaxMapping 0
+#define ParallaxMapping 1
 
 
 uniform sampler2D	TextureDiffuse;
@@ -105,7 +105,8 @@ void main()
 
 	vec4 TexEnv = texture(TextureEnvironment,refVec);
 
-	float specInt = specularPhong(lightDir,refVec,SpecularPower) * SpecularIntensity;
+	float specInt = specularCookTorrance(Normal,lightDir,-normalize(pPos),0.1f);
+	//float specInt = specularPhong(lightDir,refVec,SpecularPower) * SpecularIntensity;
 	//float specInt = specularPhong(Normal,lightDir,pPos,SpecularPower) * SpecularIntensity;
 	//float specInt = specularCookTorrance(Normal,-lightDir,pPos,0.1f);
 
@@ -117,6 +118,7 @@ void main()
 	//pixelColor = vec4(refVec,1.0f);
 	//pixelColor = TexDif;
 	//pixelColor = vec4(pPos,1.0f);
+	//pixelColor = vec4(vec3(specInt),1.0f);
 	//pixelColor = vec4(vec3(rangeInt),1.0f);
 	//pixelColor = vec4(vec3(diffInt),1.0f);
 	//pixelColor = vec4(Normal,1.0f);

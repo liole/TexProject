@@ -132,7 +132,7 @@ void TexProject::Main()
 	wnd.SetFunc(Window::Render::FuncTypes::Free,fFree);
 	wnd.SetFunc(Window::Render::FuncTypes::Loop,fLoop);
 	wnd.Create("window");
-	wnd.SetSize(uvec2(512));
+	wnd.SetSize(uvec2(1024,600));
 	wnd.SetRenderContext(Window::RenderContext::Type::OpenGL);
 
 	while(Window::Process())
