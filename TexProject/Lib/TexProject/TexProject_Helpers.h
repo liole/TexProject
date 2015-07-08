@@ -36,6 +36,7 @@ namespace TexProject
 				/*Повертає вказівник на і-й екземпляр класу*/
 				static inline T*			Get(uint32 i);
 
+				static inline void			FreeArray();
 
 				uint32						id_;
 
@@ -698,6 +699,16 @@ TexProject::uint32							TexProject::Helper::Structure::IndirectClassArray<T,aut
 template<typename T,bool autoAdd,bool autoRemove>
 TexProject::uint32							TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::capacity_ = 0;
 
+template<typename T,bool autoAdd,bool autoRemove>
+inline void									TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::FreeArray()
+{
+	if(array_)
+	{
+		free(array_);
+	}
+	count_ = 0;
+	capacity_ = 0;
+}
 template<typename T,bool autoAdd,bool autoRemove>
 inline TexProject::uint32					TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::GetCount()
 {

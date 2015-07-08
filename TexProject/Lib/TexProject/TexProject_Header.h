@@ -35,6 +35,7 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 #define __TEXPROJECT_MAC__					(__TEXPROJECT_PLATFORM__ == __TEXPROJECT_PLATFORM_MAC__)
 
 
+#define __TEXPROJECT_MEMORY_LEAK__			1
 #define __TEXPROJECT_OPENGL__				1
 #define __TEXPROJECT_DEVIL__				1
 #define __TEXPROJECT_DIRECT3D__				1
@@ -64,6 +65,19 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 // MacOS variant
 #endif
 #endif
+#endif
+
+
+
+#if __TEXPROJECT_DEBUG__ && __TEXPROJECT_MEMORY_LEAK__
+#include <VLD/include/vld.h>
+
+#if __TEXPROJECT_ARCHITECTURE__ == __TEXPROJECT_ARCHITECTURE_X86__
+#pragma comment(lib, "/Win32/vld.lib") 
+#else
+#pragma comment(lib, "/Win64/vld.lib") 
+#endif
+
 #endif
 
 

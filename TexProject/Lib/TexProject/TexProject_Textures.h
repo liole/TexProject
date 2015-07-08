@@ -42,6 +42,7 @@ namespace TexProject
 		public:
 
 			inline D2();
+			inline D2(const D2& source);
 			inline ~D2();
 
 			inline void						Create(const uvec2& size_);
@@ -333,6 +334,12 @@ namespace TexProject
 inline TexProject::Texture::D2::D2()
 {
 }
+inline TexProject::Texture::D2::D2(const D2& source):
+	size(source.size),
+	data(new vec4[source.size.x*source.size.y])
+{
+	for(uint32 i = 0; i < size.x*size.y; ++i) data[i] = source.data[i];
+}
 inline TexProject::Texture::D2::~D2()
 {
 	Delete();
@@ -545,12 +552,17 @@ inline bool									TexProject::Windows::Texture::Create(uvec2 size_,vec4* data_
 		}
 	}
 
-	bitmap = CreateBitmap(size.x,size.y,1,bitCount,textureData);
+	//bitmap = CreateBitmap(size.x,size.y,1,bitCount,textureData);
 
-	return bitmap != NULL;
+	return true;//bitmap != NULL;
 }
 inline void									TexProject::Windows::Texture::Delete()
 {
+	if(textureData)
+	{
+		delete[] textureData;
+		textureData = nullptr;
+	}
 	if(bitmap)
 	{
 		//delete bitmap

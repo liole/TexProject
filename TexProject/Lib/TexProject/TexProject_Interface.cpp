@@ -134,7 +134,7 @@ Interface::GUIPanel*						TexProject::Interface::Basic::AddPanel(const PanelType
 }
 Interface::GUIButton*						TexProject::Interface::Basic::AddButton(const ButtonType& type_)
 {
-	throw TexProject::Exception("Forbidden [TexProject::Interface::Basic::AddButton[");
+	throw TexProject::Exception("Forbidden [TexProject::Interface::Basic::AddButton]");
 }
 
 #if __TEXPROJECT_WIN__
@@ -281,11 +281,16 @@ void										TexProject::Interface::Panel::Basic::Loop()
 			{
 				t->Loop();
 			}
-			catch(Item::Exception_LocalDestruction)
+			catch(Exception_LocalDestruction)
 			{
 				Item::DeleteItem(t);
 				i = panel.erase(i);
 				continue;
+			}
+			catch(Exception_Destruction)
+			{
+				CallAction(ActionTypes::Destruction);
+				throw Exception_Destruction();
 			}
 			++i;
 		}
@@ -299,11 +304,16 @@ void										TexProject::Interface::Panel::Basic::Loop()
 			{
 				t->Loop();
 			}
-			catch(Item::Exception_LocalDestruction)
+			catch(Exception_LocalDestruction)
 			{
 				Item::DeleteItem(t);
 				i = button.erase(i);
 				continue;
+			}
+			catch(Exception_Destruction)
+			{
+				CallAction(ActionTypes::Destruction);
+				throw Exception_Destruction();
 			}
 			++i;
 		}
@@ -637,6 +647,10 @@ Interface::GUIButton*						TexProject::Interface::Default::Panel::Default::AddBu
 TexProject::Interface::Default::Panel::Image::Image(GUI* interface_,Item* parent_):
 	Interface::Panel::Image(interface_,parent_)
 {
+}
+TexProject::Interface::Default::Panel::Image::~Image()
+{
+	if(image) { delete image; image = nullptr; }
 }
 void										TexProject::Interface::Default::Panel::Image::SetImage(Texture::D2* texture_)
 {

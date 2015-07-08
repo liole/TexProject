@@ -25,6 +25,7 @@
 #include <TexProject/TexProject_Buffers.h>
 #include <TexProject/TexProject_Textures.h>
 #include <TexProject/TexProject_Geometry.h>
+#include <TexProject/TexProject_Tools.h>
 
 
 

@@ -6,11 +6,11 @@ uniform mat4 ModelMatrix;
 uniform mat4 ModelViewProjectionMatrix;
 
 
-layout(location = 0) in vec3	vPos;
-layout(location = 1) in vec2	vTex;
-layout(location = 2) in vec3	vTan;
-layout(location = 3) in vec3	vBin;
-layout(location = 4) in vec3	vNor;
+in vec3	vPos;
+in vec2	vTex;
+in vec3	vTan;
+in vec3	vBin;
+in vec3	vNor;
 
 
 out vec3	pPos;

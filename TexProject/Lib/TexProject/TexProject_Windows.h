@@ -450,6 +450,7 @@ namespace TexProject
 		/*Базовий клас для усіх вікон*/
 		struct Basic:
 			public Helper::Structure::IndirectClassArray<Basic,true,true>
+			//public Helper::Structure::ListClassArray<Basic,true,true>
 		{
 			friend bool Window::Process();
 		protected:
