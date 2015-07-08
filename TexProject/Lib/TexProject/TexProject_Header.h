@@ -35,7 +35,7 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 #define __TEXPROJECT_MAC__					(__TEXPROJECT_PLATFORM__ == __TEXPROJECT_PLATFORM_MAC__)
 
 
-#define __TEXPROJECT_MEMORY_LEAK__			1
+#define __TEXPROJECT_MEMORY_LEAK__			0
 #define __TEXPROJECT_OPENGL__				1
 #define __TEXPROJECT_DEVIL__				1
 #define __TEXPROJECT_DIRECT3D__				1

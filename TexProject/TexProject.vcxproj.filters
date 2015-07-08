@@ -54,7 +54,10 @@
     <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Test\Main_Q_worley.cpp">
+    <ClCompile Include="Source\Test\Test_Tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,6 +108,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_Direct3D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Tools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
