@@ -8,8 +8,49 @@ using namespace TexProject;
 std::list<TexProject::Tool::Basic*>			TexProject::Tool::tool;
 std::list<TexProject::Tool::Basic*>			TexProject::Tool::clean;
 
-void TexProject::Tool::Init()
+TexProject::Window::Render*					TexProject::Tool::window = nullptr;
+TexProject::Interface::Panel::Default*		TexProject::Tool::panelConfig = nullptr;
+
+TexProject::Tool::Basic*					TexProject::Tool::focus = nullptr;
+
+
+void					TexProject::Tool::SetFocus(Basic* source)
 {
+	if(panelConfig && focus != source)
+	{
+		if(focus)
+		{
+			focus->FreeFocus(panelConfig);
+			focus = nullptr;
+		}
+		if(source)
+		{
+			focus = source;
+			focus->InitFocus(panelConfig);
+		}
+	}
+}
+void					TexProject::Tool::UnsetFocus(Basic* source)
+{
+	if(panelConfig && focus == source)
+	{
+		if(focus)
+		{
+			focus->FreeFocus(panelConfig);
+			focus = nullptr;
+		}
+	}
+}
+
+
+void TexProject::Tool::Init(Window::Render* window_)
+{
+	window = window_;
+
+	panelConfig = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
+	panelConfig->SetSize(vec2(180.0f,float32(window->GetSize().y)));
+	panelConfig->SetPos(panelConfig->GetSize()*0.5f);
+	panelConfig->LockMove();
 }
 void TexProject::Tool::Free()
 {
@@ -31,6 +72,7 @@ void TexProject::Tool::Loop()
 			}
 			catch(Tool::Destruction)
 			{
+				(*i)->FlushFocus();
 				clean.push_back(*i); //delete *i;
 				(*i)->iter = tool.end();
 				i = tool.erase(i);
@@ -63,6 +105,7 @@ TexProject::Tool::Basic::Basic(Window::Render* window_):
 }
 TexProject::Tool::Basic::~Basic()
 {
+	FlushFocus();
 }
 void					TexProject::Tool::Basic::Loop()
 {
@@ -78,6 +121,12 @@ bool					TexProject::Tool::Basic::IsClean()
 {
 	return true;
 }
+void					TexProject::Tool::Basic::InitFocus(Interface::Panel::Default* panel)
+{
+}
+void					TexProject::Tool::Basic::FreeFocus(Interface::Panel::Default* panel)
+{
+}
 
 
 // Tool::Generator::D2::Blank
@@ -87,6 +136,14 @@ Tool::D2(window_)
 	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
 	panelBase->SetSize(vec2(200.0f));
 	panelBase->SetUserData(this);
+	panelBase->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			Tool::SetFocus( (Tool::Generator::D2::Blank*)item->GetUserData() );
+		}
+	);
 	panelBase->SetAction
 	(
 		Interface::Item::ActionTypes::Destruction,
@@ -138,6 +195,25 @@ void					TexProject::Tool::Generator::D2::Blank::Loop()
 {
 	Basic::Loop();
 
+	{
+		if(focusButtonSliderColorRed)
+		{
+			color.x = focusButtonSliderColorRed->GetValue();
+		}
+		if(focusButtonSliderColorGreen)
+		{
+			color.y = focusButtonSliderColorGreen->GetValue();
+		}
+		if(focusButtonSliderColorBlue)
+		{
+			color.z = focusButtonSliderColorBlue->GetValue();
+		}
+		if(focusButtonSliderColorAlpha)
+		{
+			color.w = focusButtonSliderColorAlpha->GetValue();
+		}
+	}
+
 	if(generationFlag)
 	{
 		if(generationFinish)
@@ -166,6 +242,7 @@ void					TexProject::Tool::Generator::D2::Blank::Refresh()
 
 		if(texture) { delete texture; texture = nullptr; }
 
+		generationColor = color;
 		generationFlag = true;
 		generationFinish = false;
 		generationThread = std::thread
@@ -174,7 +251,7 @@ void					TexProject::Tool::Generator::D2::Blank::Refresh()
 			{
 				generationTexture = new Texture::D2;
 				generationTexture->Create(uvec2(128));
-				generationTexture->Fill(vec4(1.0f,0.5f,0.0f,1.0f));
+				generationTexture->Fill(generationColor);	//vec4(1.0f,0.5f,0.0f,1.0f));
 
 				generationFinish = true;
 			}
@@ -184,6 +261,71 @@ void					TexProject::Tool::Generator::D2::Blank::Refresh()
 bool					TexProject::Tool::Generator::D2::Blank::IsClean()
 {
 	return !generationFlag || generationFinish;
+}
+void					TexProject::Tool::Generator::D2::Blank::InitFocus(Interface::Panel::Default* panel)
+{
+	auto size_ = panel->GetSize();
+
+	focusButtonRefresh = (Interface::Button::Default*)panel->AddButton(Interface::ButtonType::Default);
+	focusButtonRefresh->SetSize(vec2(80.0f,20.0f));
+	focusButtonRefresh->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f));
+	focusButtonRefresh->SetUserData(this);
+	focusButtonRefresh->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			((Tool::Generator::D2::Blank*)item->GetUserData())->Refresh();
+		}
+	);
+
+	focusButtonSliderColorRed = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorRed->SetSize(vec2(120.0f,20.0f));
+	focusButtonSliderColorRed->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*1));
+	focusButtonSliderColorRed->SetValue(color.x);
+
+	focusButtonSliderColorGreen = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorGreen->SetSize(vec2(120.0f,20.0f));
+	focusButtonSliderColorGreen->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*2));
+	focusButtonSliderColorGreen->SetValue(color.y);
+
+	focusButtonSliderColorBlue = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorBlue->SetSize(vec2(120.0f,20.0f));
+	focusButtonSliderColorBlue->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*3));
+	focusButtonSliderColorBlue->SetValue(color.z);
+
+	focusButtonSliderColorAlpha = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorAlpha->SetSize(vec2(120.0f,20.0f));
+	focusButtonSliderColorAlpha->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*4));
+	focusButtonSliderColorAlpha->SetValue(color.w);
+}
+void					TexProject::Tool::Generator::D2::Blank::FreeFocus(Interface::Panel::Default* panel)
+{
+	if(focusButtonRefresh)
+	{
+		panel->RemoveButton(focusButtonRefresh);
+		focusButtonRefresh = nullptr;
+	}
+	if(focusButtonSliderColorRed)
+	{
+		panel->RemoveButton(focusButtonSliderColorRed);
+		focusButtonSliderColorRed = nullptr;
+	}
+	if(focusButtonSliderColorGreen)
+	{
+		panel->RemoveButton(focusButtonSliderColorGreen);
+		focusButtonSliderColorGreen = nullptr;
+	}
+	if(focusButtonSliderColorBlue)
+	{
+		panel->RemoveButton(focusButtonSliderColorBlue);
+		focusButtonSliderColorBlue = nullptr;
+	}
+	if(focusButtonSliderColorAlpha)
+	{
+		panel->RemoveButton(focusButtonSliderColorAlpha);
+		focusButtonSliderColorAlpha = nullptr;
+	}
 }
 
 

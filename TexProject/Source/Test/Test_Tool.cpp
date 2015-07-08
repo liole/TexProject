@@ -6,7 +6,7 @@ using namespace TexProject;
 
 void fInit(Window::Render* window)
 {
-	Tool::Init();
+	Tool::Init(window);
 
 	auto panelTollbar = window->AddPanel(Interface::PanelTypes::Default);
 	panelTollbar->SetSize(vec2(200.0f,32.0f));
@@ -38,11 +38,6 @@ void fInit(Window::Render* window)
 			}
 		);
 	}
-
-	auto panelConfig = window->AddPanel(Interface::PanelTypes::Default);
-	panelConfig->SetSize(vec2(180.0f,float32(window->GetSize().y)));
-	panelConfig->SetPos(panelConfig->GetSize()*0.5f);
-	panelConfig->LockMove();
 }
 void fFree(Window::Render* window)
 {

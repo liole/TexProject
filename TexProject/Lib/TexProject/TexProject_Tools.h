@@ -42,11 +42,15 @@ namespace TexProject
 			bool												destruction = false;
 
 			Basic(Window::Render* window_);
-			virtual								~Basic();
+			virtual							~Basic();
 
-			virtual void						Loop();
-			virtual void						Refresh();
-			virtual bool						IsClean();		// Is object ready to be deleted?
+			virtual void					Loop();
+			virtual void					Refresh();
+			virtual bool					IsClean();		// Is object ready to be deleted?
+
+			inline void						FlushFocus();
+			virtual void					InitFocus(Interface::Panel::Default* panel);
+			virtual void					FreeFocus(Interface::Panel::Default* panel);
 		};
 		struct D2:
 			public Basic
@@ -63,6 +67,11 @@ namespace TexProject
 
 		static std::list<Basic*> tool;
 		static std::list<Basic*> clean;
+
+		static Window::Render*				window;
+		static Interface::Panel::Default*	panelConfig;
+
+		static Basic*						focus;
 
 	public:
 
@@ -88,11 +97,19 @@ namespace TexProject
 					Interface::Button::Connector*				buttonConnectorOut = nullptr;
 					Interface::Button::Default*					buttonClose = nullptr;
 
+					Interface::Button::Default*					focusButtonRefresh = nullptr;
+					Interface::Button::Slider*					focusButtonSliderColorRed = nullptr;
+					Interface::Button::Slider*					focusButtonSliderColorGreen = nullptr;
+					Interface::Button::Slider*					focusButtonSliderColorBlue = nullptr;
+					Interface::Button::Slider*					focusButtonSliderColorAlpha = nullptr;
+
+					vec4										generationColor = vec4(1.0f,0.5f,0.0f,1.0f);
 					bool										generationFlag = false;
 					volatile std::atomic<bool>					generationFinish = false;
 					std::thread									generationThread;
 					Texture::D2*								generationTexture = nullptr;
 
+					vec4										color = vec4(1.0f,0.5f,0.0f,1.0f);
 					Texture::D2*								texture = nullptr;
 
 					Blank(Window::Render* window_);
@@ -101,6 +118,9 @@ namespace TexProject
 					virtual void								Loop() override;
 					virtual void								Refresh() override;
 					virtual bool								IsClean() override;
+
+					virtual void								InitFocus(Interface::Panel::Default* panel) override;
+					virtual void								FreeFocus(Interface::Panel::Default* panel) override;
 				};
 			};
 		};
@@ -153,15 +173,24 @@ namespace TexProject
 		};
 
 
+		static void							SetFocus(Basic* source);
+		static void							UnsetFocus(Basic* source);
 
 		template<typename T>
 		static T*							Add(Window::Render* window);
 		static inline void					Remove(Basic* source);
 
-		static void Init();
+		static void Init(Window::Render* window_);
 		static void Free();
 		static void Loop();
 	};
+}
+
+
+// Tool::Basic
+inline void									TexProject::Tool::Basic::FlushFocus()
+{
+	UnsetFocus(this);	//if(focus == this) focus = nullptr;
 }
 
 
@@ -176,6 +205,7 @@ inline void				TexProject::Tool::Remove(TexProject::Tool::Basic* source)
 {
 	if(source && source->iter != tool.end())
 	{
+		source->FlushFocus();
 		tool.erase(source->iter); source->iter = tool.end();
 		clean.push_back(source);
 		//delete source;

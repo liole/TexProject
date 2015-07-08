@@ -248,6 +248,7 @@ namespace TexProject
 
 				virtual GUIPanel*			AddPanel(const PanelType& type_);
 				virtual GUIButton*			AddButton(const ButtonType& type_);
+				inline void					RemoveButton(Button::Basic* button_);
 
 			};
 			struct Default: public Panel::Basic
@@ -348,6 +349,10 @@ namespace TexProject
 				Slider&					operator = (Slider&&) = delete;
 
 				virtual void			Loop() override;
+
+			public:
+				inline float32			GetValue() const;
+				inline void				SetValue(float32 value_);
 			};
 			struct Connector: public Button::Basic
 			{
@@ -707,6 +712,32 @@ typename T*									TexProject::Interface::Panel::Basic::AddButton()
 	auto t = Item::CreateItem<T>(inter,this);
 	button.push_back((Button::Basic*)t);
 	return t;
+}
+inline void									TexProject::Interface::Panel::Basic::RemoveButton(Button::Basic* button_)
+{
+	auto i = button.begin();
+	while(i != button.end())
+	{
+		if(*i == button_)
+		{
+			//auto t = *i;
+			Item::DeleteItem(*i);
+			i = button.erase(i);
+			continue;
+		}
+		++i;
+	}
+}
+
+
+// Interface::Button::Slider
+inline TexProject::float32					TexProject::Interface::Button::Slider::GetValue() const
+{
+	return slide;
+}
+inline void									TexProject::Interface::Button::Slider::SetValue(float32 value_)
+{
+	slide = value_;
 }
 
 
