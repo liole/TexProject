@@ -54,7 +54,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Test\Test_TextureCube.cpp">
+    <ClCompile Include="Source\Test\Main_Q_worley.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

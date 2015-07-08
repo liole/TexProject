@@ -93,7 +93,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Main.cpp" />
-    <ClCompile Include="Source\Test\Test_TextureCube.cpp" />
+    <ClCompile Include="Source\Test\Main_Q_worley.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
