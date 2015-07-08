@@ -57,7 +57,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;$(SolutionDir)TexProject\Lib\Direct3D\Lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;$(SolutionDir)TexProject\Lib\Direct3D\Lib;$(SolutionDir)TexProject\Lib\VLD\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -76,7 +76,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;$(SolutionDir)TexProject\Lib\Direct3D\Lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\TexProject\Lib;$(SolutionDir)TexProject\Lib\DevIL\Lib\;$(SolutionDir)TexProject\Lib\Direct3D\Lib;$(SolutionDir)TexProject\Lib\VLD\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -84,6 +84,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_DevIL.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Buffers.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Tools.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Geometry.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Shaders.cpp" />
@@ -93,7 +94,7 @@
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Main.cpp" />
-    <ClCompile Include="Source\Test\Test_TextureCube.cpp" />
+    <ClCompile Include="Source\Test\Test_Tool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
@@ -102,6 +103,7 @@
     <ClInclude Include="Lib\TexProject\TexProject_DevIL.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Buffers.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Direct3D.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Tools.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Geometry.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Interface.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Shaders.h" />

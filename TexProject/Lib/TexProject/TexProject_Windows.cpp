@@ -23,6 +23,8 @@ void					TexProject::Window::Free()
 	Window::Main::Free();
 
 	Window::RenderContext::Free();
+
+	Window::Basic::FreeArray();
 }
 bool					TexProject::Window::Process()
 {
@@ -1575,6 +1577,8 @@ void					TexProject::Window::Render::Create(const string& title_)
 }
 void					TexProject::Window::Render::Delete()
 {
+	Basic::Delete();
+
 	if(renderContext)
 	{
 		if(init)
@@ -1584,13 +1588,10 @@ void					TexProject::Window::Render::Delete()
 				if(func[FuncTypes::Free]) func[FuncTypes::Free](this);
 			}
 		}
-	}
 
-	Basic::Delete();
-
-	if(renderContext)
-	{
 		renderContext->Delete();
+		delete renderContext;
+		renderContext = nullptr;
 	}
 
 #if __TEXPROJECT_WIN__
@@ -1758,6 +1759,7 @@ void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type&
 {
 	if(renderContext)
 	{
+		renderContext->Delete();
 		delete renderContext;
 		renderContext = nullptr;
 	}
@@ -1797,6 +1799,7 @@ void					TexProject::Window::Render::SetRenderContext(const RenderContext::Type&
 		if(renderContext->Use())
 		{
 			if(func[FuncTypes::Init]) func[FuncTypes::Init](this);
+			renderContext->Unuse();
 		}
 	}
 }

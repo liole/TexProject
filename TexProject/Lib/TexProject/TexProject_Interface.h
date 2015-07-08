@@ -111,7 +111,7 @@ namespace TexProject
 					Click					= 0,
 					Free					= 1,
 					Refresh					= 2,
-					Reserved				= 3
+					Destruction				= 3		// Close button pressed
 				};
 			};
 			typedef ActionTypes::Enum		ActionType;
@@ -195,8 +195,8 @@ namespace TexProject
 			inline void						SetUserData(void* data_, bool remove_ = false);
 			inline void*					GetUserData();
 
-			inline void						AddPointer(void*& pointer_);					// Додаємо у список керований вказівник
-			inline void						RemovePointer(void*& pointer_);					// Видаляємо зі списку керований вказівник і занулюємо його
+			inline void						AddPointer(void** pointer_);					// Додаємо у список керований вказівник
+			inline void						RemovePointer(void** pointer_);					// Видаляємо зі списку керований вказівник і занулюємо його
 			inline void						ResetPointers();								// Видаляємо зі списку усі вказівники і занулуємо їх
 			inline void						FlushPointers();								// Видаляємо зі списку усі вказівники
 
@@ -500,7 +500,7 @@ namespace TexProject
 
 				public:
 																Image(GUI* interface_,Item* parent_ = nullptr);
-																~Image() = default;
+																~Image();
 
 					virtual void								SetImage(Texture::D2* texture_) override;
 
@@ -613,11 +613,11 @@ void										TexProject::Interface::Item::ToTop()
 	inter->ToTop(this);
 }
 
-void										TexProject::Interface::Item::CallAction(const ActionType& type_)
+inline void									TexProject::Interface::Item::CallAction(const ActionType& type_)
 {
 	if(action[type_]) action[type_](this);
 }
-void										TexProject::Interface::Item::SetAction(const ActionType& type_,Action* action_)
+inline void									TexProject::Interface::Item::SetAction(const ActionType& type_,Action* action_)
 {
 	action[type_] = action_;
 }
@@ -636,18 +636,18 @@ inline void*								TexProject::Interface::Item::GetUserData()
 	return userData;
 }
 
-inline void									TexProject::Interface::Item::AddPointer(void*& pointer_)
+inline void									TexProject::Interface::Item::AddPointer(void** pointer_)
 {
-	pointer_ = this;
+	*pointer_ = this;
 	pointer.push_back((Item**)(&pointer_));
 }
-inline void									TexProject::Interface::Item::RemovePointer(void*& pointer_)
+inline void									TexProject::Interface::Item::RemovePointer(void** pointer_)
 {
 	auto i = pointer.begin();
 	while(i != pointer.end())
 	{
 		auto t = *i;
-		if(t == (Item**)(&pointer_))
+		if(t == (Item**)(pointer_))
 		{
 			i = pointer.erase(i);
 			pointer_ = nullptr;

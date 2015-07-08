@@ -558,6 +558,11 @@ inline bool									TexProject::Windows::Texture::Create(uvec2 size_,vec4* data_
 }
 inline void									TexProject::Windows::Texture::Delete()
 {
+	if(textureData)
+	{
+		delete[] textureData;
+		textureData = nullptr;
+	}
 	if(bitmap)
 	{
 		//delete bitmap
