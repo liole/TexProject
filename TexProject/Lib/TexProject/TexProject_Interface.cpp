@@ -150,6 +150,7 @@ TexProject::Interface::Item::Item(GUI* interface_,Item* parent_):
 	Helper::Prio(0),
 	Helper::Pos2((parent_) ? (vec2(0.0f)) : (vec2(interface_->GetWindow()->GetSize())*0.5f)),
 	Helper::Size2(vec2(128.0f)),
+	Helper::Color4(vec4(1.0f)),
 	inter(interface_)
 {
 	//for(auto i: action) i = nullptr;
@@ -178,13 +179,39 @@ void					TexProject::Interface::Item::Delete()
 }
 void					TexProject::Interface::Item::Loop()
 {
-	if(IsLocalSelect() && inter->GetPicked() && GetBase() == inter->GetPicked()->GetBase())
+	/*if(IsLocalSelect() && inter->GetPicked() && GetBase() == inter->GetPicked()->GetBase())
 	{
 		if(inter->mouse.stateL && !inter->mouse.stateOL)
 		{
 			CallAction(ActionType::Click);
 		}
+	}*/
+	if(inter->mouse.stateL)
+	{
+		if(clamped)
+		{
+			if(clampLock > 0) --clampLock;
+			else CallAction(ActionType::Clamp);
+		}
+		else
+		{
+			if(!inter->mouse.stateOL)
+			{
+				if(IsLocalSelect() && inter->GetPicked() && GetBase() == inter->GetPicked()->GetBase())
+				{
+					CallAction(ActionType::Click);
+					clamped = true;
+					clampLock = 30;
+				}
+			}
+		}
 	}
+	else
+	{
+		clamped = false;
+		clampLock = 0;
+	}
+
 }
 bool					TexProject::Interface::Item::IsConnector()
 {
@@ -365,6 +392,22 @@ TexProject::Interface::Panel::Default::Default(GUI* interface_,Item* parent_):
 }
 
 
+//
+TexProject::Interface::Panel::Text::Text(GUI* interface_,Item* parent_):
+	Basic(interface_,parent_)
+{
+}
+void										TexProject::Interface::Panel::Text::SetText(const string& text_)
+{
+	text = text_;
+}
+TexProject::string							TexProject::Interface::Panel::Text::GetText() const
+{
+	return text;
+}
+
+
+
 // Interface::Panel::Image
 TexProject::Interface::Panel::Image::Image(GUI* interface_,Item* parent_):
 	Basic(interface_,parent_)
@@ -379,6 +422,7 @@ void										TexProject::Interface::Panel::Image::SetImage(Texture::D2* texture
 TexProject::Interface::Button::Basic::Basic(GUI* interface_,Item* parent_):
 	Item(interface_,parent_)
 {
+	color = vec4(0.0f,1.0f,0.0f,1.0f);
 }
 
 
@@ -532,6 +576,18 @@ void										TexProject::Interface::Default::Panel::Default::_win_WMPaint()
 	auto pos_ = GetPos();
 	auto hsize_ = GetSize()*0.5f;
 
+	{
+		rect.left = LONG(pos_.x - hsize_.x);
+		rect.bottom = LONG(pos_.y + hsize_.y);
+		rect.right = LONG(pos_.x + hsize_.x);
+		rect.top = LONG(pos_.y - hsize_.y);
+
+		SetDCBrushColor(hDC,RGB(color.x*255,color.y*255,color.z*255));
+
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
+	}
+
+	/*
 	//if(!parent)
 	{	// shadow
 		rect.left = LONG(pos_.x - hsize_.x + 4.0f);
@@ -567,6 +623,7 @@ void										TexProject::Interface::Default::Panel::Default::_win_WMPaint()
 			Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
 		}
 	}
+	*/
 
 	Basic::_win_WMPaint();
 }
@@ -577,6 +634,10 @@ Interface::GUIPanel*						TexProject::Interface::Default::Panel::Default::AddPan
 		case PanelTypes::Default:
 		{
 			return Interface::Panel::Default::AddPanel<Interface::Default::Panel::Default>();
+		}
+		case PanelTypes::Text:
+		{
+			return  Interface::Panel::Default::AddPanel<Interface::Default::Panel::Text>();
 		}
 		case PanelTypes::Image:
 		{
@@ -643,6 +704,88 @@ Interface::GUIButton*						TexProject::Interface::Default::Panel::Default::AddBu
 }
 
 
+// Interface::Default::Panel::Text
+TexProject::Interface::Default::Panel::Text::Text(GUI* interface_,Item* parent_):
+	Interface::Panel::Text(interface_,parent_)
+{
+}
+void										TexProject::Interface::Default::Panel::Text::_win_WMPaint()
+{
+	auto window = inter->GetWindow();
+	auto &hDC = ((Interface::Default*)(inter))->renderDeviceContextHandle;
+	auto &rect = ((Interface::Default*)(inter))->renderRect;
+
+	auto pos_ = GetPos();
+	auto hsize_ = GetSize()*0.5f;
+
+	/*{
+		float32 border = 1.0f;
+
+		rect.left = LONG(pos_.x - (hsize_.x+border));
+		rect.bottom = LONG(pos_.y + (hsize_.y+border));
+		rect.right = LONG(pos_.x + (hsize_.x+border));
+		rect.top = LONG(pos_.y - (hsize_.y+border));
+
+		SetDCBrushColor(hDC,RGB(color.x*255,color.y*255,color.z*255));
+
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
+	}*/
+
+	{
+		rect.left = LONG(pos_.x - hsize_.x);
+		rect.bottom = LONG(pos_.y + hsize_.y);
+		rect.right = LONG(pos_.x + hsize_.x);
+		rect.top = LONG(pos_.y - hsize_.y);
+
+		SetTextColor(hDC,RGB(color.x*255,color.y*255,color.z*255));
+		//SetTextAlign(hDC,TA_CENTER | TA_TOP);
+		/*
+		#define TA_NOUPDATECP                0
+		#define TA_UPDATECP                  1
+
+		#define TA_LEFT                      0
+		#define TA_RIGHT                     2
+		#define TA_CENTER                    6
+
+		#define TA_TOP                       0
+		#define TA_BOTTOM                    8
+		#define TA_BASELINE                  24
+
+		TA_RTLREADING
+		*/
+
+		//SetBkColor(hDC,RGB(0,255,0));
+		SetBkMode(hDC,TRANSPARENT);	// OPAQUE, TRANSPARENT
+
+		//text = "text\nlol";
+
+		UINT format = DT_LEFT | DT_TOP | DT_NOPREFIX;
+		/*
+		DT_TOP                      0x00000000
+		DT_LEFT                     0x00000000
+		DT_CENTER                   0x00000001
+		DT_RIGHT                    0x00000002
+		DT_VCENTER                  0x00000004
+		DT_BOTTOM                   0x00000008
+		DT_WORDBREAK                0x00000010
+		DT_SINGLELINE               0x00000020
+		DT_EXPANDTABS               0x00000040
+		DT_TABSTOP                  0x00000080
+		DT_NOCLIP                   0x00000100
+		DT_EXTERNALLEADING          0x00000200
+		DT_CALCRECT                 0x00000400
+		DT_NOPREFIX                 0x00000800
+		DT_INTERNAL                 0x00001000
+		*/
+
+		DrawText(hDC,text.c_str(),text.length(),&rect,format);
+		//TextOut(hDC,0,0,text.c_str(),text.length());
+	}
+
+	Basic::_win_WMPaint();
+}
+
+
 // Interface::Default::Panel::Image
 TexProject::Interface::Default::Panel::Image::Image(GUI* interface_,Item* parent_):
 	Interface::Panel::Image(interface_,parent_)
@@ -670,7 +813,7 @@ void										TexProject::Interface::Default::Panel::Image::_win_WMPaint()
 	auto pos_ = GetPos();
 	auto hsize_ = GetSize()*0.5f;
 
-	if(!parent)
+	/*if(!parent)
 	{	// shadow
 		rect.left = LONG(pos_.x - hsize_.x + 4.0f);
 		rect.bottom = LONG(pos_.y + hsize_.y + 4.0f);
@@ -678,26 +821,32 @@ void										TexProject::Interface::Default::Panel::Image::_win_WMPaint()
 		rect.top = LONG(pos_.y - hsize_.y + 4.0f);
 
 		FillRect(hDC,&rect,(HBRUSH)GetStockObject(BLACK_BRUSH));
+	}*/
+
+	{
+		float32 border = 1.0f;
+
+		rect.left = LONG(pos_.x - (hsize_.x+border));
+		rect.bottom = LONG(pos_.y + (hsize_.y+border));
+		rect.right = LONG(pos_.x + (hsize_.x+border));
+		rect.top = LONG(pos_.y - (hsize_.y+border));
+
+		SetDCBrushColor(hDC,RGB(color.x*255,color.y*255,color.z*255));
+
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
+
+		/*SelectObject(hDC,(HBRUSH)GetStockObject(WHITE_PEN));
+		SelectObject(hDC,(HBRUSH)GetStockObject(GRAY_BRUSH));
+		Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);*/
 	}
-
-	float32 border = 1.0f;
-
-	rect.left = LONG(pos_.x - (hsize_.x+border));
-	rect.bottom = LONG(pos_.y + (hsize_.y+border));
-	rect.right = LONG(pos_.x + (hsize_.x+border));
-	rect.top = LONG(pos_.y - (hsize_.y+border));
-
-	SelectObject(hDC,(HBRUSH)GetStockObject(WHITE_PEN));
-	SelectObject(hDC,(HBRUSH)GetStockObject(GRAY_BRUSH));
-	Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
-
-	rect.left = LONG(pos_.x - hsize_.x);
-	rect.bottom = LONG(pos_.y + hsize_.y);
-	rect.right = LONG(pos_.x + hsize_.x);
-	rect.top = LONG(pos_.y - hsize_.y);
 
 	if(image)
 	{
+		rect.left = LONG(pos_.x - hsize_.x);
+		rect.bottom = LONG(pos_.y + hsize_.y);
+		rect.right = LONG(pos_.x + hsize_.x);
+		rect.top = LONG(pos_.y - hsize_.y);
+
 		SetStretchBltMode(hDC,STRETCH_HALFTONE);
 		StretchDIBits
 		(
@@ -711,7 +860,6 @@ void										TexProject::Interface::Default::Panel::Image::_win_WMPaint()
 
 	Basic::_win_WMPaint();
 }
-
 
 
 // Interface::Default::Button::Default
@@ -740,7 +888,18 @@ void										TexProject::Interface::Default::Button::Default::_win_WMPaint()
 	FillRect(hDC,&rect,(HBRUSH)GetStockObject(BLACK_BRUSH));
 	}*/
 
-	rect.left = LONG(pos_.x - hsize_.x);
+	{
+		rect.left = LONG(pos_.x - hsize_.x);
+		rect.bottom = LONG(pos_.y + hsize_.y);
+		rect.right = LONG(pos_.x + hsize_.x);
+		rect.top = LONG(pos_.y - hsize_.y);
+
+		SetDCBrushColor(hDC,RGB(color.x*255,color.y*255,color.z*255));
+
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
+	}
+
+	/*rect.left = LONG(pos_.x - hsize_.x);
 	rect.bottom = LONG(pos_.y + hsize_.y);
 	rect.right = LONG(pos_.x + hsize_.x);
 	rect.top = LONG(pos_.y - hsize_.y);
@@ -755,7 +914,7 @@ void										TexProject::Interface::Default::Button::Default::_win_WMPaint()
 	{
 		SelectObject(hDC,greenBrush);
 	}
-	Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
+	Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);*/
 }
 
 
@@ -775,7 +934,19 @@ void										TexProject::Interface::Default::Button::Trigger::_win_WMPaint()
 	auto pos_ = GetPos();
 	auto hsize_ = GetSize()*0.5f;
 
-	rect.left = LONG(pos_.x - hsize_.x);
+	{
+		rect.left = LONG(pos_.x - hsize_.x);
+		rect.bottom = LONG(pos_.y + hsize_.y);
+		rect.right = LONG(pos_.x + hsize_.x);
+		rect.top = LONG(pos_.y - hsize_.y);
+
+		if(state) SetDCBrushColor(hDC,RGB(colorActive.x*255,colorActive.y*255,colorActive.z*255));
+		else SetDCBrushColor(hDC,RGB(color.x*255,color.y*255,color.z*255));
+
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
+	}
+
+	/*rect.left = LONG(pos_.x - hsize_.x);
 	rect.bottom = LONG(pos_.y + hsize_.y);
 	rect.right = LONG(pos_.x + hsize_.x);
 	rect.top = LONG(pos_.y - hsize_.y);
@@ -791,7 +962,7 @@ void										TexProject::Interface::Default::Button::Trigger::_win_WMPaint()
 		if(state) SelectObject(hDC,blueBrush);
 		else SelectObject(hDC,greenBrush);
 	}
-	Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
+	Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);*/
 }
 
 
@@ -811,7 +982,7 @@ void										TexProject::Interface::Default::Button::Slider::_win_WMPaint()
 	auto pos_ = GetPos();
 	auto hsize_ = GetSize()*0.5f;
 
-	if(!parent)
+	/*if(!parent)
 	{	// shadow
 		rect.left = LONG(pos_.x - hsize_.x + 4.0f);
 		rect.bottom = LONG(pos_.y + hsize_.y + 4.0f);
@@ -819,7 +990,7 @@ void										TexProject::Interface::Default::Button::Slider::_win_WMPaint()
 		rect.top = LONG(pos_.y - hsize_.y + 4.0f);
 
 		FillRect(hDC,&rect,(HBRUSH)GetStockObject(BLACK_BRUSH));
-	}
+	}*/
 
 	{	// bordered
 		rect.left = LONG(pos_.x - hsize_.x);
@@ -827,10 +998,12 @@ void										TexProject::Interface::Default::Button::Slider::_win_WMPaint()
 		rect.right = LONG(pos_.x + hsize_.x);
 		rect.top = LONG(pos_.y - hsize_.y);
 
-		SelectObject(hDC,(HPEN)GetStockObject(WHITE_PEN));
+		/*SelectObject(hDC,(HPEN)GetStockObject(WHITE_PEN));
 		SelectObject(hDC,(HBRUSH)GetStockObject(DKGRAY_BRUSH));
 
-		Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
+		Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);*/
+		SetDCBrushColor(hDC,RGB(color.x*255,color.y*255,color.z*255));
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
 	}
 
 	{	// field
@@ -839,7 +1012,9 @@ void										TexProject::Interface::Default::Button::Slider::_win_WMPaint()
 		rect.right = LONG(pos_.x + hsize_.x - border.x);
 		rect.top = LONG(pos_.y - hsize_.y + border.y);
 
-		FillRect(hDC,&rect,(HBRUSH)GetStockObject(GRAY_BRUSH));
+		//FillRect(hDC,&rect,(HBRUSH)GetStockObject(GRAY_BRUSH));
+		SetDCBrushColor(hDC,RGB(colorInner.x*255,colorInner.y*255,colorInner.z*255));
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
 	}
 
 	{	// slide rail
@@ -848,7 +1023,9 @@ void										TexProject::Interface::Default::Button::Slider::_win_WMPaint()
 		rect.right = LONG(pos_.x + hsize_.x - border.x);
 		rect.top = LONG(pos_.y - 1.0f);
 
-		FillRect(hDC,&rect,(HBRUSH)GetStockObject(WHITE_BRUSH));
+		//FillRect(hDC,&rect,(HBRUSH)GetStockObject(WHITE_BRUSH));
+		SetDCBrushColor(hDC,RGB(colorRail.x*255,colorRail.y*255,colorRail.z*255));
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
 	}
 
 	{	// slider
@@ -858,11 +1035,13 @@ void										TexProject::Interface::Default::Button::Slider::_win_WMPaint()
 		rect.right = LONG(tPos.x + 2.0f);
 		rect.top = LONG(tPos.y - hsize_.y + border.y);
 
-		SelectObject(hDC,(HPEN)GetStockObject(WHITE_PEN));
+		/*SelectObject(hDC,(HPEN)GetStockObject(WHITE_PEN));
 		if(IsLocalSelect() && inter->GetPicked() && inter->GetPicked()->GetBase() == GetBase()) SelectObject(hDC,redBrush);
 		else SelectObject(hDC,greenBrush);
 
-		Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);
+		Rectangle(hDC,rect.left,rect.top,rect.right,rect.bottom);*/
+		SetDCBrushColor(hDC,RGB(colorSlider.x*255,colorSlider.y*255,colorSlider.z*255));
+		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
 	}
 }
 
@@ -1001,6 +1180,10 @@ Interface::GUIPanel*						TexProject::Interface::Default::AddPanel(const PanelTy
 		case PanelTypes::Default:
 		{
 			return AddItem<Panel::Default>();
+		}
+		case PanelTypes::Text:
+		{
+			return AddItem<Panel::Text>();
 		}
 		case PanelTypes::Image:
 		{

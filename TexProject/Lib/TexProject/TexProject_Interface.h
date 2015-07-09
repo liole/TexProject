@@ -44,6 +44,7 @@ namespace TexProject
 		{
 			struct Basic;					// Базовий
 			struct Default;					// Звичайна
+			struct Text;					// Текст
 			struct Image;					// Зображення
 		}
 		namespace Button					// Кнопки
@@ -60,6 +61,7 @@ namespace TexProject
 		typedef Panel::Basic				GUIPanel;
 		typedef Panel::Default				GUIPanelDefault;
 		typedef Panel::Image				GUIPanelImage;
+		typedef Panel::Text					GUIPanelText;
 		typedef Button::Basic				GUIButton;
 		typedef Button::Default				GUIButtonDefault;
 		typedef Button::Trigger				GUIButtonTrigger;
@@ -72,7 +74,8 @@ namespace TexProject
 			enum Enum
 			{
 				Default,
-				Image
+				Image,
+				Text
 			};
 		};
 		typedef PanelTypes::Enum			PanelType;
@@ -95,7 +98,8 @@ namespace TexProject
 		struct Item:
 			public TexProject::Helper::Prio,
 			public TexProject::Helper::Pos2,
-			public TexProject::Helper::Size2
+			public TexProject::Helper::Size2,
+			public TexProject::Helper::Color4
 		{
 			friend Interface::Basic;
 			friend Interface::Default;
@@ -105,13 +109,17 @@ namespace TexProject
 
 			struct ActionTypes
 			{
-				static const uint32			count = 4;
+				static const uint32			count = 8;
 				enum Enum
 				{
 					Click					= 0,
 					Free					= 1,
 					Refresh					= 2,
-					Destruction				= 3		// Close button pressed
+					Destruction				= 3,		// Close button pressed
+					Clamp					= 4,		// Clamped Button
+					Reserved5				= 5,
+					Reserved6				= 6,
+					Reserved7				= 7
 				};
 			};
 			typedef ActionTypes::Enum		ActionType;
@@ -146,6 +154,8 @@ namespace TexProject
 			bool							userDataRemove = false;
 			Action*							action[ActionTypes::count];
 			uint32							properties = PropertyBits::Default;
+			bool							clamped = false;
+			uint32							clampLock = 0;
 
 											Item(GUI* interface_,Item* parent_ = nullptr);
 											Item(const Item&) = delete;
@@ -208,7 +218,8 @@ namespace TexProject
 		};
 		namespace Panel
 		{
-			struct Basic: public Item
+			struct Basic:
+				public Item
 			{
 				friend Item;
 				friend Interface::Basic;
@@ -249,9 +260,15 @@ namespace TexProject
 				virtual GUIPanel*			AddPanel(const PanelType& type_);
 				virtual GUIButton*			AddButton(const ButtonType& type_);
 				inline void					RemoveButton(Button::Basic* button_);
+				inline void					RemovePanel(Panel::Basic* panel_);
+				/*inline void					AttachButton(Button::Basic* button_);
+				inline void					AttachPanel(Panel::Basic* panel_);
+				inline void					DetachButton(Button::Basic* button_);
+				inline void					DetachPanel(Panel::Basic* panel_);*/
 
 			};
-			struct Default: public Panel::Basic
+			struct Default:
+				public Panel::Basic
 			{
 				friend Item;
 				friend Interface::Basic;
@@ -264,7 +281,30 @@ namespace TexProject
 				Default&					operator = (const Default&) = delete;
 				Default&					operator = (Default&&) = delete;
 			};
-			struct Image: public Panel::Basic
+			struct Text:
+				public Panel::Basic
+			{
+				friend Item;
+				friend Interface::Basic;
+			protected:
+
+				string						text = "";
+
+											Text(GUI* interface_,Item* parent_ = nullptr);
+											Text(const Text&) = delete;
+											Text(Text&&) = delete;
+				virtual						~Text() = default;
+
+				Text&						operator = (const Text&) = delete;
+				Text&						operator = (Text&&) = delete;
+
+			public:
+
+				virtual void				SetText(const string& text_);
+				virtual string				GetText() const;
+			};
+			struct Image:
+				public Panel::Basic
 			{
 				friend Item;
 				friend Interface::Basic;
@@ -275,8 +315,8 @@ namespace TexProject
 											Image(Image&&) = delete;
 				virtual						~Image() = default;
 
-				Default&					operator = (const Image&) = delete;
-				Default&					operator = (Image&&) = delete;
+				Image&					operator = (const Image&) = delete;
+				Image&					operator = (Image&&) = delete;
 
 			public:
 
@@ -319,6 +359,7 @@ namespace TexProject
 			protected:
 
 				bool					state;
+				vec4					colorActive = vec4(1.0f,0.0f,0.0f,1.0f);
 
 										Trigger(GUI* interface_,Item* parent_ = nullptr);
 										Trigger(const Trigger&) = delete;
@@ -329,6 +370,15 @@ namespace TexProject
 				Trigger&				operator = (Trigger&&) = delete;
 
 				virtual void			Loop() override;
+
+				inline void				SetColorActive(const vec4& color_)
+				{
+					colorActive = color_;
+				}
+				inline vec4				GetColorActive()
+				{
+					return colorActive;
+				}
 			};
 			struct Slider: public Button::Basic
 			{
@@ -339,6 +389,9 @@ namespace TexProject
 				bool					selected = false;
 				float32					slide = 0.0f;
 				vec2					border = vec2(4.0f,2.0f);
+				vec4					colorInner = vec4(0.32f,0.32f,0.32f,1.0f),
+										colorRail = vec4(1.0f,1.0f,1.0f,1.0f),
+										colorSlider = vec4(0.0f,0.0f,1.0f,1.0f);
 
 										Slider(GUI* interface_,Item* parent_ = nullptr);
 										Slider(const Slider&) = delete;
@@ -353,6 +406,30 @@ namespace TexProject
 			public:
 				inline float32			GetValue() const;
 				inline void				SetValue(float32 value_);
+				inline void				SetColorInner(const vec4& color_)
+				{
+					colorInner = color_;
+				}
+				inline vec4				GetColorInner()
+				{
+					return colorInner;
+				}
+				inline void				SetColorRail(const vec4& color_)
+				{
+					colorRail = color_;
+				}
+				inline vec4				GetColorRail()
+				{
+					return colorRail;
+				}
+				inline void				SetColorSlider(const vec4& color_)
+				{
+					colorSlider = color_;
+				}
+				inline vec4				GetColorSlider()
+				{
+					return colorSlider;
+				}
 			};
 			struct Connector: public Button::Basic
 			{
@@ -498,6 +575,15 @@ namespace TexProject
 
 					virtual GUIPanel*							AddPanel(const PanelType& type_) override;
 					virtual GUIButton*							AddButton(const ButtonType& type_) override;
+				};
+				struct Text:
+					public Interface::Panel::Text
+				{
+				public:
+																Text(GUI* interface_,Item* parent_ = nullptr);
+																~Text() = default;
+
+					virtual void								_win_WMPaint() override;
 				};
 				struct Image: public Interface::Panel::Image
 				{
@@ -723,6 +809,20 @@ inline void									TexProject::Interface::Panel::Basic::RemoveButton(Button::Ba
 			//auto t = *i;
 			Item::DeleteItem(*i);
 			i = button.erase(i);
+			continue;
+		}
+		++i;
+	}
+}
+inline void									TexProject::Interface::Panel::Basic::RemovePanel(Panel::Basic* panel_)
+{
+	auto i = panel.begin();
+	while(i != panel.end())
+	{
+		if(*i == panel_)
+		{
+			Item::DeleteItem(*i);
+			i = panel.erase(i);
 			continue;
 		}
 		++i;

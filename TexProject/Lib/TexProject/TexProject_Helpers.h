@@ -75,7 +75,33 @@ namespace TexProject
 		}
 		namespace Logic
 		{
-			struct Priority
+			interface IPriority
+			{
+			public:
+				inline						IPriority() = default;
+				inline						IPriority(int32 priority_);
+				inline						IPriority(const IPriority&) = default;
+				inline						~IPriority() = default;
+
+				inline IPriority&			operator = (const IPriority&) = default;
+
+				inline void					SetPriority(int32 priority_);
+				inline int32				GetPriority() const;
+			};
+			interface IColor4
+			{
+			public:
+				inline						IColor4() = default;
+				inline						IColor4(const vec4& color_);
+				inline						IColor4(const IColor4&) = default;
+				inline						~IColor4() = default;
+
+				inline vec4					GetColor() const;
+				inline void					SetColor(const vec4& color_);
+			};
+
+			struct Priority:
+				public IPriority
 			{
 			protected:
 				int32						priority;
@@ -92,6 +118,22 @@ namespace TexProject
 
 				inline void					SetPriority(int32 priority_);
 				inline int32				GetPriority() const;
+			};
+			struct Color4:
+				public IColor4
+			{
+			protected:
+				vec4						color;
+
+			public:
+
+				inline						Color4() = default;
+				inline						Color4(const vec4& color_);
+				inline						Color4(const Color4&) = default;
+				inline						~Color4() = default;
+
+				inline vec4					GetColor() const;
+				inline void					SetColor(const vec4& color_);
 			};
 		}
 		namespace Transform					// Space Transformation
@@ -665,7 +707,10 @@ namespace TexProject
 			}
 		}
 
+		typedef Logic::IPriority								IPrio;
+		typedef Logic::IColor4									IColor4;
 		typedef Logic::Priority									Prio;
+		typedef Logic::Color4									Color4;
 
 		typedef Transform::D2::IPosition						IPos2;
 		typedef Transform::D2::ISize							ISize2;
@@ -854,6 +899,21 @@ inline void									TexProject::Helper::Logic::Priority::SetPriority(int32 prior
 inline TexProject::int32					TexProject::Helper::Logic::Priority::GetPriority() const
 {
 	return priority;
+}
+
+
+// Logic::Color4
+inline TexProject::Helper::Logic::Color4::Color4(const vec4& color_):
+	color(color_)
+{
+}
+inline TexProject::vec4						TexProject::Helper::Logic::Color4::GetColor() const
+{
+	return color;
+}
+inline void									TexProject::Helper::Logic::Color4::SetColor(const vec4& color_)
+{
+	color = color_;
 }
 
 

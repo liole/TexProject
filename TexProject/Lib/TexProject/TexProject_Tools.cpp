@@ -134,6 +134,7 @@ TexProject::Tool::Generator::D2::Blank::Blank(Window::Render* window_):
 Tool::D2(window_)
 {
 	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
+	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
 	panelBase->SetSize(vec2(200.0f));
 	panelBase->SetUserData(this);
 	panelBase->SetAction
@@ -195,23 +196,15 @@ void					TexProject::Tool::Generator::D2::Blank::Loop()
 {
 	Basic::Loop();
 
+	if(focusPanel)
 	{
-		if(focusButtonSliderColorRed)
-		{
-			color.x = focusButtonSliderColorRed->GetValue();
-		}
-		if(focusButtonSliderColorGreen)
-		{
-			color.y = focusButtonSliderColorGreen->GetValue();
-		}
-		if(focusButtonSliderColorBlue)
-		{
-			color.z = focusButtonSliderColorBlue->GetValue();
-		}
-		if(focusButtonSliderColorAlpha)
-		{
-			color.w = focusButtonSliderColorAlpha->GetValue();
-		}
+		focusPanelSizeXText->SetText(std::to_string(size.x));
+		focusPanelSizeYText->SetText(std::to_string(size.y));
+
+		color.x = focusButtonSliderColorRed->GetValue();
+		color.y = focusButtonSliderColorGreen->GetValue();
+		color.z = focusButtonSliderColorBlue->GetValue();
+		color.w = focusButtonSliderColorAlpha->GetValue();
 	}
 
 	if(generationFlag)
@@ -242,6 +235,7 @@ void					TexProject::Tool::Generator::D2::Blank::Refresh()
 
 		if(texture) { delete texture; texture = nullptr; }
 
+		generationSize = size;
 		generationColor = color;
 		generationFlag = true;
 		generationFinish = false;
@@ -250,8 +244,8 @@ void					TexProject::Tool::Generator::D2::Blank::Refresh()
 			[this]()
 			{
 				generationTexture = new Texture::D2;
-				generationTexture->Create(uvec2(128));
-				generationTexture->Fill(generationColor);	//vec4(1.0f,0.5f,0.0f,1.0f));
+				generationTexture->Create(generationSize);
+				generationTexture->Fill(generationColor);
 
 				generationFinish = true;
 			}
@@ -264,9 +258,83 @@ bool					TexProject::Tool::Generator::D2::Blank::IsClean()
 }
 void					TexProject::Tool::Generator::D2::Blank::InitFocus(Interface::Panel::Default* panel)
 {
-	auto size_ = panel->GetSize();
+	focusPanel = (Interface::Panel::Default*)panel->AddPanel(Interface::PanelTypes::Default);
+	focusPanel->SetColor(vec4(vec3(0.32f),1.0f));
+	focusPanel->SetSize(vec2(160.0f,300.0f));
 
-	focusButtonRefresh = (Interface::Button::Default*)panel->AddButton(Interface::ButtonType::Default);
+	auto size_ = focusPanel->GetSize();
+
+	focusPanelSizeX = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
+	focusPanelSizeX->SetSize(vec2(64.0f,16.0f));
+	focusPanelSizeX->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*1));
+
+	focusPanelSizeXText = (Interface::Panel::Text*)focusPanelSizeX->AddPanel(Interface::PanelTypes::Text);
+	focusPanelSizeXText->SetSize(vec2(40.0f,14.0f));
+	focusPanelSizeXText->SetPos(vec2(-focusPanelSizeX->GetSize().x*0.5f + focusPanelSizeXText->GetSize().x*0.5f + 2.0f,0.0f));
+	focusPanelSizeXText->SetText("test");
+	focusPanelSizeXText->SetColor(vec4(vec3(0.5f),1.0f));
+
+	{
+		auto t1 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
+		t1->SetSize(vec2(10.0f,5.0f));
+		t1->SetPos(vec2(focusPanelSizeX->GetSize().x*0.5f - 6.0f,-4.0f));
+		t1->SetUserData(this);
+		auto ft1 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.x;
+			if(t < 1024) ++t;
+		};
+		t1->SetAction(Interface::Item::ActionTypes::Click,ft1);
+		t1->SetAction(Interface::Item::ActionTypes::Clamp,ft1);
+		auto t2 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
+		t2->SetSize(vec2(10.0f,5.0f));
+		t2->SetPos(vec2(focusPanelSizeX->GetSize().x*0.5f - 6.0f,+4.0f));
+		t2->SetUserData(this);
+		auto ft2 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.x;
+			if(t > 0) --t;
+		};
+		t2->SetAction(Interface::Item::ActionTypes::Click,ft2);
+		t2->SetAction(Interface::Item::ActionTypes::Clamp,ft2);
+	}
+
+	focusPanelSizeY = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
+	focusPanelSizeY->SetSize(vec2(64.0f,16.0f));
+	focusPanelSizeY->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*2));
+
+	focusPanelSizeYText = (Interface::Panel::Text*)focusPanelSizeY->AddPanel(Interface::PanelTypes::Text);
+	focusPanelSizeYText->SetSize(vec2(40.0f,14.0f));
+	focusPanelSizeYText->SetPos(vec2(-focusPanelSizeY->GetSize().x*0.5f + focusPanelSizeYText->GetSize().x*0.5f + 2.0f,0.0f));
+	focusPanelSizeYText->SetText("test");
+	focusPanelSizeYText->SetColor(vec4(vec3(0.5f),1.0f));
+
+	{
+		auto t1 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
+		t1->SetSize(vec2(10.0f,5.0f));
+		t1->SetPos(vec2(focusPanelSizeY->GetSize().x*0.5f - 6.0f,-4.0f));
+		t1->SetUserData(this);
+		auto ft1 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.y;
+			if(t < 1024) ++t;
+		};
+		t1->SetAction(Interface::Item::ActionTypes::Click,ft1);
+		t1->SetAction(Interface::Item::ActionTypes::Clamp,ft1);
+		auto t2 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
+		t2->SetSize(vec2(10.0f,5.0f));
+		t2->SetPos(vec2(focusPanelSizeY->GetSize().x*0.5f - 6.0f,+4.0f));
+		t2->SetUserData(this);
+		auto ft2 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.y;
+			if(t > 0) --t;
+		};
+		t2->SetAction(Interface::Item::ActionTypes::Click,ft2);
+		t2->SetAction(Interface::Item::ActionTypes::Clamp,ft2);
+	}
+
+	focusButtonRefresh = (Interface::Button::Default*)focusPanel->AddButton(Interface::ButtonType::Default);
 	focusButtonRefresh->SetSize(vec2(80.0f,20.0f));
 	focusButtonRefresh->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f));
 	focusButtonRefresh->SetUserData(this);
@@ -279,29 +347,34 @@ void					TexProject::Tool::Generator::D2::Blank::InitFocus(Interface::Panel::Def
 		}
 	);
 
-	focusButtonSliderColorRed = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorRed = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
 	focusButtonSliderColorRed->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorRed->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*1));
+	focusButtonSliderColorRed->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*3));
 	focusButtonSliderColorRed->SetValue(color.x);
 
-	focusButtonSliderColorGreen = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorGreen = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
 	focusButtonSliderColorGreen->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorGreen->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*2));
+	focusButtonSliderColorGreen->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*4));
 	focusButtonSliderColorGreen->SetValue(color.y);
 
-	focusButtonSliderColorBlue = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorBlue = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
 	focusButtonSliderColorBlue->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorBlue->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*3));
+	focusButtonSliderColorBlue->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*5));
 	focusButtonSliderColorBlue->SetValue(color.z);
 
-	focusButtonSliderColorAlpha = (Interface::Button::Slider*)panel->AddButton(Interface::ButtonType::Slider);
+	focusButtonSliderColorAlpha = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
 	focusButtonSliderColorAlpha->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorAlpha->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*4));
+	focusButtonSliderColorAlpha->SetPos(vec2(0.0f,-size_.y*0.5f + 16.0f + 32.0f*6));
 	focusButtonSliderColorAlpha->SetValue(color.w);
 }
 void					TexProject::Tool::Generator::D2::Blank::FreeFocus(Interface::Panel::Default* panel)
 {
-	if(focusButtonRefresh)
+	if(focusPanel)
+	{
+		panel->RemovePanel(focusPanel);
+		focusPanel = nullptr;
+	}
+	/*if(focusButtonRefresh)
 	{
 		panel->RemoveButton(focusButtonRefresh);
 		focusButtonRefresh = nullptr;
@@ -325,7 +398,7 @@ void					TexProject::Tool::Generator::D2::Blank::FreeFocus(Interface::Panel::Def
 	{
 		panel->RemoveButton(focusButtonSliderColorAlpha);
 		focusButtonSliderColorAlpha = nullptr;
-	}
+	}*/
 }
 
 
@@ -334,8 +407,17 @@ TexProject::Tool::Filter::D2::Correction::Color::Color(Window::Render* window_):
 Tool::D2(window_)
 {
 	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
+	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
 	panelBase->SetSize(vec2(200.0f));
 	panelBase->SetUserData(this);
+	panelBase->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			Tool::SetFocus( (Tool::Generator::D2::Blank*)item->GetUserData() );
+		}
+	);
 	panelBase->SetAction
 	(
 		Interface::Item::ActionTypes::Destruction,

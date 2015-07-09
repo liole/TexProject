@@ -97,18 +97,25 @@ namespace TexProject
 					Interface::Button::Connector*				buttonConnectorOut = nullptr;
 					Interface::Button::Default*					buttonClose = nullptr;
 
+					Interface::Panel::Default*					focusPanel = nullptr;
+					Interface::Panel::Default*					focusPanelSizeX = nullptr;
+					Interface::Panel::Default*					focusPanelSizeY = nullptr;
+					Interface::Panel::Text*						focusPanelSizeXText = nullptr;
+					Interface::Panel::Text*						focusPanelSizeYText = nullptr;
 					Interface::Button::Default*					focusButtonRefresh = nullptr;
 					Interface::Button::Slider*					focusButtonSliderColorRed = nullptr;
 					Interface::Button::Slider*					focusButtonSliderColorGreen = nullptr;
 					Interface::Button::Slider*					focusButtonSliderColorBlue = nullptr;
 					Interface::Button::Slider*					focusButtonSliderColorAlpha = nullptr;
 
-					vec4										generationColor = vec4(1.0f,0.5f,0.0f,1.0f);
+					uvec2										generationSize;
+					vec4										generationColor;
 					bool										generationFlag = false;
 					volatile std::atomic<bool>					generationFinish = false;
 					std::thread									generationThread;
 					Texture::D2*								generationTexture = nullptr;
 
+					uvec2										size = uvec2(128,128);
 					vec4										color = vec4(1.0f,0.5f,0.0f,1.0f);
 					Texture::D2*								texture = nullptr;
 

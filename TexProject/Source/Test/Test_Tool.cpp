@@ -13,6 +13,9 @@ void fInit(Window::Render* window)
 	panelTollbar->SetPos(vec2(180.0f + panelTollbar->GetSize().x*0.5f,window->GetSize().y - panelTollbar->GetSize().y*0.5f));
 	panelTollbar->LockMove();
 
+	//auto t = window->AddPanel(Interface::PanelTypes::Text);
+	//t->SetColor(vec4(0.0f));
+
 	{
 		auto b1 = (Interface::Button::Default*)panelTollbar->AddButton(Interface::ButtonTypes::Default);
 		b1->SetPos(vec2(-panelTollbar->GetSize().x*0.5f + 16.0f + 32.0f*0,0.0f));
