@@ -7,40 +7,6 @@ using namespace TexProject;
 void fInit(Window::Render* window)
 {
 	Tool::Init(window);
-
-	auto panelTollbar = window->AddPanel(Interface::PanelTypes::Default);
-	panelTollbar->SetSize(vec2(200.0f,32.0f));
-	panelTollbar->SetPos(vec2(180.0f + panelTollbar->GetSize().x*0.5f,window->GetSize().y - panelTollbar->GetSize().y*0.5f));
-	panelTollbar->LockMove();
-
-	//auto t = window->AddPanel(Interface::PanelTypes::Text);
-	//t->SetColor(vec4(0.0f));
-
-	{
-		auto b1 = (Interface::Button::Default*)panelTollbar->AddButton(Interface::ButtonTypes::Default);
-		b1->SetPos(vec2(-panelTollbar->GetSize().x*0.5f + 16.0f + 32.0f*0,0.0f));
-		b1->SetSize(vec2(24.0f));
-		b1->SetAction
-		(
-			Interface::Item::ActionTypes::Click,
-			[](Interface::Item* item)
-			{
-				Tool::Add<Tool::Generator::D2::Blank>(item->GetWindow());
-			}
-		);
-
-		auto b2 = (Interface::Button::Default*)panelTollbar->AddButton(Interface::ButtonTypes::Default);
-		b2->SetPos(vec2(-panelTollbar->GetSize().x*0.5f + 16.0f + 32.0f*1,0.0f));
-		b2->SetSize(vec2(24.0f));
-		b2->SetAction
-		(
-			Interface::Item::ActionTypes::Click,
-			[](Interface::Item* item)
-			{
-				Tool::Add<Tool::Filter::D2::Correction::Color>(item->GetWindow());
-			}
-		);
-	}
 }
 void fFree(Window::Render* window)
 {

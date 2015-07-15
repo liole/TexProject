@@ -233,6 +233,11 @@ namespace TexProject
 				virtual bool				Use();
 				virtual void				Unuse();
 
+				inline Interface::Basic*	GetInterface()
+				{
+					return inter;
+				}
+
 				inline Interface::GUIPanel*						AddPanel(const Interface::PanelType& type_);
 				inline Interface::GUIButton*					AddButton(const Interface::ButtonType& type_);
 				inline void										RemoveItem(Interface::GUIItem* source);
@@ -586,6 +591,10 @@ namespace TexProject
 #endif
 
 			virtual void*					GetHandle() override;
+			inline vec2						ToWindowSpace(vec2 input)
+			{
+				return vec2(input.x, size.y - input.y);
+			}
 
 			template <typename T>
 			T*								AddPanel();
@@ -627,6 +636,7 @@ namespace TexProject
 			Render&							operator = (const Render& source) = delete;
 			Render&							operator = (Render&& source) = delete;
 
+			inline Interface::Basic*		GetInterface() { return renderContext->GetInterface(); }
 			inline RenderContext::Basic*	GetRenderContext() { return renderContext; }
 
 			virtual void					Create(const string& title_ = "") override;
@@ -651,6 +661,14 @@ namespace TexProject
 		/*Повертає вказівник на вікно, яке в даний момент обробляється функцією Window::Process()*/
 		inline Basic*						GetCurrent();
 		inline uvec2						GetDesktopSize();
+		inline vec2							ToDesktopSpace(vec2 input)
+		{
+			return vec2(input.x,GetDesktopSize().y - input.y);
+		}
+		inline vec2							FromDesktopSpace(vec2 input)
+		{
+			return vec2(input.x,GetDesktopSize().y - input.y);
+		}
 
 		/*Обробка помилок Windows*/
 		bool								ErrorTest();

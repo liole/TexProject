@@ -65,11 +65,14 @@ namespace TexProject
 		};
 
 
-		static std::list<Basic*> tool;
-		static std::list<Basic*> clean;
+		static std::list<Basic*>			tool;
+		static std::list<Basic*>			clean;
+
+		static vec2							panAnchor;
 
 		static Window::Render*				window;
 		static Interface::Panel::Default*	panelConfig;
+		static Interface::Panel::Default*	panelTools;
 
 		static Basic*						focus;
 
@@ -192,6 +195,11 @@ namespace TexProject
 		static void Init(Window::Render* window_);
 		static void Free();
 		static void Loop();
+
+		static inline vec2					GetAnchor()
+		{
+			return panAnchor;
+		}
 	};
 }
 
