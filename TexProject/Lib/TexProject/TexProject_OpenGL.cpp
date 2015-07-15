@@ -62,6 +62,15 @@ PFNGLMAPBUFFERPROC							TexProject::OpenGL::glMapBuffer = nullptr;
 PFNGLUNMAPBUFFERPROC						TexProject::OpenGL::glUnmapBuffer = nullptr;
 PFNGLGETBUFFERPARAMETERIVPROC				TexProject::OpenGL::glGetBufferParameteriv = nullptr;
 PFNGLGETBUFFERPOINTERVPROC					TexProject::OpenGL::glGetBufferPointerv = nullptr;
+// Framebuffer func
+bool										TexProject::OpenGL::initFuncFramebuffer = nullptr;
+PFNGLBINDFRAMEBUFFERPROC					TexProject::OpenGL::glBindFramebuffer = nullptr;
+PFNGLDELETEFRAMEBUFFERSPROC					TexProject::OpenGL::glDeleteFramebuffers = nullptr;
+PFNGLGENFRAMEBUFFERSPROC					TexProject::OpenGL::glGenFramebuffers = nullptr;
+PFNGLCHECKFRAMEBUFFERSTATUSPROC				TexProject::OpenGL::glCheckFramebufferStatus = nullptr;
+PFNGLFRAMEBUFFERTEXTUREPROC					TexProject::OpenGL::glFramebufferTexture = nullptr;
+PFNGLFRAMEBUFFERTEXTURE2DPROC				TexProject::OpenGL::glFramebufferTexture2D = nullptr;
+PFNGLDRAWBUFFERSPROC						TexProject::OpenGL::glDrawBuffers = nullptr;
 
 
 bool										TexProject::OpenGL::isInit = false;
@@ -162,7 +171,7 @@ bool										TexProject::OpenGL::Init()
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLUNMAPBUFFERPROC,glUnmapBuffer);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETBUFFERPARAMETERIVPROC,glGetBufferParameteriv);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETBUFFERPOINTERVPROC,glGetBufferPointerv);
-	initFuncShader =
+	initFuncBuffer =
 	(
 		glGenVertexArrays != nullptr &&
 		glDeleteVertexArrays != nullptr &&
@@ -179,11 +188,29 @@ bool										TexProject::OpenGL::Init()
 		glGetBufferParameteriv != nullptr &&
 		glGetBufferPointerv != nullptr
 	);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLBINDFRAMEBUFFERPROC,glBindFramebuffer);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLDELETEFRAMEBUFFERSPROC,glDeleteFramebuffers);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGENFRAMEBUFFERSPROC,glGenFramebuffers);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLCHECKFRAMEBUFFERSTATUSPROC,glCheckFramebufferStatus);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLFRAMEBUFFERTEXTUREPROC,glFramebufferTexture);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLFRAMEBUFFERTEXTURE2DPROC,glFramebufferTexture2D);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLDRAWBUFFERSPROC,glDrawBuffers);
+	initFuncFramebuffer =
+	(
+		glBindFramebuffer != nullptr &&
+		glDeleteFramebuffers != nullptr &&
+		glGenFramebuffers != nullptr &&
+		glCheckFramebufferStatus != nullptr &&
+		glFramebufferTexture != nullptr &&
+		glFramebufferTexture2D != nullptr &&
+		glDrawBuffers != nullptr
+	);
 
 
 	initFunc =	initFuncShader &&
 				initFuncTexture &&
-				initFuncShader;
+				initFuncBuffer &&
+				initFuncFramebuffer;
 
 	//glGetString​(GL_VERSION​);
 	isInit = true;

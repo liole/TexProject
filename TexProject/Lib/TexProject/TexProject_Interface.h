@@ -286,9 +286,26 @@ namespace TexProject
 			{
 				friend Item;
 				friend Interface::Basic;
+			public:
+
+				enum class Alignment
+				{
+					Default,
+					LeftTop,
+					LeftCenter,
+					LeftBottom,
+					CenterTop,
+					CenterCenter,
+					CenterBottom,
+					RightTop,
+					RightCenter,
+					RightBottom
+				};
+
 			protected:
 
 				string						text = "";
+				Alignment					alignment = Alignment::Default;
 
 											Text(GUI* interface_,Item* parent_ = nullptr);
 											Text(const Text&) = delete;
@@ -302,6 +319,7 @@ namespace TexProject
 
 				virtual void				SetText(const string& text_);
 				virtual string				GetText() const;
+				virtual void				SetAlignment(Alignment alignment_);
 			};
 			struct Image:
 				public Panel::Basic
@@ -579,9 +597,43 @@ namespace TexProject
 				struct Text:
 					public Interface::Panel::Text
 				{
+				protected:
+
+					enum class _win_Alignment: UINT
+					{
+						Default					= DT_LEFT | DT_TOP,
+						LeftTop					= DT_LEFT | DT_TOP,
+						LeftCenter				= DT_LEFT | DT_VCENTER,
+						LeftBottom				= DT_LEFT | DT_RIGHT,
+						CenterTop				= DT_CENTER | DT_TOP,
+						CenterCenter			= DT_CENTER | DT_VCENTER,
+						CenterBottom			= DT_CENTER | DT_RIGHT,
+						RightTop				= DT_RIGHT | DT_TOP,
+						RightCenter				= DT_RIGHT | DT_VCENTER,
+						RightBottom				= DT_RIGHT | DT_RIGHT,
+						/*DT_TOP                      0x00000000
+						DT_LEFT                     0x00000000
+						DT_CENTER                   0x00000001
+						DT_RIGHT                    0x00000002
+						DT_VCENTER                  0x00000004
+						DT_BOTTOM                   0x00000008
+						DT_WORDBREAK                0x00000010
+						DT_SINGLELINE               0x00000020
+						DT_EXPANDTABS               0x00000040
+						DT_TABSTOP                  0x00000080
+						DT_NOCLIP                   0x00000100
+						DT_EXTERNALLEADING          0x00000200
+						DT_CALCRECT                 0x00000400
+						DT_NOPREFIX                 0x00000800
+						DT_INTERNAL                 0x00001000*/
+					};
+					_win_Alignment								_win_alignment = _win_Alignment::Default;
+
 				public:
 																Text(GUI* interface_,Item* parent_ = nullptr);
 																~Text() = default;
+
+					virtual void								SetAlignment(Alignment alignment_) override;
 
 					virtual void								_win_WMPaint() override;
 				};

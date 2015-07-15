@@ -13,6 +13,17 @@ namespace TexProject
 #if __TEXPROJECT_OPENGL__
 	namespace OpenGL
 	{
+		struct ContextBind
+		{
+		protected:
+			Window::RenderContext::OpenGL* const				renderContext;
+
+		public:
+			inline												ContextBind(Window::Render* window);
+			inline												ContextBind(Window::RenderContext::Basic* renderContext_);
+
+			inline Window::RenderContext::OpenGL*				GetRenderContext() const;
+		};
 		namespace Buffer
 		{
 			enum struct Type: GLenum
@@ -56,10 +67,10 @@ namespace TexProject
 				};
 			};
 
-			struct Data
+			struct Data:
+				public ContextBind
 			{
 			protected:
-				Window::RenderContext::OpenGL* const			renderContext;
 				Type											type = Type::Static;
 				GLuint											buffer = 0;
 				uint32											vCount = 0,
@@ -74,14 +85,13 @@ namespace TexProject
 				inline void					Delete();
 				inline void					Use();
 				inline void					Unuse();
-				inline Window::RenderContext::OpenGL*			GetRenderContext() const;
 				inline uint32				GetVertexCount() const;
 				inline uint32				GetVertexSize() const;
 			};
-			struct Index
+			struct Index:
+				public ContextBind
 			{
 			protected:
-				Window::RenderContext::OpenGL* const			renderContext;
 				Type											type = Type::Static;
 				GLuint											buffer = 0;
 				uint32											iCount = 0,
@@ -96,14 +106,13 @@ namespace TexProject
 				inline void					Delete();
 				inline void					Use();
 				inline void					Unuse();
-				inline Window::RenderContext::OpenGL*			GetRenderContext() const;
 				inline uint32				GetIndexCount() const;
 				inline uint32				GetIndexSize() const;
 			};
-			struct Array
+			struct Array:
+				public ContextBind
 			{
 			protected:
-				Window::RenderContext::OpenGL* const			renderContext;
 				GLuint											buffer = 0;
 
 			public:
@@ -114,7 +123,30 @@ namespace TexProject
 				//inline void					Create(Data* dBuffer_,Index* iBuffer_,Shader* shader_,std::list<Attribute::Params> params);
 				inline void					Create(std::list<Attribute::Params> params);
 				inline void					Delete();
-				inline Window::RenderContext::OpenGL*			GetRenderContext() const;
+				inline void					Use();
+				inline void					Unuse();
+			};
+			struct Frame:
+				public ContextBind
+			{
+			protected:
+				uvec2						size = uvec2(0);
+				GLuint						buffer = 0;
+
+				bool*const					ownColor;
+				bool						ownDepth = false;
+				bool						ownStencil = false;
+				Texture**const				color;				// Color Attachment
+				Texture*					depth = nullptr;	// Depth Attachment
+				Texture*					stencil = nullptr;	// Stencil Attachment
+
+			public:
+				inline						Frame(Window::Render* window);
+				inline						Frame(Window::RenderContext::Basic* renderContext_);
+				inline						~Frame();
+
+				void						Create(Texture* texture_);
+				void						Delete();
 				inline void					Use();
 				inline void					Unuse();
 			};
@@ -282,8 +314,8 @@ namespace TexProject
 
 #if __TEXPROJECT_OPENGL__
 
-// Buffer::Data
-inline															TexProject::OpenGL::Buffer::Data::Data(Window::Render* window):
+// TexProject::OpenGL::ContextBind
+inline TexProject::OpenGL::ContextBind::ContextBind(Window::Render* window):
 	renderContext
 	(
 		window->GetRenderContext()->GetType() == Window::RenderContext::Type::OpenGL ?
@@ -292,13 +324,28 @@ inline															TexProject::OpenGL::Buffer::Data::Data(Window::Render* wind
 	)
 {
 }
-inline															TexProject::OpenGL::Buffer::Data::Data(Window::RenderContext::Basic* renderContext_):
+inline TexProject::OpenGL::ContextBind::ContextBind(Window::RenderContext::Basic* renderContext_):
 	renderContext
 	(
 		renderContext_->GetType() == Window::RenderContext::Type::OpenGL ?
 		(Window::RenderContext::OpenGL*)renderContext_->GetData() :
 		throw Exception()
 	)
+{
+}
+inline TexProject::Window::RenderContext::OpenGL*				TexProject::OpenGL::ContextBind::GetRenderContext() const
+{
+	return renderContext;
+}
+
+
+// Buffer::Data
+inline															TexProject::OpenGL::Buffer::Data::Data(Window::Render* window):
+	ContextBind(window)
+{
+}
+inline															TexProject::OpenGL::Buffer::Data::Data(Window::RenderContext::Basic* renderContext_):
+	ContextBind(renderContext_)
 {
 }
 inline															TexProject::OpenGL::Buffer::Data::~Data()
@@ -351,10 +398,6 @@ inline void														TexProject::OpenGL::Buffer::Data::Unuse()
 	OpenGL::ErrorTest();
 #endif
 }
-inline TexProject::Window::RenderContext::OpenGL*				TexProject::OpenGL::Buffer::Data::GetRenderContext() const
-{
-	return renderContext;
-}
 inline TexProject::uint32										TexProject::OpenGL::Buffer::Data::GetVertexCount() const
 {
 	return vCount;
@@ -367,21 +410,11 @@ inline TexProject::uint32										TexProject::OpenGL::Buffer::Data::GetVertexSi
 
 // Buffer::Index
 inline															TexProject::OpenGL::Buffer::Index::Index(Window::Render* window):
-	renderContext
-	(
-		window->GetRenderContext()->GetType() == Window::RenderContext::Type::OpenGL ?
-		(Window::RenderContext::OpenGL*)window->GetRenderContext()->GetData() :
-		throw Exception()
-	)
+	ContextBind(window)
 {
 }
 inline															TexProject::OpenGL::Buffer::Index::Index(Window::RenderContext::Basic* renderContext_):
-	renderContext
-	(
-		renderContext_->GetType() == Window::RenderContext::Type::OpenGL ?
-		(Window::RenderContext::OpenGL*)renderContext_->GetData() :
-		throw Exception()
-	)
+	ContextBind(renderContext_)
 {
 }
 inline															TexProject::OpenGL::Buffer::Index::~Index()
@@ -434,10 +467,6 @@ inline void														TexProject::OpenGL::Buffer::Index::Unuse()
 	OpenGL::ErrorTest();
 #endif
 }
-inline TexProject::Window::RenderContext::OpenGL*				TexProject::OpenGL::Buffer::Index::GetRenderContext() const
-{
-	return renderContext;
-}
 inline TexProject::uint32										TexProject::OpenGL::Buffer::Index::GetIndexCount() const
 {
 	return iCount;
@@ -450,21 +479,11 @@ inline TexProject::uint32										TexProject::OpenGL::Buffer::Index::GetIndexSi
 
 // Buffer::Array
 inline															TexProject::OpenGL::Buffer::Array::Array(Window::Render* window):
-	renderContext
-	(
-		window->GetRenderContext()->GetType() == Window::RenderContext::Type::OpenGL ?
-		(Window::RenderContext::OpenGL*)window->GetRenderContext()->GetData() :
-		throw Exception()
-	)
+	ContextBind(window)
 {
 }
 inline															TexProject::OpenGL::Buffer::Array::Array(Window::RenderContext::Basic* renderContext_):
-	renderContext
-	(
-		renderContext_->GetType() == Window::RenderContext::Type::OpenGL ?
-		(Window::RenderContext::OpenGL*)renderContext_->GetData() :
-		throw Exception()
-	)
+	ContextBind(renderContext_)
 {
 }
 inline															TexProject::OpenGL::Buffer::Array::~Array()
@@ -517,7 +536,7 @@ inline void														TexProject::OpenGL::Buffer::Array::Unuse()
 {
 	if(renderContext->bufferArrayCurrent == this)
 	{
-		renderContext->bufferIndexCurrent = nullptr;
+		renderContext->bufferArrayCurrent = nullptr;
 		OpenGL::glBindVertexArray(0);
 	}
 
@@ -525,9 +544,60 @@ inline void														TexProject::OpenGL::Buffer::Array::Unuse()
 	OpenGL::ErrorTest();
 #endif
 }
-inline TexProject::Window::RenderContext::OpenGL*				TexProject::OpenGL::Buffer::Array::GetRenderContext() const
+
+
+// Buffer::Frame
+inline															TexProject::OpenGL::Buffer::Frame::Frame(Window::Render* window):
+	ContextBind(window),
+	ownColor(new bool[renderContext->GetBufferFrameMaxColorAttachment()]),
+	color(new Texture*[renderContext->GetBufferFrameMaxColorAttachment()])
 {
-	return renderContext;
+	for(int32 i = 0; i < renderContext->GetBufferFrameMaxColorAttachment(); ++i)
+	{
+		ownColor[i] = false;
+		color[i] = nullptr;
+	}
+}
+inline															TexProject::OpenGL::Buffer::Frame::Frame(Window::RenderContext::Basic* renderContext_):
+	ContextBind(renderContext_),
+	ownColor(new bool[renderContext->GetBufferFrameMaxColorAttachment()]),
+	color(new Texture*[renderContext->GetBufferFrameMaxColorAttachment()])
+{
+	for(int32 i = 0; i < renderContext->GetBufferFrameMaxColorAttachment(); ++i)
+	{
+		ownColor[i] = false;
+		color[i] = nullptr;
+	}
+}
+inline															TexProject::OpenGL::Buffer::Frame::~Frame()
+{
+	Delete();
+
+	delete[] color;
+	delete[] ownColor;
+}
+inline void														TexProject::OpenGL::Buffer::Frame::Use()
+{
+	renderContext->bufferFrameCurrent = this;
+	glBindFramebuffer(GL_FRAMEBUFFER,buffer);
+
+	glViewport(0,0,size.x,size.y);
+
+#if __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
+}
+inline void														TexProject::OpenGL::Buffer::Frame::Unuse()
+{
+	if(renderContext->bufferFrameCurrent == this)
+	{
+		renderContext->bufferFrameCurrent = nullptr;
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+	}
+
+#if __TEXPROJECT_DEBUG__
+	OpenGL::ErrorTest();
+#endif
 }
 
 #endif

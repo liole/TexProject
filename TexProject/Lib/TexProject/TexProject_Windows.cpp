@@ -2,6 +2,7 @@
 using namespace TexProject;
 
 
+#include <TexProject/TexProject_OpenGL.h>
 #include <TexProject/TexProject_Textures.h>
 
 
@@ -566,13 +567,9 @@ void					TexProject::Window::RenderContext::OpenGL::Free()
 {
 }
 TexProject::Window::RenderContext::OpenGL::OpenGL(Window::Render* window_):
-	Basic(window_),
-	textureCurrent(new TexProject::OpenGL::Texture*[TexProject::OpenGL::Texture::GetSlotCount()])
+	Basic(window_)
+	//textureCurrent(new TexProject::OpenGL::Texture*[GetTextureMaxSlots()])
 {
-	for(int32 i = 0; i < TexProject::OpenGL::Texture::GetSlotCount(); ++i)
-	{
-		textureCurrent[i] = nullptr;
-	}
 }
 TexProject::Window::RenderContext::OpenGL::~OpenGL()
 {
@@ -580,7 +577,7 @@ TexProject::Window::RenderContext::OpenGL::~OpenGL()
 TexProject::OpenGL::Texture*				TexProject::Window::RenderContext::OpenGL::GetCurrentTexture(uint32 level) const
 {
 #if __TEXPROJECT_DEBUG__
-	if(int32(level) < TexProject::OpenGL::Texture::GetSlotCount())
+	if(int32(level) < GetTextureMaxSlots())
 	{
 		return textureCurrent[level];
 	}
@@ -618,11 +615,34 @@ void					TexProject::Window::RenderContext::OpenGL::Create()
 	}
 
 	init = true;
+
+	Use();
+
+	{
+		glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,&textureMaxSlots);
+		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS,&bufferFrameMaxColorAttachment);
+	}
+
+	{
+		textureCurrent = new TexProject::OpenGL::Texture*[GetTextureMaxSlots()];
+		for(int32 i = 0; i < GetTextureMaxSlots(); ++i) textureCurrent[i] = nullptr;
+	}
+
+	Unuse();
 }
 void					TexProject::Window::RenderContext::OpenGL::Delete()
 {
 	if( init )
 	{
+		{
+			textureMaxSlots = 0;
+			bufferFrameMaxColorAttachment = 0;
+		}
+		if(textureCurrent)
+		{
+			delete[] textureCurrent;
+			textureCurrent = nullptr;
+		}
 		init = false;
 	}
 }
@@ -647,6 +667,32 @@ bool					TexProject::Window::RenderContext::OpenGL::Use()
 		return true;
 	}
 	return false;
+}
+
+void					TexProject::Window::RenderContext::OpenGL::UnuseBufferArray()
+{
+	::OpenGL::glBindVertexArray(0);
+	bufferArrayCurrent = nullptr;
+}
+void					TexProject::Window::RenderContext::OpenGL::UnuseBufferIndex()
+{
+	::OpenGL::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+	bufferIndexCurrent = nullptr;
+}
+void					TexProject::Window::RenderContext::OpenGL::UnuseBufferData()
+{
+	::OpenGL::glBindBuffer(GL_ARRAY_BUFFER,0);
+	bufferDataCurrent = nullptr;
+}
+void					TexProject::Window::RenderContext::OpenGL::UnuseBufferFrame()
+{
+	::OpenGL::glBindFramebuffer(GL_FRAMEBUFFER,0);
+	bufferFrameCurrent = nullptr;
+}
+void					TexProject::Window::RenderContext::OpenGL::UnuseShader()
+{
+	::OpenGL::glUseProgram(0);
+	shaderCurrent = nullptr;
 }
 
 #endif

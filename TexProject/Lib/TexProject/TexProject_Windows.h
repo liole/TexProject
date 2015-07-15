@@ -288,6 +288,7 @@ namespace TexProject
 				friend TexProject::OpenGL::Buffer::Data;
 				friend TexProject::OpenGL::Buffer::Index;
 				friend TexProject::OpenGL::Buffer::Array;
+				friend TexProject::OpenGL::Buffer::Frame;
 				friend TexProject::OpenGL::Shader;
 				friend TexProject::OpenGL::Texture;
 			protected:
@@ -298,11 +299,15 @@ namespace TexProject
 				TexProject::OpenGL::Buffer::Array*				bufferArrayCurrent = nullptr;
 				TexProject::OpenGL::Buffer::Data*				bufferDataCurrent = nullptr;
 				TexProject::OpenGL::Buffer::Index*				bufferIndexCurrent = nullptr;
+				TexProject::OpenGL::Buffer::Frame*				bufferFrameCurrent = nullptr;
 
 				TexProject::OpenGL::Shader*						shaderCurrent = nullptr;
 
 				uint32											textureActiveSlot = 0;
-				TexProject::OpenGL::Texture**const				textureCurrent;
+				TexProject::OpenGL::Texture**					textureCurrent = nullptr;
+
+				int32											textureMaxSlots = 0;
+				int32											bufferFrameMaxColorAttachment = 0;
 
 #ifdef __TEXPROJECT_WIN__
 
@@ -351,15 +356,32 @@ namespace TexProject
 				{
 					return bufferDataCurrent;
 				}
+				inline TexProject::OpenGL::Buffer::Frame*		GetCurrentBufferFrame() const
+				{
+					return bufferFrameCurrent;
+				}
 				inline TexProject::OpenGL::Shader*				GetCurrentShader() const
 				{
 					return shaderCurrent;
 				}
-				inline uint32									GetActiveTextureActiveSlot() const
+				inline uint32									GetTextureActiveSlot() const
 				{
 					return textureActiveSlot;
 				}
-				TexProject::OpenGL::Texture*				GetCurrentTexture(uint32 level = 0) const;
+				TexProject::OpenGL::Texture*					GetCurrentTexture(uint32 level = 0) const;
+				inline int32									GetTextureMaxSlots() const
+				{
+					return textureMaxSlots;
+				}
+				inline int32									GetBufferFrameMaxColorAttachment() const
+				{
+					return bufferFrameMaxColorAttachment;
+				}
+				void											UnuseBufferArray();
+				void											UnuseBufferIndex();
+				void											UnuseBufferData();
+				void											UnuseBufferFrame();
+				void											UnuseShader();
 
 			};
 #endif

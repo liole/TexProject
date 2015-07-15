@@ -39,6 +39,7 @@ namespace TexProject
 
 
 			inline							Shader(Window::Render* window);
+			inline							Shader(Window::RenderContext::Basic* renderContext_);
 			inline							Shader(const Shader&) = delete;
 			inline							Shader(Shader&&) = delete;
 			inline							~Shader();
@@ -107,6 +108,15 @@ inline										TexProject::OpenGL::Shader::Shader(Window::Render* window):
 	(
 		window->GetRenderContext()->GetType() == Window::RenderContext::Type::OpenGL ?
 		(Window::RenderContext::OpenGL*)window->GetRenderContext()->GetData() :
+		throw Exception()
+	)
+{
+}
+inline										TexProject::OpenGL::Shader::Shader(Window::RenderContext::Basic* renderContext_):
+	renderContext
+	(
+		renderContext_->GetType() == Window::RenderContext::Type::OpenGL ?
+		(Window::RenderContext::OpenGL*)renderContext_->GetData() :
 		throw Exception()
 	)
 {

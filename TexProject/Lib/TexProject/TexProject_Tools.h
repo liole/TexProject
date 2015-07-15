@@ -92,6 +92,7 @@ namespace TexProject
 					friend Tool;
 				private:
 					Interface::Panel::Default*					panelBase = nullptr;
+					Interface::Panel::Text*						panelTitle = nullptr;
 					Interface::Panel::Image*					panelImage = nullptr;
 					Interface::Button::Default*					buttonRefresh = nullptr;
 					Interface::Button::Connector*				buttonConnectorOut = nullptr;
@@ -152,6 +153,7 @@ namespace TexProject
 						friend Tool;
 					private:
 						Interface::Panel::Default*				panelBase = nullptr;
+						Interface::Panel::Text*					panelTitle = nullptr;
 						Interface::Panel::Image*				panelImage = nullptr;
 						Interface::Button::Default*				buttonRefresh = nullptr;
 						Interface::Button::Connector*			buttonConnectorIn = nullptr;

@@ -121,9 +121,15 @@
     <None Include="Media\Shaders\GLSL\1.vs" />
     <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.ps" />
     <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.vs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.gs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.ps" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.vs" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.gs" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.ps" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.vs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.gs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.ps" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.vs" />
     <None Include="Media\Shaders\GLSL\Simple Texture\1.ps" />
     <None Include="Media\Shaders\GLSL\Simple Texture\1.vs" />
     <None Include="Media\Shaders\GLSL\Simple\1.ps" />

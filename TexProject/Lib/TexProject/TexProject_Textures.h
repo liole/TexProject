@@ -61,6 +61,9 @@ namespace TexProject
 #if __TEXPROJECT_DEVIL__
 			bool							_DevIL_Load(const string& filename);
 #endif
+#if __TEXPROJECT_OPENGL__
+			inline D2&						operator = (OpenGL::Texture& source);
+#endif
 		};
 		struct Cube
 		{
@@ -262,12 +265,12 @@ namespace TexProject
 
 			typedef InternalFormat			IFormat;
 
-			static inline int32			GetSlotCount()
+			/*static inline int32			GetSlotCount()
 			{
 				static GLint result;
 				glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,&result);
 				return (int32)result;
-			}
+			}*/
 
 		protected:
 
@@ -287,16 +290,51 @@ namespace TexProject
 		public:
 
 			inline Texture(Window::Render* window);
+			inline Texture(Window::RenderContext::Basic* renderContext_);
 			inline ~Texture();
 
 			inline Texture&					operator = (const TexProject::Texture::D2& source);
 			inline Texture&					operator = (const TexProject::Texture::Cube& source);
+
+			inline Type						GetType() const
+			{
+				return type;
+			}
+			inline InternalFormat			GetInternalFormat() const
+			{
+				return internalFormat;
+			}
+			inline Format					GetFormat() const
+			{
+				return format;
+			}
+			inline Component				GetComponent() const
+			{
+				return component;
+			}
+			inline Wrap						GetWrap() const
+			{
+				return wrap;
+			}
+			inline Filter					GetFilter() const
+			{
+				return filter;
+			}
+			inline uvec3					GetSize() const
+			{
+				return size;
+			}
 
 			inline void						Create(Type type_,InternalFormat internalFormat_,Format format_,Component component_,Wrap wrap_,Filter filter_,uvec3 size_,void* data_);
 			inline void						Delete();
 			inline void						Use(uint32 level = 0);
 			inline void						Unuse(uint32 level);
 			inline void						Unuse();
+			inline GLuint					GetTexture() const
+			{
+				return texture;
+			}
+			inline vec4*					GetDataRGBA32F();
 			inline Window::RenderContext::OpenGL*			GetRenderContext() const;
 
 		};
@@ -403,6 +441,25 @@ inline void*								TexProject::Texture::D2::GetDataRGBA32F() const
 	}
 	return data_;
 }
+#if __TEXPROJECT_OPENGL__
+
+inline TexProject::Texture::D2&				TexProject::Texture::D2::operator = (OpenGL::Texture& source)
+{
+	if(source.GetType() == OpenGL::Texture::Type::D2)
+	{
+		Create(source.GetSize().xy());
+		auto t = source.GetDataRGBA32F();
+		for(uint32 i = 0; i < size.x*size.y; ++i)
+		{
+			data[i] = t[i];
+		}
+		delete[] t;
+	}
+	return *this;
+}
+
+#endif
+
 
 
 inline										TexProject::Texture::Cube::Cube()
@@ -594,6 +651,15 @@ inline										TexProject::OpenGL::Texture::Texture(Window::Render* window):
 	)
 {
 }
+inline										TexProject::OpenGL::Texture::Texture(Window::RenderContext::Basic* renderContext_):
+	renderContext
+	(
+		renderContext_->GetType() == Window::RenderContext::Type::OpenGL ?
+		(Window::RenderContext::OpenGL*)renderContext_->GetData() :
+		throw Exception()
+	)
+{
+}
 inline										TexProject::OpenGL::Texture::~Texture()
 {
 	Delete();
@@ -726,7 +792,7 @@ inline void									TexProject::OpenGL::Texture::Use(uint32 level)
 #if __TEXPROJECT_DEBUG__
 	if(texture)
 	{
-		if(int32(level) < GetSlotCount())
+		if(int32(level) < renderContext->GetTextureMaxSlots())//GetSlotCount())
 		{
 			if(renderContext->textureActiveSlot != level)
 			{
@@ -760,7 +826,7 @@ inline void									TexProject::OpenGL::Texture::Use(uint32 level)
 inline void									TexProject::OpenGL::Texture::Unuse(uint32 level)
 {
 #if __TEXPROJECT_DEBUG__
-	if(int32(level) < GetSlotCount())
+	if(int32(level) < renderContext->GetTextureMaxSlots())
 	{
 		if(renderContext->textureCurrent[level] == this)
 		{
@@ -796,7 +862,166 @@ inline void									TexProject::OpenGL::Texture::Unuse(uint32 level)
 }
 inline void									TexProject::OpenGL::Texture::Unuse()
 {
-	for(int32 i = 0; i < GetSlotCount(); ++i) Unuse(i);
+	for(int32 i = 0; i < renderContext->GetTextureMaxSlots(); ++i) Unuse(i);
+}
+inline TexProject::vec4*					TexProject::OpenGL::Texture::GetDataRGBA32F()
+{
+	switch(type)
+	{
+	case TexProject::OpenGL::Texture::Type::D1: break;
+	case TexProject::OpenGL::Texture::Type::D1Array: break;
+	case TexProject::OpenGL::Texture::Type::D2:
+	{
+		auto res = new vec4[size.x*size.y];
+
+		uint32	pixelSize = 0;		// size in bytes
+		uint32	pixelLength = 0;	// component count
+
+		switch(component)
+		{
+		case TexProject::OpenGL::Texture::Component::UInt8: pixelSize = 1; break;
+		case TexProject::OpenGL::Texture::Component::UInt16: pixelSize = 2; break;
+		case TexProject::OpenGL::Texture::Component::UInt32: pixelSize = 4; break;
+		case TexProject::OpenGL::Texture::Component::Int8: pixelSize = 1; break;
+		case TexProject::OpenGL::Texture::Component::Int16: pixelSize = 2; break;
+		case TexProject::OpenGL::Texture::Component::Int32: pixelSize = 4; break;
+		case TexProject::OpenGL::Texture::Component::Float16: pixelSize = 2; break;
+		case TexProject::OpenGL::Texture::Component::Float32: pixelSize = 4; break;
+		default: break;
+		}
+
+		switch(format)
+		{
+		case TexProject::OpenGL::Texture::Format::R: pixelLength = 1; break;
+		case TexProject::OpenGL::Texture::Format::G: pixelLength = 1; break;
+		case TexProject::OpenGL::Texture::Format::B: pixelLength = 1; break;
+		case TexProject::OpenGL::Texture::Format::A: pixelLength = 1; break;
+		case TexProject::OpenGL::Texture::Format::L: pixelLength = 1; break;
+		case TexProject::OpenGL::Texture::Format::RG: pixelLength = 2; break;
+		case TexProject::OpenGL::Texture::Format::RGB: pixelLength = 3; break;
+		case TexProject::OpenGL::Texture::Format::BGR: pixelLength = 3; break;
+		case TexProject::OpenGL::Texture::Format::RGBA: pixelLength = 4; break;
+		case TexProject::OpenGL::Texture::Format::BGRA: pixelLength = 4; break;
+		case TexProject::OpenGL::Texture::Format::Depth: pixelLength = 1; break;
+		default: break;
+		}
+		
+		auto storage_ = malloc(size.x*size.y*pixelSize*pixelLength);
+
+		Use(0);
+		glGetTexImage((GLenum)type,0,(GLenum)format,(GLenum)component,storage_);
+		Unuse(0);
+
+		{
+			ivec4	off(-1,-1,-1,-1);
+
+			switch(format)
+			{
+				case Format::R:				{ off = ivec4(0,-1,-1,-1); break; }
+				case Format::G:				{ off = ivec4(-1,0,-1,-1); break; }
+				case Format::B:				{ off = ivec4(-1,-1,0,-1); break; }
+				case Format::A:				{ off = ivec4(-1,-1,-1,0); break; }
+				case Format::L:				{ off = ivec4(0,0,0,-1); break; }
+				case Format::RG:			{ off = ivec4(0,1,-1,-1); break; }
+				case Format::RGB:			{ off = ivec4(0,1,2,-1); break; }
+				case Format::BGR:			{ off = ivec4(2,1,0,-1); break; }
+				case Format::RGBA:			{ off = ivec4(0,1,2,3); break; }
+				case Format::BGRA:			{ off = ivec4(2,1,0,3); break; }
+				default:					throw TexProject::Exception();
+			}
+
+			for(uint32 x = 0; x < size.x; ++x)
+			for(uint32 y = 0; y < size.y; ++y)
+			{
+				void* data_ = (int8*)storage_ + (y*size.x+x)*pixelSize*pixelLength;
+				vec4 color(0.0f);
+				switch(component)
+				{
+					case Component::Int8:
+					{
+						if(off.x>=0) color.x =  float32(float64(*((int8*)data_+off.x) - INT8_MIN) / INT8_MAX);
+						if(off.y>=0) color.y =  float32(float64(*((int8*)data_+off.y) - INT8_MIN) / INT8_MAX);
+						if(off.z>=0) color.z =  float32(float64(*((int8*)data_+off.z) - INT8_MIN) / INT8_MAX);
+						if(off.w>=0) color.w =  float32(float64(*((int8*)data_+off.w) - INT8_MIN) / INT8_MAX);
+						break;
+					}
+					case Component::UInt8:
+					{
+						if(off.x>=0) color.x =  float32(float64(*((uint8*)data_+off.x)) / UINT8_MAX);
+						if(off.y>=0) color.y =  float32(float64(*((uint8*)data_+off.y)) / UINT8_MAX);
+						if(off.z>=0) color.z =  float32(float64(*((uint8*)data_+off.z)) / UINT8_MAX);
+						if(off.w>=0) color.w =  float32(float64(*((uint8*)data_+off.w)) / UINT8_MAX);
+						break;
+					}
+					case Component::Int16:
+					{
+						if(off.x>=0) color.x =  float32(float64(*((int16*)data_+off.x) - INT16_MIN) / INT16_MAX);
+						if(off.y>=0) color.y =  float32(float64(*((int16*)data_+off.y) - INT16_MIN) / INT16_MAX);
+						if(off.z>=0) color.z =  float32(float64(*((int16*)data_+off.z) - INT16_MIN) / INT16_MAX);
+						if(off.w>=0) color.w =  float32(float64(*((int16*)data_+off.w) - INT16_MIN) / INT16_MAX);
+						break;
+					}
+					case Component::UInt16:
+					{
+						if(off.x>=0) color.x =  float32(float64(*((uint16*)data_+off.x)) / UINT16_MAX);
+						if(off.y>=0) color.y =  float32(float64(*((uint16*)data_+off.y)) / UINT16_MAX);
+						if(off.z>=0) color.z =  float32(float64(*((uint16*)data_+off.z)) / UINT16_MAX);
+						if(off.w>=0) color.w =  float32(float64(*((uint16*)data_+off.w)) / UINT16_MAX);
+						break;
+					}
+					case Component::Int32:
+					{
+						if(off.x>=0) color.x =  float32(float64(*((int32*)data_+off.x) - INT32_MIN) / INT32_MAX);
+						if(off.y>=0) color.y =  float32(float64(*((int32*)data_+off.y) - INT32_MIN) / INT32_MAX);
+						if(off.z>=0) color.z =  float32(float64(*((int32*)data_+off.z) - INT32_MIN) / INT32_MAX);
+						if(off.w>=0) color.w =  float32(float64(*((int32*)data_+off.w) - INT32_MIN) / INT32_MAX);
+						break;
+					}
+					case Component::UInt32:
+					{
+						if(off.x>=0) color.x =  float32(float64(*((uint32*)data_+off.x)) / UINT32_MAX);
+						if(off.y>=0) color.y =  float32(float64(*((uint32*)data_+off.y)) / UINT32_MAX);
+						if(off.z>=0) color.z =  float32(float64(*((uint32*)data_+off.z)) / UINT32_MAX);
+						if(off.w>=0) color.w =  float32(float64(*((uint32*)data_+off.w)) / UINT32_MAX);
+						break;
+					}
+					case Component::Float16:
+					{
+						if(off.x>=0) color.x =  float32(*((float16*)data_+off.x));
+						if(off.y>=0) color.y =  float32(*((float16*)data_+off.y));
+						if(off.z>=0) color.z =  float32(*((float16*)data_+off.z));
+						if(off.w>=0) color.w =  float32(*((float16*)data_+off.w));
+						break;
+					}
+					case Component::Float32:
+					{
+						if(off.x>=0) color.x =  float32(*((float32*)data_+off.x));
+						if(off.y>=0) color.y =  float32(*((float32*)data_+off.y));
+						if(off.z>=0) color.z =  float32(*((float32*)data_+off.z));
+						if(off.w>=0) color.w =  float32(*((float32*)data_+off.w));
+						break;
+					}
+					default:
+					{
+						throw TexProject::Exception();
+					}
+				}
+				res[y*size.x + x] = color;
+			}
+
+			free(storage_);
+		}
+
+		return res;
+	}
+	break;
+	case TexProject::OpenGL::Texture::Type::D2Array: break;
+	case TexProject::OpenGL::Texture::Type::D3: break;
+	case TexProject::OpenGL::Texture::Type::Cube: break;
+	case TexProject::OpenGL::Texture::Type::CubeArray: break;
+	default: break;
+	}
+	return nullptr;
 }
 inline TexProject::Window::RenderContext::OpenGL*				TexProject::OpenGL::Texture::GetRenderContext() const
 {

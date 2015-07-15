@@ -154,6 +154,12 @@ Tool::D2(window_)
 		}
 	);
 
+	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
+	panelTitle->SetSize(vec2(160.0f,14.0f));
+	panelTitle->SetPos(vec2(0.0f,-panelBase->GetSize().y*0.5f + panelTitle->GetSize().y*0.5f));
+	panelTitle->SetText("Blank");
+	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
+
 	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
 	panelImage->SetSize(vec2(128.0f));
 
@@ -426,6 +432,12 @@ Tool::D2(window_)
 			((Tool::Generator::D2::Blank*)item->GetUserData())->destruction = true;
 		}
 	);
+
+	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
+	panelTitle->SetSize(vec2(160.0f,14.0f));
+	panelTitle->SetPos(vec2(0.0f,-panelBase->GetSize().y*0.5f + panelTitle->GetSize().y*0.5f));
+	panelTitle->SetText("Color Correction");
+	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
 
 	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
 	panelImage->SetSize(vec2(128.0f));

@@ -1,0 +1,35 @@
+#version 330 core
+
+
+uniform sampler2D	Texture;
+uniform vec2		dt;
+uniform float		Power = 5.0f;
+
+
+in vec2		P_Tex;
+
+
+out vec4	Out_Color;
+
+
+void main()
+{
+	float h = texture(Texture,P_Tex).x;
+	float r = texture(Texture,P_Tex+vec2(dt.x,0)).x;
+	float l = texture(Texture,P_Tex+vec2(-dt.x,0)).x;
+	float u = texture(Texture,P_Tex+vec2(0,dt.y)).x;
+	float d = texture(Texture,P_Tex+vec2(0,-dt.y)).x;
+
+	Out_Color.x = (l-r)*Power;
+	Out_Color.y = (d-u)*Power;
+	Out_Color.z = 1.0f;
+
+	Out_Color = vec4(normalize(Out_Color.xyz)*0.5f+0.5f, h);
+
+	//Out_Color = texture(Texture, P_Tex);
+
+
+	//Out_Color = texture(Texture, P_Tex*2.0f) * vec4(P_Tex,1,1);
+	//Out_Color = vec4(P_Tex,1,1);
+	//Out_Color = vec4(1,1,1,1);
+}

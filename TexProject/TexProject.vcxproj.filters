@@ -54,10 +54,10 @@
     <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Test\Test_Tool.cpp">
+    <ClCompile Include="Lib\TexProject\TexProject_Tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Tools.cpp">
+    <ClCompile Include="Source\Test\Test_Tool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -128,6 +128,12 @@
     <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.gs" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.ps" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.vs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.gs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.ps" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.vs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.gs" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.ps" />
+    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Media\Images\Test.bmp">

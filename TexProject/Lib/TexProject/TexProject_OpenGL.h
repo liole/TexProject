@@ -211,6 +211,15 @@ namespace TexProject
 		extern PFNGLUNMAPBUFFERPROC								glUnmapBuffer;
 		extern PFNGLGETBUFFERPARAMETERIVPROC					glGetBufferParameteriv;
 		extern PFNGLGETBUFFERPOINTERVPROC						glGetBufferPointerv;
+		// Framebuffer Func
+		extern bool												initFuncFramebuffer;
+		extern PFNGLBINDFRAMEBUFFERPROC							glBindFramebuffer;
+		extern PFNGLDELETEFRAMEBUFFERSPROC						glDeleteFramebuffers;
+		extern PFNGLGENFRAMEBUFFERSPROC							glGenFramebuffers;
+		extern PFNGLCHECKFRAMEBUFFERSTATUSPROC					glCheckFramebufferStatus;
+		extern PFNGLFRAMEBUFFERTEXTUREPROC						glFramebufferTexture;
+		extern PFNGLFRAMEBUFFERTEXTURE2DPROC					glFramebufferTexture2D;
+		extern PFNGLDRAWBUFFERSPROC								glDrawBuffers;
 
 
 		extern bool							isInit;

@@ -405,6 +405,10 @@ TexProject::string							TexProject::Interface::Panel::Text::GetText() const
 {
 	return text;
 }
+void										TexProject::Interface::Panel::Text::SetAlignment(Alignment alignment_)
+{
+	alignment = alignment_;
+}
 
 
 
@@ -709,6 +713,24 @@ TexProject::Interface::Default::Panel::Text::Text(GUI* interface_,Item* parent_)
 	Interface::Panel::Text(interface_,parent_)
 {
 }
+void										TexProject::Interface::Default::Panel::Text::SetAlignment(Alignment alignment_)
+{
+	alignment = alignment_;
+	switch(alignment)
+	{
+	case TexProject::Interface::Panel::Text::Alignment::Default: _win_alignment = _win_Alignment::Default; break;
+	case TexProject::Interface::Panel::Text::Alignment::LeftTop: _win_alignment = _win_Alignment::LeftTop; break;
+	case TexProject::Interface::Panel::Text::Alignment::LeftCenter: _win_alignment = _win_Alignment::LeftCenter; break;
+	case TexProject::Interface::Panel::Text::Alignment::LeftBottom: _win_alignment = _win_Alignment::LeftBottom; break;
+	case TexProject::Interface::Panel::Text::Alignment::CenterTop: _win_alignment = _win_Alignment::CenterTop; break;
+	case TexProject::Interface::Panel::Text::Alignment::CenterCenter: _win_alignment = _win_Alignment::CenterCenter; break;
+	case TexProject::Interface::Panel::Text::Alignment::CenterBottom: _win_alignment = _win_Alignment::CenterBottom; break;
+	case TexProject::Interface::Panel::Text::Alignment::RightTop: _win_alignment = _win_Alignment::RightTop; break;
+	case TexProject::Interface::Panel::Text::Alignment::RightCenter: _win_alignment = _win_Alignment::RightCenter; break;
+	case TexProject::Interface::Panel::Text::Alignment::RightBottom: _win_alignment = _win_Alignment::RightBottom; break;
+	default: _win_alignment = _win_Alignment::LeftTop; break;
+	}
+}
 void										TexProject::Interface::Default::Panel::Text::_win_WMPaint()
 {
 	auto window = inter->GetWindow();
@@ -759,7 +781,7 @@ void										TexProject::Interface::Default::Panel::Text::_win_WMPaint()
 
 		//text = "text\nlol";
 
-		UINT format = DT_LEFT | DT_TOP | DT_NOPREFIX;
+		//UINT format = DT_LEFT | DT_TOP | DT_NOPREFIX;
 		/*
 		DT_TOP                      0x00000000
 		DT_LEFT                     0x00000000
@@ -778,7 +800,7 @@ void										TexProject::Interface::Default::Panel::Text::_win_WMPaint()
 		DT_INTERNAL                 0x00001000
 		*/
 
-		DrawText(hDC,text.c_str(),text.length(),&rect,format);
+		DrawText(hDC,text.c_str(),text.length(),&rect,(UINT)_win_alignment | DT_NOPREFIX);
 		//TextOut(hDC,0,0,text.c_str(),text.length());
 	}
 
