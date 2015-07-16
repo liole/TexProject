@@ -21,6 +21,7 @@ void fLoop(Window::Render* window)
 void TexProject::Main()
 {
 	Window::Render wnd;
+	Window::Render wnd1;
 
 	wnd.SetFunc(Window::Render::FuncTypes::Init,fInit);
 	wnd.SetFunc(Window::Render::FuncTypes::Free,fFree);

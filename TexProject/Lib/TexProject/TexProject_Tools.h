@@ -3,6 +3,9 @@
 #include <TexProject/TexProject_Textures.h>
 #include <TexProject/TexProject_Interface.h>
 
+#include <TexProject/TexProject_Geometry.h>
+#include <TexProject/TexProject_Shaders.h>
+#include <TexProject/TexProject_Buffers.h>
 
 #include <list>
 #include <iterator>
@@ -181,6 +184,44 @@ namespace TexProject
 						virtual bool							IsClean() override;
 					};
 				};
+			};
+		};
+		struct Viewer
+		{
+			friend Tool;
+		public:
+			struct Default:
+				private Tool::Basic
+			{
+				friend Tool;
+			protected:
+
+				static void										funcWindowInit(Window::Render* window);
+				static void										funcWindowFree(Window::Render* window);
+				static void										funcWindowLoop(Window::Render* window);
+
+				Interface::Panel::Default*						panelBase = nullptr;
+				Interface::Panel::Text*							panelTitle = nullptr;
+				Interface::Panel::Image*						panelImage = nullptr;
+				Interface::Button::Default*						buttonRefresh = nullptr;
+				Interface::Button::Connector*					buttonConnectorIn = nullptr;
+				Interface::Button::Default*						buttonClose = nullptr;
+
+				Window::Render*									renderWindow = nullptr;
+
+				OpenGL::Shader*									renderGLShader = nullptr;
+				OpenGL::Model*									renderGLModel = nullptr;
+				OpenGL::Texture*								renderGLTextureDiffuse = nullptr;
+				OpenGL::Texture*								renderGLTextureNormals = nullptr;
+				OpenGL::Texture*								renderGLTextureMaterial = nullptr;
+
+			public:
+											Default(Window::Render* window_);
+				virtual						~Default();
+
+				virtual void							Loop() override;
+				virtual void							Refresh() override;
+				//virtual bool							IsClean() override;
 			};
 		};
 

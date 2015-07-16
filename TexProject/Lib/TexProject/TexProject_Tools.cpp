@@ -76,13 +76,26 @@ void TexProject::Tool::Init(Window::Render* window_)
 	{
 		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
 		t->SetSize(vec2(24.0f));
-		t->SetPos(vec2(4.0f) + vec2(32.0f*1,0.0f));
+		t->SetPos(vec2(4.0f) + vec2(32.0f*2,0.0f));
 		t->SetAction
 		(
 			Interface::Item::ActionTypes::Click,
 			[](Interface::Item* item) -> void
 			{
 				Tool::Add<Tool::Filter::D2::Correction::Color>(item->GetWindow());
+			}
+		);
+	}
+	{
+		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
+		t->SetSize(vec2(24.0f));
+		t->SetPos(vec2(4.0f) + vec2(32.0f*3,0.0f));
+		t->SetAction
+		(
+			Interface::Item::ActionTypes::Click,
+			[](Interface::Item* item) -> void
+			{
+				Tool::Add<Tool::Viewer::Default>(item->GetWindow());
 			}
 		);
 	}
@@ -451,7 +464,7 @@ void					TexProject::Tool::Generator::D2::Blank::FreeFocus(Interface::Panel::Def
 
 // Tool::Filter::D2::Correction::Color
 TexProject::Tool::Filter::D2::Correction::Color::Color(Window::Render* window_):
-Tool::D2(window_)
+	Tool::D2(window_)
 {
 	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
 	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
@@ -624,8 +637,186 @@ bool										TexProject::Tool::Filter::D2::Correction::Color::IsClean()
 }
 
 
+// Tool::Viewer::Default
+void										TexProject::Tool::Viewer::Default::funcWindowInit(Window::Render* window)
+{
+	auto tool = (Tool::Viewer::Default*)window->GetUserData();
 
+	tool->renderGLShader = new OpenGL::Shader(window);
+	tool->renderGLShader->Load("Media/Shaders/GLSL/3D/Material/Basic/V1/1.vs","","","","Media/Shaders/GLSL/3D/Material/Basic/V1/1.ps");
+	tool->renderGLShader->Use();
+	tool->renderGLShader->SetInt("TextureDiffuse",0);
+	tool->renderGLShader->SetInt("TextureNormal",1);
+	tool->renderGLShader->SetInt("TextureMaterial",2);
+	tool->renderGLShader->SetInt("TextureEnvironment",3);
+	tool->renderGLShader->Unuse();
 
+	auto m = new Geometry::Mesh();
+	m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
+
+	tool->renderGLModel = new OpenGL::Model(window);
+	tool->renderGLModel->Create(m,tool->renderGLShader);
+
+	auto t = new Texture::D2;
+
+	t->Load("Media/Images/Brick1_D.png");
+	tool->renderGLTextureDiffuse = new OpenGL::Texture(window);
+	*tool->renderGLTextureDiffuse = *t;
+
+	t->Load("Media/Images/Brick1_N.png");
+	tool->renderGLTextureNormals = new OpenGL::Texture(window);
+	*tool->renderGLTextureNormals = *t;
+
+	t->Load("Media/Images/Brick1_M.png");
+	tool->renderGLTextureMaterial = new OpenGL::Texture(window);
+	*tool->renderGLTextureMaterial = *t;
+}
+void										TexProject::Tool::Viewer::Default::funcWindowFree(Window::Render* window)
+{
+	auto tool = (Tool::Viewer::Default*)window->GetUserData();
+
+	if(tool->renderGLShader)
+	{
+		delete tool->renderGLShader;
+		tool->renderGLShader = nullptr;
+	}
+}
+void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* window)
+{
+	auto tool = (Tool::Viewer::Default*)window->GetUserData();
+
+	Helper::VMat tVMat;
+	tVMat.SetPos(vec3(0.0f,0.0f,-10.0f));
+	tVMat.SetAng(vec3(0.0f));
+	tVMat.SetPerspective(Helper::Transform::D3::Projection::Params::Perspective(60.0f,window->GetAspect(),0.1f,1000.0f));
+
+	Helper::MMat tMMat;
+	tMMat.SetPos(vec3(0.0f));
+	tMMat.SetAng(vec3(0.0f));
+	tMMat.SetScale(vec3(1.0f));
+
+	glClearColor(0.16f,0.16f,0.16f,1.0f);
+	glClearDepth(1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LESS);
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);	//glDisable(GL_CULL_FACE);
+
+	//if(MouseLState()) glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	//else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
+	tool->renderGLTextureDiffuse->Use(0);
+	tool->renderGLTextureNormals->Use(1);
+	tool->renderGLTextureMaterial->Use(2);
+	tool->renderGLShader->Use();
+	tool->renderGLShader->SetVec3("lightPos",vec3(0.0f,10.0f,-20.0f) - tVMat.GetPos());
+	tool->renderGLShader->SetMat3("RotateMatrix",tMMat.GetRMat());
+	tool->renderGLShader->SetMat4("ModelMatrix",tMMat.GetMMat() * mat4::move(-tVMat.GetPos()));
+	tool->renderGLShader->SetMat4("ModelViewProjectionMatrix",tMMat.GetMMat() * tVMat.GetVPMat());
+
+	tool->renderGLModel->Draw();
+}
+
+TexProject::Tool::Viewer::Default::Default(Window::Render* window_):
+	Tool::Basic(window_)
+{
+	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
+	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
+	panelBase->SetSize(vec2(200.0f));
+	panelBase->SetUserData(this);
+	panelBase->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			Tool::SetFocus( (Tool::Filter::D2::Correction::Color*)item->GetUserData() );
+		}
+	);
+	panelBase->SetAction
+	(
+		Interface::Item::ActionTypes::Destruction,
+		[](Interface::Item* item)
+		{
+			((Tool::Filter::D2::Correction::Color*)item->GetUserData())->destruction = true;
+		}
+	);
+
+	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
+	panelTitle->SetSize(vec2(160.0f,14.0f));
+	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f -  panelTitle->GetSize().x*0.5f,panelBase->GetSize().y - panelTitle->GetSize().y));
+	panelTitle->SetText("Viewer");
+	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
+
+	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
+	panelImage->SetSize(vec2(128.0f));
+	panelImage->SetPos( (panelBase->GetSize().x-panelImage->GetSize())*0.5f );
+
+	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
+	buttonRefresh->SetSize(vec2(64.0f,16.0f));
+	buttonRefresh->SetPos(vec2((panelBase->GetSize().x-buttonRefresh->GetSize().x)*0.5f,4.0f));
+	buttonRefresh->SetUserData(this);
+	buttonRefresh->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			((Tool::Viewer::Default*)item->GetUserData())->Refresh();
+		}
+	);
+
+	buttonConnectorIn = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::InputConnector);
+	buttonConnectorIn->SetSize(vec2(8.0f));
+	buttonConnectorIn->SetPos(vec2(4.0f,(panelBase->GetSize().y - buttonConnectorIn->GetSize().y)*0.5f));
+	buttonConnectorIn->connectDirection = vec2(-64.0f,0.0f);
+	buttonConnectorIn->SetUserData(this);
+	buttonConnectorIn->SetAction
+	(
+		Interface::Item::ActionTypes::Refresh,
+		[](Interface::Item* item)
+		{
+			((Tool::Viewer::Default*)item->GetUserData())->Refresh();
+		}
+	);
+
+	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
+	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
+	buttonClose->SetSize(vec2(16.0f));
+
+	renderWindow = new Window::Render();
+	renderWindow->SetUserData(this);
+	renderWindow->SetFunc(Window::Render::FuncTypes::Init,funcWindowInit);
+	renderWindow->SetFunc(Window::Render::FuncTypes::Free,funcWindowFree);
+	renderWindow->SetFunc(Window::Render::FuncTypes::Loop,funcWindowLoop);
+}
+TexProject::Tool::Viewer::Default::~Default()
+{
+	if(renderWindow)
+	{
+		renderWindow->Delete();
+		delete renderWindow;
+		renderWindow = nullptr;
+	}
+}
+void										TexProject::Tool::Viewer::Default::Loop()
+{
+	Basic::Loop();
+
+	if(panelBase)
+	{
+		panelBase->SetAnchor(Tool::GetAnchor());
+	}  
+}
+void										TexProject::Tool::Viewer::Default::Refresh()
+{
+	if(!renderWindow->IsRunning())
+	{
+		renderWindow->Create("Viewer");
+		renderWindow->SetSize(uvec2(600,400));
+		renderWindow->SetRenderContext(Window::RenderContext::Type::OpenGL);
+	}
+}
 
 
 

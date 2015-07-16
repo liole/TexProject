@@ -36,9 +36,9 @@ bool					TexProject::Window::Process()
 	for(uint32 i = 0; i < Window::Basic::GetCount(); ++i)
 	{
 		auto window = Window::Basic::Get(i);
-		if(window->IsRunning()) res = true;
 		Window::Basic::current = window;
 		window->Loop();
+		if(window->IsRunning()) res = true;
 	}
 	Window::Basic::current = nullptr;
 
@@ -128,6 +128,8 @@ void					TexProject::Window::Input::Mouse::Loop()
 	mB.state = GetAsyncKeyState(VK_MBUTTON) != NULL;
 	rB.state = GetAsyncKeyState(VK_RBUTTON) != NULL;
 
+	//GetDoubleClickTime();
+
 	lB.Loop();
 	mB.Loop();
 	rB.Loop();
@@ -162,115 +164,115 @@ void					TexProject::Window::Input::Keyboard::Loop()
 		keys[Keys::F5].state									= GetAsyncKeyState(VK_F5) != 0;
 		keys[Keys::F6].state									= GetAsyncKeyState(VK_F6) != 0;
 		keys[Keys::F7].state									= GetAsyncKeyState(VK_F7) != 0;
-		keys[Keys::F8].state						= GetAsyncKeyState(VK_F8) != 0;
-		keys[Keys::F9].state						= GetAsyncKeyState(VK_F9) != 0;
-		keys[Keys::F10].state						= GetAsyncKeyState(VK_F10) != 0;
-		keys[Keys::F11].state						= GetAsyncKeyState(VK_F11) != 0;
-		keys[Keys::F12].state						= GetAsyncKeyState(VK_F2) != 0;
-		keys[Keys::PrtScr].state					= GetAsyncKeyState(VK_SNAPSHOT) != 0;
-		keys[Keys::SCROLL_LOCK].state				= GetAsyncKeyState(VK_SCROLL) != 0;
-		keys[Keys::PAUSE].state					= GetAsyncKeyState(VK_PAUSE) != 0;
+		keys[Keys::F8].state									= GetAsyncKeyState(VK_F8) != 0;
+		keys[Keys::F9].state									= GetAsyncKeyState(VK_F9) != 0;
+		keys[Keys::F10].state									= GetAsyncKeyState(VK_F10) != 0;
+		keys[Keys::F11].state									= GetAsyncKeyState(VK_F11) != 0;
+		keys[Keys::F12].state									= GetAsyncKeyState(VK_F2) != 0;
+		keys[Keys::PrtScr].state								= GetAsyncKeyState(VK_SNAPSHOT) != 0;
+		keys[Keys::SCROLL_LOCK].state							= GetAsyncKeyState(VK_SCROLL) != 0;
+		keys[Keys::PAUSE].state									= GetAsyncKeyState(VK_PAUSE) != 0;
 
-		keys[Keys::TILDE].state					= GetAsyncKeyState(VK_OEM_3) != 0;
-		keys[Keys::DIGIT1].state					= GetAsyncKeyState('1') != 0;
-		keys[Keys::DIGIT2].state					= GetAsyncKeyState('2') != 0;
-		keys[Keys::DIGIT3].state					= GetAsyncKeyState('3') != 0;
-		keys[Keys::DIGIT4].state					= GetAsyncKeyState('4') != 0;
-		keys[Keys::DIGIT5].state					= GetAsyncKeyState('5') != 0;
-		keys[Keys::DIGIT6].state					= GetAsyncKeyState('6') != 0;
-		keys[Keys::DIGIT7].state					= GetAsyncKeyState('7') != 0;
-		keys[Keys::DIGIT8].state					= GetAsyncKeyState('8') != 0;
-		keys[Keys::DIGIT9].state					= GetAsyncKeyState('9') != 0;
-		keys[Keys::DIGIT0].state					= GetAsyncKeyState('0') != 0;
-		keys[Keys::MINUS].state					= GetAsyncKeyState(VK_OEM_MINUS) != 0;
-		keys[Keys::PLUS].state					= GetAsyncKeyState(VK_OEM_PLUS) != 0;
-		keys[Keys::BACKSPACE].state				= GetAsyncKeyState(VK_BACK) != 0;
+		keys[Keys::TILDE].state									= GetAsyncKeyState(VK_OEM_3) != 0;
+		keys[Keys::DIGIT1].state								= GetAsyncKeyState('1') != 0;
+		keys[Keys::DIGIT2].state								= GetAsyncKeyState('2') != 0;
+		keys[Keys::DIGIT3].state								= GetAsyncKeyState('3') != 0;
+		keys[Keys::DIGIT4].state								= GetAsyncKeyState('4') != 0;
+		keys[Keys::DIGIT5].state								= GetAsyncKeyState('5') != 0;
+		keys[Keys::DIGIT6].state								= GetAsyncKeyState('6') != 0;
+		keys[Keys::DIGIT7].state								= GetAsyncKeyState('7') != 0;
+		keys[Keys::DIGIT8].state								= GetAsyncKeyState('8') != 0;
+		keys[Keys::DIGIT9].state								= GetAsyncKeyState('9') != 0;
+		keys[Keys::DIGIT0].state								= GetAsyncKeyState('0') != 0;
+		keys[Keys::MINUS].state									= GetAsyncKeyState(VK_OEM_MINUS) != 0;
+		keys[Keys::PLUS].state									= GetAsyncKeyState(VK_OEM_PLUS) != 0;
+		keys[Keys::BACKSPACE].state								= GetAsyncKeyState(VK_BACK) != 0;
 
-		keys[Keys::TAB].state						= GetAsyncKeyState(VK_TAB) != 0;
-		keys[Keys::Q].state						= GetAsyncKeyState('Q') != 0;
-		keys[Keys::W].state						= GetAsyncKeyState('W') != 0;
-		keys[Keys::E].state						= GetAsyncKeyState('E') != 0;
-		keys[Keys::R].state						= GetAsyncKeyState('R') != 0;
-		keys[Keys::T].state						= GetAsyncKeyState('T') != 0;
-		keys[Keys::Y].state						= GetAsyncKeyState('Y') != 0;
-		keys[Keys::U].state						= GetAsyncKeyState('U') != 0;
-		keys[Keys::I].state						= GetAsyncKeyState('I') != 0;
-		keys[Keys::O].state						= GetAsyncKeyState('O') != 0;
-		keys[Keys::P].state						= GetAsyncKeyState('P') != 0;
-		keys[Keys::L_CLIP].state					= GetAsyncKeyState(VK_OEM_4) != 0;
-		keys[Keys::R_CLIP].state					= GetAsyncKeyState(VK_OEM_6) != 0;
-		keys[Keys::ENTER].state					= GetAsyncKeyState(VK_RETURN) != 0;
+		keys[Keys::TAB].state									= GetAsyncKeyState(VK_TAB) != 0;
+		keys[Keys::Q].state										= GetAsyncKeyState('Q') != 0;
+		keys[Keys::W].state										= GetAsyncKeyState('W') != 0;
+		keys[Keys::E].state										= GetAsyncKeyState('E') != 0;
+		keys[Keys::R].state										= GetAsyncKeyState('R') != 0;
+		keys[Keys::T].state										= GetAsyncKeyState('T') != 0;
+		keys[Keys::Y].state										= GetAsyncKeyState('Y') != 0;
+		keys[Keys::U].state										= GetAsyncKeyState('U') != 0;
+		keys[Keys::I].state										= GetAsyncKeyState('I') != 0;
+		keys[Keys::O].state										= GetAsyncKeyState('O') != 0;
+		keys[Keys::P].state										= GetAsyncKeyState('P') != 0;
+		keys[Keys::L_CLIP].state								= GetAsyncKeyState(VK_OEM_4) != 0;
+		keys[Keys::R_CLIP].state								= GetAsyncKeyState(VK_OEM_6) != 0;
+		keys[Keys::ENTER].state									= GetAsyncKeyState(VK_RETURN) != 0;
 
-		keys[Keys::CAPS_LOCK].state				= GetAsyncKeyState(VK_CAPITAL) != 0;
-		keys[Keys::A].state						= GetAsyncKeyState('A') != 0;
-		keys[Keys::S].state						= GetAsyncKeyState('S') != 0;
-		keys[Keys::D].state						= GetAsyncKeyState('D') != 0;
-		keys[Keys::F].state						= GetAsyncKeyState('F') != 0;
-		keys[Keys::G].state						= GetAsyncKeyState('G') != 0;
-		keys[Keys::H].state						= GetAsyncKeyState('H') != 0;
-		keys[Keys::J].state						= GetAsyncKeyState('J') != 0;
-		keys[Keys::K].state						= GetAsyncKeyState('K') != 0;
-		keys[Keys::L].state						= GetAsyncKeyState('L') != 0;
-		keys[Keys::COLON].state					= GetAsyncKeyState(VK_OEM_1) != 0;
-		keys[Keys::QUOTE].state					= GetAsyncKeyState(VK_OEM_7) != 0;
-		keys[Keys::DASH].state					= GetAsyncKeyState(VK_OEM_5) != 0;
+		keys[Keys::CAPS_LOCK].state								= GetAsyncKeyState(VK_CAPITAL) != 0;
+		keys[Keys::A].state										= GetAsyncKeyState('A') != 0;
+		keys[Keys::S].state										= GetAsyncKeyState('S') != 0;
+		keys[Keys::D].state										= GetAsyncKeyState('D') != 0;
+		keys[Keys::F].state										= GetAsyncKeyState('F') != 0;
+		keys[Keys::G].state										= GetAsyncKeyState('G') != 0;
+		keys[Keys::H].state										= GetAsyncKeyState('H') != 0;
+		keys[Keys::J].state										= GetAsyncKeyState('J') != 0;
+		keys[Keys::K].state										= GetAsyncKeyState('K') != 0;
+		keys[Keys::L].state										= GetAsyncKeyState('L') != 0;
+		keys[Keys::COLON].state									= GetAsyncKeyState(VK_OEM_1) != 0;
+		keys[Keys::QUOTE].state									= GetAsyncKeyState(VK_OEM_7) != 0;
+		keys[Keys::DASH].state									= GetAsyncKeyState(VK_OEM_5) != 0;
 
-		keys[Keys::BACKSLASH].state				= GetAsyncKeyState(VK_OEM_102) != 0;
-		keys[Keys::Z].state						= GetAsyncKeyState('Z') != 0;
-		keys[Keys::X].state						= GetAsyncKeyState('X') != 0;
-		keys[Keys::C].state						= GetAsyncKeyState('C') != 0;
-		keys[Keys::V].state						= GetAsyncKeyState('V') != 0;
-		keys[Keys::B].state						= GetAsyncKeyState('B') != 0;
-		keys[Keys::N].state						= GetAsyncKeyState('N') != 0;
-		keys[Keys::M].state						= GetAsyncKeyState('M') != 0;
-		keys[Keys::COMM].state					= GetAsyncKeyState(VK_OEM_COMMA) != 0;
-		keys[Keys::DOT].state						= GetAsyncKeyState(VK_OEM_PERIOD) != 0;
-		keys[Keys::SLASH].state					= GetAsyncKeyState(VK_OEM_2) != 0;
+		keys[Keys::BACKSLASH].state								= GetAsyncKeyState(VK_OEM_102) != 0;
+		keys[Keys::Z].state										= GetAsyncKeyState('Z') != 0;
+		keys[Keys::X].state										= GetAsyncKeyState('X') != 0;
+		keys[Keys::C].state										= GetAsyncKeyState('C') != 0;
+		keys[Keys::V].state										= GetAsyncKeyState('V') != 0;
+		keys[Keys::B].state										= GetAsyncKeyState('B') != 0;
+		keys[Keys::N].state										= GetAsyncKeyState('N') != 0;
+		keys[Keys::M].state										= GetAsyncKeyState('M') != 0;
+		keys[Keys::COMM].state									= GetAsyncKeyState(VK_OEM_COMMA) != 0;
+		keys[Keys::DOT].state									= GetAsyncKeyState(VK_OEM_PERIOD) != 0;
+		keys[Keys::SLASH].state									= GetAsyncKeyState(VK_OEM_2) != 0;
 
-		keys[Keys::L_SHIFT].state					= GetAsyncKeyState(VK_LSHIFT) != 0;
-		keys[Keys::R_SHIFT].state					= GetAsyncKeyState(VK_RSHIFT) != 0;
-		keys[Keys::SHIFT].state					= keys[Keys::L_SHIFT].state || keys[Keys::R_SHIFT].state;
-		keys[Keys::L_ALT].state					= GetAsyncKeyState(VK_LMENU) != 0;
-		keys[Keys::R_ALT].state					= GetAsyncKeyState(VK_RMENU) != 0;
-		keys[Keys::ALT].state						= keys[Keys::L_ALT].state || keys[Keys::R_ALT].state;
-		keys[Keys::L_CTRL].state					= GetAsyncKeyState(VK_LCONTROL) != 0;
-		keys[Keys::R_CTRL].state					= GetAsyncKeyState(VK_RCONTROL) != 0;
-		keys[Keys::CTRL].state					= keys[Keys::L_CTRL].state || keys[Keys::R_CTRL].state;
-		keys[Keys::L_WIN].state					= GetAsyncKeyState(VK_LWIN) != 0;
-		keys[Keys::R_WIN].state					= GetAsyncKeyState(VK_RWIN) != 0;
-		keys[Keys::WIN].state						= keys[Keys::L_WIN].state || keys[Keys::R_WIN].state;
-		keys[Keys::SPACE].state					= GetAsyncKeyState(VK_SPACE) != 0;
-		keys[Keys::MENU].state					= GetAsyncKeyState(VK_APPS) != 0;
+		keys[Keys::L_SHIFT].state								= GetAsyncKeyState(VK_LSHIFT) != 0;
+		keys[Keys::R_SHIFT].state								= GetAsyncKeyState(VK_RSHIFT) != 0;
+		keys[Keys::SHIFT].state									= keys[Keys::L_SHIFT].state || keys[Keys::R_SHIFT].state;
+		keys[Keys::L_ALT].state									= GetAsyncKeyState(VK_LMENU) != 0;
+		keys[Keys::R_ALT].state									= GetAsyncKeyState(VK_RMENU) != 0;
+		keys[Keys::ALT].state									= keys[Keys::L_ALT].state || keys[Keys::R_ALT].state;
+		keys[Keys::L_CTRL].state								= GetAsyncKeyState(VK_LCONTROL) != 0;
+		keys[Keys::R_CTRL].state								= GetAsyncKeyState(VK_RCONTROL) != 0;
+		keys[Keys::CTRL].state									= keys[Keys::L_CTRL].state || keys[Keys::R_CTRL].state;
+		keys[Keys::L_WIN].state									= GetAsyncKeyState(VK_LWIN) != 0;
+		keys[Keys::R_WIN].state									= GetAsyncKeyState(VK_RWIN) != 0;
+		keys[Keys::WIN].state									= keys[Keys::L_WIN].state || keys[Keys::R_WIN].state;
+		keys[Keys::SPACE].state									= GetAsyncKeyState(VK_SPACE) != 0;
+		keys[Keys::MENU].state									= GetAsyncKeyState(VK_APPS) != 0;
 
-		keys[Keys::INS].state						= GetAsyncKeyState(VK_INSERT) != 0;
-		keys[Keys::DEL].state						= GetAsyncKeyState(VK_DELETE) != 0;
-		keys[Keys::HOME].state					= GetAsyncKeyState(VK_HOME) != 0;
-		keys[Keys::END].state						= GetAsyncKeyState(VK_END) != 0;
-		keys[Keys::PAGE_UP].state					= GetAsyncKeyState(VK_PRIOR) != 0;
-		keys[Keys::PAGE_DOWN].state				= GetAsyncKeyState(VK_NEXT) != 0;
+		keys[Keys::INS].state									= GetAsyncKeyState(VK_INSERT) != 0;
+		keys[Keys::DEL].state									= GetAsyncKeyState(VK_DELETE) != 0;
+		keys[Keys::HOME].state									= GetAsyncKeyState(VK_HOME) != 0;
+		keys[Keys::END].state									= GetAsyncKeyState(VK_END) != 0;
+		keys[Keys::PAGE_UP].state								= GetAsyncKeyState(VK_PRIOR) != 0;
+		keys[Keys::PAGE_DOWN].state								= GetAsyncKeyState(VK_NEXT) != 0;
 
-		keys[Keys::UP].state						= GetAsyncKeyState(VK_UP) != 0;
-		keys[Keys::DOWN].state					= GetAsyncKeyState(VK_DOWN) != 0;
-		keys[Keys::RIGHT].state					= GetAsyncKeyState(VK_RIGHT) != 0;
-		keys[Keys::LEFT].state					= GetAsyncKeyState(VK_LEFT) != 0;
+		keys[Keys::UP].state									= GetAsyncKeyState(VK_UP) != 0;
+		keys[Keys::DOWN].state									= GetAsyncKeyState(VK_DOWN) != 0;
+		keys[Keys::RIGHT].state									= GetAsyncKeyState(VK_RIGHT) != 0;
+		keys[Keys::LEFT].state									= GetAsyncKeyState(VK_LEFT) != 0;
 
-		keys[Keys::NUM_LOCK].state				= GetAsyncKeyState(VK_NUMLOCK) != 0;
-		keys[Keys::NUM_DIV].state					= GetAsyncKeyState(VK_DIVIDE) != 0;
-		keys[Keys::NUM_MUL].state					= GetAsyncKeyState(VK_MULTIPLY) != 0;
-		keys[Keys::NUM_SUB].state					= GetAsyncKeyState(VK_SUBTRACT) != 0;
-		keys[Keys::NUM_ADD].state					= GetAsyncKeyState(VK_ADD) != 0;
+		keys[Keys::NUM_LOCK].state								= GetAsyncKeyState(VK_NUMLOCK) != 0;
+		keys[Keys::NUM_DIV].state								= GetAsyncKeyState(VK_DIVIDE) != 0;
+		keys[Keys::NUM_MUL].state								= GetAsyncKeyState(VK_MULTIPLY) != 0;
+		keys[Keys::NUM_SUB].state								= GetAsyncKeyState(VK_SUBTRACT) != 0;
+		keys[Keys::NUM_ADD].state								= GetAsyncKeyState(VK_ADD) != 0;
 		//NUM_ENTER.state		= GetAsyncKeyState(VK_UP);
 		//NUM_DOT.state		= GetAsyncKeyState(VK_DELETE);
-		keys[Keys::NUM_DIGIT1].state				= GetAsyncKeyState(VK_NUMPAD1) != 0;
-		keys[Keys::NUM_DIGIT2].state				= GetAsyncKeyState(VK_NUMPAD2) != 0;
-		keys[Keys::NUM_DIGIT3].state				= GetAsyncKeyState(VK_NUMPAD3) != 0;
-		keys[Keys::NUM_DIGIT4].state				= GetAsyncKeyState(VK_NUMPAD4) != 0;
-		keys[Keys::NUM_DIGIT5].state				= GetAsyncKeyState(VK_NUMPAD5) != 0;
-		keys[Keys::NUM_DIGIT6].state				= GetAsyncKeyState(VK_NUMPAD6) != 0;
-		keys[Keys::NUM_DIGIT7].state				= GetAsyncKeyState(VK_NUMPAD7) != 0;
-		keys[Keys::NUM_DIGIT8].state				= GetAsyncKeyState(VK_NUMPAD8) != 0;
-		keys[Keys::NUM_DIGIT9].state				= GetAsyncKeyState(VK_NUMPAD9) != 0;
-		keys[Keys::NUM_DIGIT0].state				= GetAsyncKeyState(VK_NUMPAD0) != 0;
+		keys[Keys::NUM_DIGIT1].state							= GetAsyncKeyState(VK_NUMPAD1) != 0;
+		keys[Keys::NUM_DIGIT2].state							= GetAsyncKeyState(VK_NUMPAD2) != 0;
+		keys[Keys::NUM_DIGIT3].state							= GetAsyncKeyState(VK_NUMPAD3) != 0;
+		keys[Keys::NUM_DIGIT4].state							= GetAsyncKeyState(VK_NUMPAD4) != 0;
+		keys[Keys::NUM_DIGIT5].state							= GetAsyncKeyState(VK_NUMPAD5) != 0;
+		keys[Keys::NUM_DIGIT6].state							= GetAsyncKeyState(VK_NUMPAD6) != 0;
+		keys[Keys::NUM_DIGIT7].state							= GetAsyncKeyState(VK_NUMPAD7) != 0;
+		keys[Keys::NUM_DIGIT8].state							= GetAsyncKeyState(VK_NUMPAD8) != 0;
+		keys[Keys::NUM_DIGIT9].state							= GetAsyncKeyState(VK_NUMPAD9) != 0;
+		keys[Keys::NUM_DIGIT0].state							= GetAsyncKeyState(VK_NUMPAD0) != 0;
 	}
 	for(uint32 i = 0; i < Keys::count; ++i) keys[i].Loop();
 }
@@ -1284,6 +1286,11 @@ LRESULT CALLBACK		TexProject::Window::Render::callbackDefault(HWND hWnd,UINT msg
 					EndPaint(hWnd,&ps);
 				}
 			}
+			else
+			{
+				ValidateRect(hWnd,NULL);	//
+			}
+
 			return 0;
 		}
 		case WM_ERASEBKGND:
@@ -1292,7 +1299,7 @@ LRESULT CALLBACK		TexProject::Window::Render::callbackDefault(HWND hWnd,UINT msg
 		}
 		case WM_MOVE:
 		{
-			if(window)
+			/*if(window)
 			{
 				RECT rect;
 				GetClientRect(hWnd,&rect);
@@ -1302,7 +1309,7 @@ LRESULT CALLBACK		TexProject::Window::Render::callbackDefault(HWND hWnd,UINT msg
 				ClientToScreen(hWnd,&p);
 				window->pos.x = p.x;
 				window->pos.y = p.y;
-			}
+			}*/
 			return DefWindowProc(hWnd,msg,wParam,lParam);
 		}
 		case WM_CLOSE:
@@ -1686,6 +1693,7 @@ void					TexProject::Window::Render::Loop()
 	{
 		static MSG msg;
 		while(running && PeekMessage(&msg,NULL,0,0,PM_REMOVE))
+		//while(running && PeekMessage(&msg,wndHandle,0,0,PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);

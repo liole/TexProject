@@ -493,6 +493,8 @@ namespace TexProject
 			uvec2							size		= uvec2(100);
 			string							title		= "window";
 
+			void*							userData = nullptr;
+
 		public:
 
 			static inline Basic*			GetCurrent();
@@ -506,6 +508,20 @@ namespace TexProject
 			Basic&							operator = (const Basic& source) = delete;
 			Basic&							operator = (Basic&& source) = delete;
 
+
+			inline float32					GetAspect() const
+			{
+				return float32(size.x)/float32(size.y);
+			}
+
+			inline void						SetUserData(void* data_)
+			{
+				userData = data_;
+			}
+			inline void*					GetUserData()
+			{
+				return userData;
+			}
 
 			virtual void					Create(const string& title_ = "") = 0;
 			virtual void					Delete();
