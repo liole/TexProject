@@ -86,6 +86,7 @@ namespace TexProject
 			{
 				Default,
 				Trigger,
+				Switcher,
 				Slider,
 				Close,
 				InputConnector,				// З'єднувач з входом
@@ -156,6 +157,7 @@ namespace TexProject
 			uint32							properties = PropertyBits::Default;
 			bool							clamped = false;
 			uint32							clampLock = 0;
+			vec2							anchor = vec2(0.0f);					// Anchor point for position
 
 											Item(GUI* interface_,Item* parent_ = nullptr);
 											Item(const Item&) = delete;
@@ -187,7 +189,14 @@ namespace TexProject
 
 			GUIItem*						GetBase();
 
-			//virtual void					SetPos(const vec2& pos_);
+			inline void						SetAnchor(const vec2& anchor_)
+			{
+				anchor = anchor_;
+			}
+			inline vec2						GetAnchor() const
+			{
+				return anchor;
+			}
 
 			virtual vec2					GetPos();
 			virtual vec2					GetLocalPos();
@@ -343,7 +352,8 @@ namespace TexProject
 		}
 		namespace Button
 		{
-			struct Basic: public Item
+			struct Basic:
+				public Item
 			{
 				friend Item;
 				friend Interface::Basic;
@@ -357,7 +367,8 @@ namespace TexProject
 				Basic&					operator = (const Basic&) = delete;
 				Basic&					operator = (Basic&&) = delete;
 			};
-			struct Default: public Button::Basic
+			struct Default:
+				public Button::Basic
 			{
 				friend Item;
 				friend Interface::Basic;
@@ -370,7 +381,8 @@ namespace TexProject
 				Default&				operator = (const Default&) = delete;
 				Default&				operator = (Default&&) = delete;
 			};
-			struct Trigger: public Button::Basic
+			struct Trigger:
+				public Button::Basic
 			{
 				friend Item;
 				friend Interface::Basic;
@@ -396,6 +408,56 @@ namespace TexProject
 				inline vec4				GetColorActive()
 				{
 					return colorActive;
+				}
+			};
+			struct Switcher:
+				public Button::Basic
+			{
+				friend Item;
+				friend Interface::Basic;
+			protected:
+
+				uint32					state = 0;
+				uint32					maxState = 1;
+				vec4					colorActive = vec4(1.0f,0.0f,0.0f,1.0f);
+
+										Switcher(GUI* interface_,Item* parent_ = nullptr);
+										Switcher(const Switcher&) = delete;
+										Switcher(Switcher&&) = delete;
+				virtual					~Switcher() = default;
+
+				Switcher&				operator = (const Switcher&) = delete;
+				Switcher&				operator = (Switcher&&) = delete;
+
+				virtual void			Loop() override;
+
+			public:
+
+				inline void				SetColorActive(const vec4& color_)
+				{
+					colorActive = color_;
+				}
+				inline vec4				GetColorActive()
+				{
+					return colorActive;
+				}
+
+				inline void				SetState(uint32 state_)
+				{
+					if(state_ < maxState) state = state_;
+				}
+				inline uint32			GetState() const
+				{
+					return state;
+				}
+				inline void				SetMaxState(uint32 maxState_)
+				{
+					if(maxState > 0) maxState = maxState_;
+					if(state >= maxState) state = 0;
+				}
+				inline uint32			GetMaxState() const
+				{
+					return state;
 				}
 			};
 			struct Slider: public Button::Basic
@@ -504,7 +566,8 @@ namespace TexProject
 				bool						stateL = false,stateM = false,stateR = false,
 											stateOL = false,stateOM = false,stateOR = false,
 											pressL = false,pressM = false,pressR = false;
-				ivec2						pos = ivec2(0,0),oPos = ivec2(0,0),dPos = ivec2(0,0);
+				ivec2						pos = ivec2(0,0),oPos = ivec2(0,0),dPos = ivec2(0,0),
+											localPos = ivec2(0,0);
 
 				inline void					Update()
 				{
@@ -524,6 +587,8 @@ namespace TexProject
 			Item*							top = nullptr;
 			void							RefreshPicked();
 			void							RefreshSelected();
+
+			bool							dragging = true;
 
 
 			PWindow							window = nullptr;
@@ -548,6 +613,15 @@ namespace TexProject
 
 			virtual GUIPanel*									AddPanel(const PanelType& type_);
 			virtual GUIButton*									AddButton(const ButtonType& type_);
+
+			inline void											EnableDragging()
+			{
+				dragging = true;
+			}
+			inline void											DisableDragging()
+			{
+				dragging = false;
+			}
 
 			inline void											RemoveItem(GUIItem* source);
 
@@ -665,6 +739,15 @@ namespace TexProject
 				public:
 																Trigger(GUI* interface_,Item* parent_ = nullptr);
 																~Trigger() = default;
+
+					virtual void								_win_WMPaint() override;
+				};
+				struct Switcher:
+					public Interface::Button::Switcher
+				{
+				public:
+																Switcher(GUI* interface_,Item* parent_ = nullptr);
+																~Switcher() = default;
 
 					virtual void								_win_WMPaint() override;
 				};
@@ -973,14 +1056,17 @@ typename T*									TexProject::Interface::Basic::AddItem()
 }
 void										TexProject::Interface::Basic::RemoveItem(GUIItem* source)
 {
-	for(auto i = item.begin(); i != item.end(); ++i)
+	auto i = item.begin();
+	while(i != item.end())
 	{
 		auto t = *i;
 		if(t == source)
 		{
 			Item::DeleteItem((Item*)t);
 			i = item.erase(i);
+			continue;
 		}
+		++i;
 	}
 }
 

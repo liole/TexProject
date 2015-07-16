@@ -118,9 +118,11 @@ void					TexProject::Window::Input::Mouse::Loop()
 {
 	static POINT t;
 	GetCursorPos(&t);
-	//ScreenToClient(Window.WndHandle,&t);
+	//pos.x = t.x;
+	//pos.y = t.y;	//.y = Window.size.y - t.y;
+
 	pos.x = t.x;
-	pos.y = t.y;	//.y = Window.size.y - t.y;
+	pos.y = GetDesktopSize().y - t.y;
 
 	lB.state = GetAsyncKeyState(VK_LBUTTON) != NULL;
 	mB.state = GetAsyncKeyState(VK_MBUTTON) != NULL;
@@ -1514,15 +1516,18 @@ void					TexProject::Window::Render::Create(const string& title_)
 
 	{
 		size = uvec2(256);
-		pos = GetDesktopSize()/2 - size/2;
-		title = title_;	//"window";
+		pos = (vec2(GetDesktopSize()) - vec2(size))*0.5f;
+		title = title_;
 	}
 
 	{
-		wndRect.left	= (LONG)(pos.x);
-		wndRect.right	= (LONG)(pos.x + size.x);
-		wndRect.top		= (LONG)(pos.y);
-		wndRect.bottom	= (LONG)(pos.y + size.y);
+		vec2 p;
+		p = ToDesktopSpace(vec2(pos));
+		wndRect.left	= (LONG)(p.x);
+		wndRect.bottom	= (LONG)(p.y);
+		p = ToDesktopSpace(vec2(pos + ivec2(size)));
+		wndRect.right	= (LONG)(p.x);
+		wndRect.top		= (LONG)(p.y);
 	}
 
 	AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
@@ -1692,6 +1697,19 @@ void					TexProject::Window::Render::Loop()
 	{
 		if(running)
 		{
+			{
+				RECT rect;
+				GetClientRect(wndHandle,&rect);
+				size.x = (uint32)rect.right;
+				size.y = (uint32)rect.bottom;
+
+				POINT p;
+				p.x = 0;
+				p.y = (LONG)size.y;
+				ClientToScreen(wndHandle,&p);
+				pos = ivec2(FromDesktopSpace(vec2((float32)p.x,(float32)p.y)));
+			}
+
 			if(GetFocus() == wndHandle)
 			{
 				active = true;
@@ -1733,15 +1751,19 @@ void					TexProject::Window::Render::SetSize(const uvec2 size_)
 {
 	if(size.x != size_.x || size.y != size_.y)
 	{
+		pos += (ivec2(size) - ivec2(size_))/2;
 		size = size_;
 #ifdef __TEXPROJECT_WIN__
 		if(wndHandle)
 		{
 			{
-				wndRect.left	= (LONG)(pos.x);
-				wndRect.right	= (LONG)(pos.x + size.x);
-				wndRect.top		= (LONG)(pos.y);
-				wndRect.bottom	= (LONG)(pos.y + size.y);
+				vec2 p;
+				p = ToDesktopSpace(vec2(pos));
+				wndRect.left	= (LONG)(p.x);
+				wndRect.bottom	= (LONG)(p.y);
+				p = ToDesktopSpace(vec2(pos + ivec2(size)));
+				wndRect.right	= (LONG)(p.x);
+				wndRect.top		= (LONG)(p.y);
 			}
 			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
 			SetWindowPos
@@ -1749,10 +1771,10 @@ void					TexProject::Window::Render::SetSize(const uvec2 size_)
 				wndHandle,
 				HWND_NOTOPMOST,
 				wndRect.left,
-				wndRect.bottom,
-				wndRect.right-wndRect.left,
-				wndRect.bottom-wndRect.top,
-				SWP_NOMOVE
+				wndRect.top,
+				wndRect.right - wndRect.left,
+				wndRect.bottom - wndRect.top,
+				SWP_NOZORDER	//SWP_NOMOVE
 			);
 			UpdateWindow(wndHandle);
 		}
@@ -1774,10 +1796,13 @@ void					TexProject::Window::Render::SetPos(const ivec2 pos_)
 		if(wndHandle)
 		{
 			{
-				wndRect.left	= (LONG)(pos.x);
-				wndRect.right	= (LONG)(pos.x + size.x);
-				wndRect.top		= (LONG)(pos.y);
-				wndRect.bottom	= (LONG)(pos.y + size.y);
+				vec2 p;
+				p = ToDesktopSpace(vec2(pos));
+				wndRect.left	= (LONG)(p.x);
+				wndRect.bottom	= (LONG)(p.y);
+				p = ToDesktopSpace(vec2(pos + ivec2(size)));
+				wndRect.right	= (LONG)(p.x);
+				wndRect.top		= (LONG)(p.y);
 			}
 			AdjustWindowRectEx(&wndRect,wndStyle,FALSE,wndExStyle);
 			SetWindowPos
