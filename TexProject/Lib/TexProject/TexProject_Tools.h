@@ -207,13 +207,18 @@ namespace TexProject
 				Interface::Button::Connector*					buttonConnectorIn = nullptr;
 				Interface::Button::Default*						buttonClose = nullptr;
 
+				Helper::VMat									vMat;
+				Helper::MMat									mMat;
+
 				Window::Render*									renderWindow = nullptr;
 
+				OpenGL::Shader*									skyGLShader = nullptr;
 				OpenGL::Shader*									renderGLShader = nullptr;
 				OpenGL::Model*									renderGLModel = nullptr;
 				OpenGL::Texture*								renderGLTextureDiffuse = nullptr;
 				OpenGL::Texture*								renderGLTextureNormals = nullptr;
 				OpenGL::Texture*								renderGLTextureMaterial = nullptr;
+				OpenGL::Texture*								renderGLTextureEnvironment = nullptr;
 
 			public:
 											Default(Window::Render* window_);

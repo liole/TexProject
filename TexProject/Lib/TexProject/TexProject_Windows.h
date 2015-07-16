@@ -509,6 +509,11 @@ namespace TexProject
 			Basic&							operator = (Basic&& source) = delete;
 
 
+			inline bool						IsActive() const
+			{
+				return active;
+			}
+
 			inline float32					GetAspect() const
 			{
 				return float32(size.x)/float32(size.y);

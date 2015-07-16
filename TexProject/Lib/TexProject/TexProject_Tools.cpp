@@ -651,25 +651,47 @@ void										TexProject::Tool::Viewer::Default::funcWindowInit(Window::Render* 
 	tool->renderGLShader->SetInt("TextureEnvironment",3);
 	tool->renderGLShader->Unuse();
 
+	tool->skyGLShader = new OpenGL::Shader(window);
+	tool->skyGLShader->Load
+	(
+		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.vs",
+		"",
+		"",
+		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.gs",
+		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.ps"
+	);
+	tool->skyGLShader->Use();
+	tool->skyGLShader->SetInt("Texture",3);
+
 	auto m = new Geometry::Mesh();
-	m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
+	//m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
+	m->CreateSphere(5.0f,vec2(1.0f),uvec2(32));
 
 	tool->renderGLModel = new OpenGL::Model(window);
 	tool->renderGLModel->Create(m,tool->renderGLShader);
 
-	auto t = new Texture::D2;
+	{
+		auto t = new Texture::D2;
 
-	t->Load("Media/Images/Brick1_D.png");
-	tool->renderGLTextureDiffuse = new OpenGL::Texture(window);
-	*tool->renderGLTextureDiffuse = *t;
+		t->Load("Media/Images/Brick1_D.png");
+		tool->renderGLTextureDiffuse = new OpenGL::Texture(window);
+		*tool->renderGLTextureDiffuse = *t;
 
-	t->Load("Media/Images/Brick1_N.png");
-	tool->renderGLTextureNormals = new OpenGL::Texture(window);
-	*tool->renderGLTextureNormals = *t;
+		t->Load("Media/Images/Brick1_N.png");
+		tool->renderGLTextureNormals = new OpenGL::Texture(window);
+		*tool->renderGLTextureNormals = *t;
 
-	t->Load("Media/Images/Brick1_M.png");
-	tool->renderGLTextureMaterial = new OpenGL::Texture(window);
-	*tool->renderGLTextureMaterial = *t;
+		t->Load("Media/Images/Brick1_M.png");
+		tool->renderGLTextureMaterial = new OpenGL::Texture(window);
+		*tool->renderGLTextureMaterial = *t;
+	}
+	{
+		auto t = new Texture::Cube;
+		t->Load("Media/Images/Cubemap1.DDS");
+
+		tool->renderGLTextureEnvironment = new OpenGL::Texture(window);
+		*tool->renderGLTextureEnvironment = *t;
+	}
 }
 void										TexProject::Tool::Viewer::Default::funcWindowFree(Window::Render* window)
 {
@@ -685,19 +707,49 @@ void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* 
 {
 	auto tool = (Tool::Viewer::Default*)window->GetUserData();
 
-	Helper::VMat tVMat;
-	tVMat.SetPos(vec3(0.0f,0.0f,-10.0f));
-	tVMat.SetAng(vec3(0.0f));
-	tVMat.SetPerspective(Helper::Transform::D3::Projection::Params::Perspective(60.0f,window->GetAspect(),0.1f,1000.0f));
+	if(window->IsActive())
+	{
+		{
+			float32 speed = 0.1f;
+			vec3 move(0.0f);
+			if(KeyState(Keys::W)) move.z += speed;
+			if(KeyState(Keys::S)) move.z -= speed;
+			if(KeyState(Keys::D)) move.x += speed;
+			if(KeyState(Keys::A)) move.x -= speed;
+			if(KeyState(Keys::SPACE)) move.y += speed;
+			if(KeyState(Keys::L_CTRL)) move.y -= speed;
+			tool->vMat.Move(move);
+		}
+		{
+			float32 speed = 1.0f;
+			vec3 rotate(0.0f);
+			if(KeyState(Keys::E)) rotate.z += speed;
+			if(KeyState(Keys::Q)) rotate.z -= speed;
+			if(KeyState(Keys::UP)) rotate.x += speed;
+			if(KeyState(Keys::DOWN)) rotate.x -= speed;
+			if(KeyState(Keys::RIGHT)) rotate.y += speed;
+			if(KeyState(Keys::LEFT)) rotate.y -= speed;
+			tool->vMat.Rotate(rotate);
+		}
 
-	Helper::MMat tMMat;
-	tMMat.SetPos(vec3(0.0f));
-	tMMat.SetAng(vec3(0.0f));
-	tMMat.SetScale(vec3(1.0f));
+		//tool->mMat.Rotate(vec3(0.0f,1.0f,0.0f));
+	}
 
 	glClearColor(0.16f,0.16f,0.16f,1.0f);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	tool->skyGLShader->Use();
+	tool->skyGLShader->SetMat4("ViewProjectionInverseMatrix",tool->vMat.GetPIMat() * mat4::scale(vec3(1,1,-1)) * mat4(tool->vMat.GetRMat()));
+
+	tool->renderGLTextureEnvironment->Use(3);
+
+	glDrawArrays(GL_POINTS,0,1);
+
 
 	glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LESS);
 	glDisable(GL_BLEND);
@@ -711,10 +763,10 @@ void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* 
 	tool->renderGLTextureNormals->Use(1);
 	tool->renderGLTextureMaterial->Use(2);
 	tool->renderGLShader->Use();
-	tool->renderGLShader->SetVec3("lightPos",vec3(0.0f,10.0f,-20.0f) - tVMat.GetPos());
-	tool->renderGLShader->SetMat3("RotateMatrix",tMMat.GetRMat());
-	tool->renderGLShader->SetMat4("ModelMatrix",tMMat.GetMMat() * mat4::move(-tVMat.GetPos()));
-	tool->renderGLShader->SetMat4("ModelViewProjectionMatrix",tMMat.GetMMat() * tVMat.GetVPMat());
+	tool->renderGLShader->SetVec3("lightPos",vec3(0.0f,10.0f,-20.0f) - tool->vMat.GetPos());
+	tool->renderGLShader->SetMat3("RotateMatrix",tool->mMat.GetRMat());
+	tool->renderGLShader->SetMat4("ModelMatrix",tool->mMat.GetMMat() * mat4::move(-tool->vMat.GetPos()));
+	tool->renderGLShader->SetMat4("ModelViewProjectionMatrix",tool->mMat.GetMMat() * tool->vMat.GetVPMat());
 
 	tool->renderGLModel->Draw();
 }
@@ -789,6 +841,14 @@ TexProject::Tool::Viewer::Default::Default(Window::Render* window_):
 	renderWindow->SetFunc(Window::Render::FuncTypes::Init,funcWindowInit);
 	renderWindow->SetFunc(Window::Render::FuncTypes::Free,funcWindowFree);
 	renderWindow->SetFunc(Window::Render::FuncTypes::Loop,funcWindowLoop);
+
+	vMat.SetPos(vec3(0.0f,0.0f,-10.0f));
+	vMat.SetAng(vec3(0.0f));
+	vMat.SetPerspective(Helper::Transform::D3::Projection::Params::Perspective(60.0f,window->GetAspect(),0.1f,1000.0f));
+
+	mMat.SetPos(vec3(0.0f));
+	mMat.SetAng(vec3(0.0f));
+	mMat.SetScale(vec3(1.0f));
 }
 TexProject::Tool::Viewer::Default::~Default()
 {
