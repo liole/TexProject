@@ -51,6 +51,26 @@ namespace TexProject
 		inline vec2&						operator *= (const vec2& a);
 		inline vec2&						operator /= (const vec2& a);
 
+
+
+		//
+		inline vec2&						operator += (const float32 a);
+		inline vec2&						operator -= (const float32 a);
+		inline vec2&						operator *= (const float32 a);
+		inline vec2&						operator /= (const float32 a);
+
+		inline bool							operator==(const vec2& a) const;
+		inline bool							operator!=(const vec2& a) const;
+
+		inline bool							operator==(const float32 a) const;
+		inline bool							operator!=(const float32 a) const;
+
+		inline vec2							operator+() const;
+		inline vec2							operator-() const;
+		//
+
+
+
 		inline vec2							operator + (const vec2& a) const;
 		inline vec2							operator - (const vec2& a) const;
 		inline vec2							operator * (const vec2& a) const;
@@ -91,6 +111,26 @@ namespace TexProject
 		inline ivec2&						operator -= (const ivec2& a);
 		inline ivec2&						operator *= (const ivec2& a);
 		inline ivec2&						operator /= (const ivec2& a);
+
+
+
+		//
+		inline ivec2&						operator += (const int32 a);
+		inline ivec2&						operator -= (const int32 a);
+		inline ivec2&						operator *= (const int32 a);
+		inline ivec2&						operator /= (const int32 a);
+
+		inline bool							operator==(const ivec2& a) const;
+		inline bool							operator!=(const ivec2& a) const;
+
+		inline bool							operator==(const int32 a) const;
+		inline bool							operator!=(const int32 a) const;
+
+		inline ivec2						operator+() const;
+		inline ivec2						operator-() const;
+		//
+
+
 
 		inline ivec2						operator + (const ivec2& a) const;
 		inline ivec2						operator - (const ivec2& a) const;
@@ -138,6 +178,26 @@ namespace TexProject
 		inline uvec2&						operator -= (const uvec2& a);
 		inline uvec2&						operator *= (const uvec2& a);
 		inline uvec2&						operator /= (const uvec2& a);
+
+
+
+		//
+		inline uvec2&						operator += (const uint32 a);
+		inline uvec2&						operator -= (const uint32 a);
+		inline uvec2&						operator *= (const uint32 a);
+		inline uvec2&						operator /= (const uint32 a);
+
+		inline bool							operator==(const uvec2& a) const;
+		inline bool							operator!=(const uvec2& a) const;
+
+		inline bool							operator==(const uint32 a) const;
+		inline bool							operator!=(const uint32 a) const;
+
+		inline uvec2						operator+() const;
+		inline ivec2						operator-() const;
+		//
+
+
 
 		inline uvec2						operator + (const uvec2& a) const;
 		inline uvec2						operator - (const uvec2& a) const;
@@ -187,6 +247,26 @@ namespace TexProject
 		inline vec3&						operator *= (const vec3& a);
 		inline vec3&						operator /= (const vec3& a);
 
+
+
+		//
+		inline vec3&						operator += (const float32 a);
+		inline vec3&						operator -= (const float32 a);
+		inline vec3&						operator *= (const float32 a);
+		inline vec3&						operator /= (const float32 a);
+
+		inline bool							operator==(const vec3& a) const;
+		inline bool							operator!=(const vec3& a) const;
+
+		inline bool							operator==(const float32 a) const;
+		inline bool							operator!=(const float32 a) const;
+
+		//inline vec3							operator+() const;
+		//inline vec3							operator-() const;
+		//
+
+
+
 		inline vec3							operator + (const vec3& a) const;
 		inline vec3							operator - (const vec3& a) const;
 		inline vec3							operator * (const vec3& a) const;
@@ -234,6 +314,26 @@ namespace TexProject
 		inline ivec3&						operator *= (const ivec3& a);
 		inline ivec3&						operator /= (const ivec3& a);
 
+
+
+		//
+		inline ivec3&						operator += (const int32 a);
+		inline ivec3&						operator -= (const int32 a);
+		inline ivec3&						operator *= (const int32 a);
+		inline ivec3&						operator /= (const int32 a);
+
+		inline bool							operator==(const ivec3& a) const;
+		inline bool							operator!=(const ivec3& a) const;
+
+		inline bool							operator==(const int32 a) const;
+		inline bool							operator!=(const int32 a) const;
+
+		inline ivec3						operator+() const;
+		inline ivec3						operator-() const;
+		//
+
+
+
 		inline ivec3						operator + (const ivec3& a) const;
 		inline ivec3						operator - (const ivec3& a) const;
 		inline ivec3						operator * (const ivec3& a) const;
@@ -276,6 +376,26 @@ namespace TexProject
 		inline uvec3&						operator -= (const uvec3& a);
 		inline uvec3&						operator *= (const uvec3& a);
 		inline uvec3&						operator /= (const uvec3& a);
+
+
+
+		//
+		inline uvec3&						operator += (const uint32 a);
+		inline uvec3&						operator -= (const uint32 a);
+		inline uvec3&						operator *= (const uint32 a);
+		inline uvec3&						operator /= (const uint32 a);
+
+		inline bool							operator==(const uvec3& a) const;
+		inline bool							operator!=(const uvec3& a) const;
+
+		inline bool							operator==(const uint32 a) const;
+		inline bool							operator!=(const uint32 a) const;
+
+		inline uvec3						operator+() const;
+		inline ivec3						operator-() const;
+		//
+
+
 
 		inline uvec3						operator + (const uvec3& a) const;
 		inline uvec3						operator - (const uvec3& a) const;
@@ -323,6 +443,26 @@ namespace TexProject
 		inline vec4&						operator -= (const vec4& a);
 		inline vec4&						operator *= (const vec4& a);
 		inline vec4&						operator /= (const vec4& a);
+
+
+
+		//
+		inline vec4&						operator += (const float32 a);
+		inline vec4&						operator -= (const float32 a);
+		inline vec4&						operator *= (const float32 a);
+		inline vec4&						operator /= (const float32 a);
+
+		inline bool							operator==(const vec4& a) const;
+		inline bool							operator!=(const vec4& a) const;
+
+		inline bool							operator==(const float32 a) const;
+		inline bool							operator!=(const float32 a) const;
+
+		inline vec4							operator+() const;
+		inline vec4							operator-() const;
+		//
+
+
 
 		inline vec4							operator + (const vec4& a) const;
 		inline vec4							operator - (const vec4& a) const;
@@ -375,6 +515,26 @@ namespace TexProject
 		inline ivec4&						operator *= (const ivec4& a);
 		inline ivec4&						operator /= (const ivec4& a);
 
+
+
+		//
+		inline ivec4&						operator += (const int32 a);
+		inline ivec4&						operator -= (const int32 a);
+		inline ivec4&						operator *= (const int32 a);
+		inline ivec4&						operator /= (const int32 a);
+
+		inline bool							operator==(const ivec4& a) const;
+		inline bool							operator!=(const ivec4& a) const;
+
+		inline bool							operator==(const int32 a) const;
+		inline bool							operator!=(const int32 a) const;
+
+		inline ivec4						operator+() const;
+		inline ivec4						operator-() const;
+		//
+
+
+
 		inline ivec4						operator + (const ivec4& a) const;
 		inline ivec4						operator - (const ivec4& a) const;
 		inline ivec4						operator * (const ivec4& a) const;
@@ -421,6 +581,26 @@ namespace TexProject
 		inline uvec4&						operator -= (const uvec4& a);
 		inline uvec4&						operator *= (const uvec4& a);
 		inline uvec4&						operator /= (const uvec4& a);
+
+
+
+		//
+		inline uvec4&						operator += (const uint32 a);
+		inline uvec4&						operator -= (const uint32 a);
+		inline uvec4&						operator *= (const uint32 a);
+		inline uvec4&						operator /= (const uint32 a);
+
+		inline bool							operator==(const uvec4& a) const;
+		inline bool							operator!=(const uvec4& a) const;
+
+		inline bool							operator==(const uint32 a) const;
+		inline bool							operator!=(const uint32 a) const;
+
+		inline uvec4						operator+() const;
+		inline ivec4						operator-() const;
+		//
+
+
 
 		inline uvec4						operator + (const uvec4& a) const;
 		inline uvec4						operator - (const uvec4& a) const;
@@ -686,6 +866,58 @@ inline TexProject::vec2&					TexProject::vec2::operator /= (const vec2& a)
 	return *this;
 }
 
+//
+inline TexProject::vec2&					TexProject::vec2::operator += (const float32 a)
+{
+	x += a;
+	y += a;
+	return *this;
+}
+inline TexProject::vec2&					TexProject::vec2::operator -= (const float32 a)
+{
+	x -= a;
+	y -= a;
+	return *this;
+}
+inline TexProject::vec2&					TexProject::vec2::operator *= (const float32 a)
+{
+	x *= a;
+	y *= a;
+	return *this;
+}
+inline TexProject::vec2&					TexProject::vec2::operator /= (const float32 a)
+{
+	x /= a;
+	y /= a;
+	return *this;
+}
+inline bool									TexProject::vec2::operator == (const vec2& a) const
+{
+	return this->x == a.x && this->y == a.y;
+}
+inline bool									TexProject::vec2::operator != (const vec2& a) const
+{
+	return this->x != a.x && this->y != a.y;
+}
+
+inline bool									TexProject::vec2::operator == (const float32 a) const
+{
+	return this->x == a && this->y == a;
+}
+inline bool									TexProject::vec2::operator != (const float32 a) const
+{
+	return this->x != a && this->y != a;
+}
+
+inline TexProject::vec2						TexProject::vec2::operator + () const
+{
+	return vec2(+this->x, +this->y);
+}
+inline TexProject::vec2						TexProject::vec2::operator - () const
+{
+	return vec2(-this->x, -this->y);
+}
+//
 
 inline TexProject::vec2						TexProject::vec2::operator + (const vec2& a) const
 {
@@ -866,6 +1098,60 @@ inline TexProject::ivec2&					TexProject::ivec2::operator /= (const ivec2& a)
 	return *this;
 }
 
+//
+inline TexProject::ivec2&					TexProject::ivec2::operator += (const int32 a)
+{
+	x += a;
+	y += a;
+	return *this;
+}
+inline TexProject::ivec2&					TexProject::ivec2::operator -= (const int32 a)
+{
+	x -= a;
+	y -= a;
+	return *this;
+}
+inline TexProject::ivec2&					TexProject::ivec2::operator *= (const int32 a)
+{
+	x *= a;
+	y *= a;
+	return *this;
+}
+inline TexProject::ivec2&					TexProject::ivec2::operator /= (const int32 a)
+{
+	x /= a;
+	y /= a;
+	return *this;
+}
+
+inline bool									TexProject::ivec2::operator==(const ivec2& a) const
+{
+	return this->x == a.x && this->y == a.y;
+}
+inline bool									TexProject::ivec2::operator!=(const ivec2& a) const
+{
+	return this->x != a.x && this->y != a.y;
+}
+
+inline bool									TexProject::ivec2::operator==(const int32 a) const
+{
+	return this->x == a && this->y == a;
+}
+inline bool									TexProject::ivec2::operator!=(const int32 a) const
+{
+	return this->x != a && this->y != a;
+}
+
+inline TexProject::ivec2					TexProject::ivec2::operator+() const
+{
+	return ivec2(+this->x, +this->y);
+}
+inline TexProject::ivec2					TexProject::ivec2::operator-() const
+{
+	return ivec2(-this->x, -this->y);
+}
+//
+
 inline TexProject::ivec2					TexProject::ivec2::operator + (const ivec2& a) const
 {
 	return ivec2(
@@ -1019,6 +1305,61 @@ inline TexProject::uvec2&					TexProject::uvec2::operator /= (const uvec2& a)
 	y /= a.y;
 	return *this;
 }
+
+//
+inline TexProject::uvec2&					TexProject::uvec2::operator += (const uint32 a)
+{
+	x += a;
+	y += a;
+	return *this;
+}
+inline TexProject::uvec2&					TexProject::uvec2::operator -= (const uint32 a)
+{
+	x -= a;
+	y -= a;
+	return *this;
+}
+inline TexProject::uvec2&					TexProject::uvec2::operator *= (const uint32 a)
+{
+	x *= a;
+	y *= a;
+	return *this;
+}
+inline TexProject::uvec2&					TexProject::uvec2::operator /= (const uint32 a)
+{
+	x /= a;
+	y /= a;
+	return *this;
+}
+
+inline bool									TexProject::uvec2::operator == (const uvec2& a) const
+{
+	return this->x == a.x && this->y == a.y;
+}
+inline bool									TexProject::uvec2::operator != (const uvec2& a) const
+{
+	return this->x != a.x && this->y != a.y;
+}
+
+inline bool									TexProject::uvec2::operator == (const uint32 a) const
+{
+	return this->x == a && this->y == a;
+}
+inline bool									TexProject::uvec2::operator != (const uint32 a) const
+{
+	return this->x != a && this->y != a;
+}
+
+inline TexProject::uvec2					TexProject::uvec2::operator + () const
+{
+	return uvec2(+this->x, +this->y);
+}
+inline TexProject::ivec2					TexProject::uvec2::operator - () const
+{
+	return ivec2(-int(this->x), -int(this->y));
+}
+//
+
 inline TexProject::uvec2					TexProject::uvec2::operator + (const uvec2& a) const
 {
 	return uvec2(
@@ -1207,6 +1548,64 @@ inline TexProject::vec3&					TexProject::vec3::operator /= (const vec3& a)
 	z /= a.z;
 	return *this;
 }
+
+//
+inline TexProject::vec3&					TexProject::vec3::operator += (const float32 a)
+{
+	x += a;
+	y += a;
+	z += a;
+	return *this;
+}
+inline TexProject::vec3&					TexProject::vec3::operator -= (const float32 a)
+{
+	x -= a;
+	y -= a;
+	z -= a;
+	return *this;
+}
+inline TexProject::vec3&					TexProject::vec3::operator *= (const float32 a)
+{
+	x *= a;
+	y *= a;
+	z *= a;
+	return *this;
+}
+inline TexProject::vec3&					TexProject::vec3::operator /= (const float32 a)
+{
+	x /= a;
+	y /= a;
+	z /= a;
+	return *this;
+}
+
+inline bool									TexProject::vec3::operator==(const vec3& a) const
+{
+	return this->x == a.x && this->y == a.y && this->z == a.z;
+}
+inline bool									TexProject::vec3::operator!=(const vec3& a) const
+{
+	return this->x != a.x && this->y != a.y && this->z != a.z;
+}
+
+inline bool									TexProject::vec3::operator==(const float32 a) const
+{
+	return this->x == a && this->y == a && this->z == a;
+}
+inline bool									TexProject::vec3::operator!=(const float32 a) const
+{
+	return this->x != a && this->y != a && this->z != a;
+}
+
+//inline TexProject::vec3						TexProject::vec3::operator+() const
+//{
+//	return vec3(+this->x, +this->y, +this->z);
+//}
+//inline TexProject::vec3						TexProject::vec3::operator-() const
+//{
+//	return vec3(-this->x, -this->y, -this->z);
+//}
+//
 
 inline TexProject::vec3						TexProject::vec3::operator + (const vec3& a) const
 {
@@ -1435,6 +1834,65 @@ inline TexProject::ivec3&					TexProject::ivec3::operator /= (const ivec3& a)
 	z /= a.z;
 	return *this;
 }
+
+//
+inline TexProject::ivec3&					TexProject::ivec3::operator += (const int32 a)
+{
+	x += a;
+	y += a;
+	z += a;
+	return *this;
+}
+inline TexProject::ivec3&					TexProject::ivec3::operator -= (const int32 a)
+{
+	x -= a;
+	y -= a;
+	z -= a;
+	return *this;
+}
+inline TexProject::ivec3&					TexProject::ivec3::operator *= (const int32 a)
+{
+	x *= a;
+	y *= a;
+	z *= a;
+	return *this;
+}
+inline TexProject::ivec3&					TexProject::ivec3::operator /= (const int32 a)
+{
+	x /= a;
+	y /= a;
+	z /= a;
+	return *this;
+}
+
+inline bool									TexProject::ivec3::operator == (const ivec3& a) const
+{
+	return this->x == a.x && this->y == a.y && this->z == a.z;
+}
+inline bool									TexProject::ivec3::operator != (const ivec3& a) const
+{
+	return this->x != a.x && this->y != a.y && this->z != a.z;
+}
+
+inline bool									TexProject::ivec3::operator == (const int32 a) const
+{
+	return this->x == a && this->y == a && this->z == a;
+}
+inline bool									TexProject::ivec3::operator != (const int32 a) const
+{
+	return this->x != a && this->y != a && this->z != a;
+}
+
+inline TexProject::ivec3					TexProject::ivec3::operator + () const
+{
+	return ivec3(+this->x, +this->y, +this->z);
+}
+inline TexProject::ivec3					TexProject::ivec3::operator - () const
+{
+	return ivec3(-this->x, -this->y, -this->z);
+}
+//
+
 inline TexProject::ivec3					TexProject::ivec3::operator + (const ivec3& a) const
 {
 	return ivec3(
@@ -1647,6 +2105,65 @@ inline TexProject::uvec3&					TexProject::uvec3::operator /= (const uvec3& a)
 	z /= a.z;
 	return *this;
 }
+
+//
+inline TexProject::uvec3&					TexProject::uvec3::operator += (const uint32 a)
+{
+	x += a;
+	y += a;
+	z += a;
+	return *this;
+}
+inline TexProject::uvec3&					TexProject::uvec3::operator -= (const uint32 a)
+{
+	x -= a;
+	y -= a;
+	z -= a;
+	return *this;
+}
+inline TexProject::uvec3&					TexProject::uvec3::operator *= (const uint32 a)
+{
+	x *= a;
+	y *= a;
+	z *= a;
+	return *this;
+}
+inline TexProject::uvec3&					TexProject::uvec3::operator /= (const uint32 a)
+{
+	x /= a;
+	y /= a;
+	z /= a;
+	return *this;
+}
+
+inline bool									TexProject::uvec3::operator == (const uvec3& a) const
+{
+	return this->x == a.x && this->y == a.y && this->z == a.z;
+}
+inline bool									TexProject::uvec3::operator != (const uvec3& a) const
+{
+	return this->x != a.x && this->y != a.y && this->z != a.z;
+}
+													 
+inline bool									TexProject::uvec3::operator == (const uint32 a) const
+{
+	return this->x == a && this->y == a && this->z == a;
+}
+inline bool									TexProject::uvec3::operator != (const uint32 a) const
+{
+	return this->x != a && this->y != a && this->z != a;
+}
+
+inline TexProject::uvec3					TexProject::uvec3::operator + () const
+{
+	return uvec3(+this->x, +this->y, +this->z);
+}
+inline TexProject::ivec3					TexProject::uvec3::operator - () const
+{
+	return ivec3(-int(this->x), -int(this->y), -int(this->z));
+}
+//
+
 inline TexProject::uvec3					TexProject::uvec3::operator + (const uvec3& a) const
 {
 	return uvec3(
@@ -1895,6 +2412,68 @@ inline TexProject::vec4&					TexProject::vec4::operator /= (const vec4& a)
 	w /= a.w;
 	return *this;
 }
+
+//
+inline TexProject::vec4&					TexProject::vec4::operator += (const float32 a)
+{
+	x += a;
+	y += a;
+	z += a;
+	w += a;
+	return *this;
+}
+inline TexProject::vec4&					TexProject::vec4::operator -= (const float32 a)
+{
+	x -= a;
+	y -= a;
+	z -= a;
+	w -= a;
+	return *this;
+}
+inline TexProject::vec4&					TexProject::vec4::operator *= (const float32 a)
+{
+	x *= a;
+	y *= a;
+	z *= a;
+	w *= a;
+	return *this;
+}
+inline TexProject::vec4&					TexProject::vec4::operator /= (const float32 a)
+{
+	x /= a;
+	y /= a;
+	z /= a;
+	w /= a;
+	return *this;
+}
+
+inline bool									TexProject::vec4::operator == (const vec4& a) const
+{
+	return this->x == a.x && this->y == a.y && this->z == a.z && this->w == a.w;
+}
+inline bool									TexProject::vec4::operator != (const vec4& a) const
+{
+	return this->x != a.x && this->y != a.y && this->z != a.z && this->w != a.w;
+}
+
+inline bool									TexProject::vec4::operator == (const float32 a) const
+{
+	return this->x == a && this->y == a && this->z == a && this->w == a;
+}
+inline bool									TexProject::vec4::operator != (const float32 a) const
+{
+	return this->x != a && this->y != a && this->z != a && this->w != a;
+}
+
+inline TexProject::vec4						TexProject::vec4::operator + () const
+{
+	return vec4(+this->x, +this->y, +this->z, +this->w);
+}
+inline TexProject::vec4						TexProject::vec4::operator - () const
+{
+	return vec4(-this->x, -this->y, -this->z, -this->w);
+}
+//
 
 inline TexProject::vec4						TexProject::vec4::operator + (const vec4& a) const
 {
@@ -2181,6 +2760,68 @@ inline TexProject::ivec4&					TexProject::ivec4::operator /= (const ivec4& a)
 	return *this;
 }
 
+//
+inline TexProject::ivec4&					TexProject::ivec4::operator += (const int32 a)
+{
+	x += a;
+	y += a;
+	z += a;
+	w += a;
+	return *this;
+}
+inline TexProject::ivec4&					TexProject::ivec4::operator -= (const int32 a)
+{
+	x -= a;
+	y -= a;
+	z -= a;
+	w -= a;
+	return *this;
+}
+inline TexProject::ivec4&					TexProject::ivec4::operator *= (const int32 a)
+{
+	x *= a;
+	y *= a;
+	z *= a;
+	w *= a;
+	return *this;
+}
+inline TexProject::ivec4&					TexProject::ivec4::operator /= (const int32 a)
+{
+	x /= a;
+	y /= a;
+	z /= a;
+	w /= a;
+	return *this;
+}
+
+inline bool									TexProject::ivec4::operator == (const ivec4& a) const
+{
+	return this->x == a.x && this->y == a.y && this->z == a.z && this->w == a.w;
+}
+inline bool									TexProject::ivec4::operator != (const ivec4& a) const
+{
+	return this->x != a.x && this->y != a.y && this->z != a.z && this->w != a.w;
+}
+
+inline bool									TexProject::ivec4::operator == (const int32 a) const
+{
+	return this->x == a && this->y == a && this->z == a && this->w == a;
+}
+inline bool									TexProject::ivec4::operator != (const int32 a) const
+{
+	return this->x != a && this->y != a && this->z != a && this->w != a;
+}
+
+inline TexProject::ivec4					TexProject::ivec4::operator + () const
+{
+	return ivec4(+this->x, +this->y, +this->z, +this->w);
+}
+inline TexProject::ivec4					TexProject::ivec4::operator - () const
+{
+	return ivec4(-this->x, -this->y, -this->z, -this->w);
+}
+//
+
 inline TexProject::ivec4					TexProject::ivec4::operator + (const ivec4& a) const
 {
 	return ivec4(
@@ -2448,6 +3089,68 @@ inline TexProject::uvec4&					TexProject::uvec4::operator /= (const uvec4& a)
 	w /= a.w;
 	return *this;
 }
+
+//
+inline TexProject::uvec4&					TexProject::uvec4::operator += (const uint32 a)
+{
+	x += a;
+	y += a;
+	z += a;
+	w += a;
+	return *this;
+}
+inline TexProject::uvec4&					TexProject::uvec4::operator -= (const uint32 a)
+{
+	x -= a;
+	y -= a;
+	z -= a;
+	w -= a;
+	return *this;
+}
+inline TexProject::uvec4&					TexProject::uvec4::operator *= (const uint32 a)
+{
+	x *= a;
+	y *= a;
+	z *= a;
+	w *= a;
+	return *this;
+}
+inline TexProject::uvec4&					TexProject::uvec4::operator /= (const uint32 a)
+{
+	x /= a;
+	y /= a;
+	z /= a;
+	w /= a;
+	return *this;
+}
+
+inline bool									TexProject::uvec4::operator == (const uvec4& a) const
+{
+	return this->x == a.x && this->y == a.y && this->z == a.z && this->w == a.w;
+}
+inline bool									TexProject::uvec4::operator != (const uvec4& a) const
+{
+	return this->x != a.x && this->y != a.y && this->z != a.z && this->w != a.w;
+}
+
+inline bool									TexProject::uvec4::operator == (const uint32 a) const
+{
+	return this->x == a && this->y == a && this->z == a && this->w == a;
+}
+inline bool									TexProject::uvec4::operator != (const uint32 a) const
+{
+	return this->x != a && this->y != a && this->z != a && this->w != a;
+}
+
+inline TexProject::uvec4					TexProject::uvec4::operator + () const
+{
+	return uvec4(+this->x, +this->y, +this->z, +this->w);
+}
+inline TexProject::ivec4					TexProject::uvec4::operator - () const
+{
+	return ivec4(-int(this->x), -int(this->y), -int(this->z), -int(this->w));
+}
+//
 
 inline TexProject::uvec4					TexProject::uvec4::operator + (const uvec4& a) const
 {
