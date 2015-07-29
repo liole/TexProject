@@ -457,7 +457,7 @@ namespace TexProject
 				}
 				inline uint32			GetMaxState() const
 				{
-					return state;
+					return maxState;
 				}
 			};
 			struct Slider: public Button::Basic
@@ -677,14 +677,14 @@ namespace TexProject
 					{
 						Default					= DT_LEFT | DT_TOP,
 						LeftTop					= DT_LEFT | DT_TOP,
-						LeftCenter				= DT_LEFT | DT_VCENTER,
-						LeftBottom				= DT_LEFT | DT_RIGHT,
+						LeftCenter				= DT_LEFT | DT_VCENTER | DT_SINGLELINE,
+						LeftBottom				= DT_LEFT | DT_RIGHT | DT_SINGLELINE,
 						CenterTop				= DT_CENTER | DT_TOP,
-						CenterCenter			= DT_CENTER | DT_VCENTER,
-						CenterBottom			= DT_CENTER | DT_RIGHT,
+						CenterCenter			= DT_CENTER | DT_VCENTER | DT_SINGLELINE,
+						CenterBottom			= DT_CENTER | DT_RIGHT | DT_SINGLELINE,
 						RightTop				= DT_RIGHT | DT_TOP,
-						RightCenter				= DT_RIGHT | DT_VCENTER,
-						RightBottom				= DT_RIGHT | DT_RIGHT,
+						RightCenter				= DT_RIGHT | DT_VCENTER | DT_SINGLELINE,
+						RightBottom				= DT_RIGHT | DT_RIGHT | DT_SINGLELINE,
 						/*DT_TOP                      0x00000000
 						DT_LEFT                     0x00000000
 						DT_CENTER                   0x00000001

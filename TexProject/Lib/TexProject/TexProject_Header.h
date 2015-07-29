@@ -345,6 +345,13 @@ namespace TexProject
 		struct Cube;
 	}
 
+
+	//
+	struct Lexer;
+	struct Parser;
+	struct Checker;
+	struct Translator;
+	struct Script;
 }
 
 

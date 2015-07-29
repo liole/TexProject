@@ -81,9 +81,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Lib\TexProject\Empty\TexProject_Empty.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Checker.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_DevIL.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Buffers.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Lexer.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Parser.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Translator.cpp" />
+    <ClCompile Include="Lib\TexProject\TexProject_Script.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Geometry.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp" />
     <ClCompile Include="Lib\TexProject\TexProject_Shaders.cpp" />
@@ -99,10 +104,15 @@
   <ItemGroup>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h" />
     <ClInclude Include="Lib\HalfFloat\half.hpp" />
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Checker.h" />
     <ClInclude Include="Lib\TexProject\TexProject.h" />
     <ClInclude Include="Lib\TexProject\TexProject_DevIL.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Buffers.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Direct3D.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Lexer.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Parser.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Translator.h" />
+    <ClInclude Include="Lib\TexProject\TexProject_Script.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Geometry.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Interface.h" />
     <ClInclude Include="Lib\TexProject\TexProject_Shaders.h" />
@@ -121,6 +131,10 @@
     <None Include="Media\Shaders\GLSL\1.vs" />
     <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.ps" />
     <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Empty\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Empty\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Texture\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Texture\1.vs" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.gs" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.ps" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.vs" />

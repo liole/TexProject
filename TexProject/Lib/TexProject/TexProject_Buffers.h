@@ -177,7 +177,7 @@ namespace TexProject
 
 		public:
 
-			inline						Model(Window::Render* window):
+			inline							Model(Window::Render* window):
 				renderContext
 				(
 					window->GetRenderContext()->GetType() == Window::RenderContext::Type::OpenGL ?
@@ -186,8 +186,8 @@ namespace TexProject
 				)
 			{
 			}
-			inline						Model(const Model&) = delete;
-			inline						~Model()
+			inline							Model(const Model&) = delete;
+			inline							~Model()
 			{
 				Delete();
 			}
@@ -228,9 +228,48 @@ namespace TexProject
 						OpenGL::Buffer::Attribute::Params(attNor,3,OpenGL::Buffer::Attribute::DataType::Float32,true,mesh_->GetVertexSize(),sizeof(float32)*11)
 					}
 				);
+
+				delete[] vArr;
+				delete[] iArr;
 			}
 			inline void						Delete()
 			{
+				if(aBuffer)
+				{
+					if(ownBit & (uint8)bit::ownArray)
+					{
+						delete aBuffer;
+						ownBit &= ~(uint8)bit::ownArray;
+					}
+					aBuffer = nullptr;
+				}
+				if(dBuffer)
+				{
+					if(ownBit & (uint8)bit::ownData)
+					{
+						delete dBuffer;
+						ownBit &= ~(uint8)bit::ownData;
+					}
+					dBuffer = nullptr;
+				}
+				if(iBuffer)
+				{
+					if(ownBit & (uint8)bit::ownIndex)
+					{
+						delete iBuffer;
+						ownBit &= ~(uint8)bit::ownIndex;
+					}
+					iBuffer = nullptr;
+				}
+				if(shader)
+				{
+					if(ownBit & (uint8)bit::ownShader)
+					{
+						delete shader;
+						ownBit &= ~(uint8)bit::ownShader;
+					}
+					shader = nullptr;
+				}
 			}
 			inline void						Draw()
 			{

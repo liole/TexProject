@@ -196,6 +196,13 @@ namespace TexProject
 				friend Tool;
 			protected:
 
+				enum class PrimitiveType
+				{
+					Box,
+					Sphere,
+					Cylinder
+				};
+
 				static void										funcWindowInit(Window::Render* window);
 				static void										funcWindowFree(Window::Render* window);
 				static void										funcWindowLoop(Window::Render* window);
@@ -207,6 +214,16 @@ namespace TexProject
 				Interface::Button::Connector*					buttonConnectorIn = nullptr;
 				Interface::Button::Default*						buttonClose = nullptr;
 
+				Interface::Panel::Default*						focusPanel = nullptr;
+				Interface::Button::Switcher*					focusButtonPrimitiveSwitcher = nullptr;
+				Interface::Panel::Text*							focusPanelPrimitiveText[3];
+
+				PrimitiveType									currentPrimitiveType = PrimitiveType::Box;
+				PrimitiveType									primitiveType = PrimitiveType::Box;
+				bool											oWindowActive = false;
+				ivec2											oMousePos = ivec2(0);
+				vec3											viewAng = vec3(0.0f);
+				float32											viewDist = 3.0f;
 				Helper::VMat									vMat;
 				Helper::MMat									mMat;
 
@@ -220,13 +237,18 @@ namespace TexProject
 				OpenGL::Texture*								renderGLTextureMaterial = nullptr;
 				OpenGL::Texture*								renderGLTextureEnvironment = nullptr;
 
+				Texture::D2*									GetInput();
+
 			public:
 											Default(Window::Render* window_);
 				virtual						~Default();
 
-				virtual void							Loop() override;
-				virtual void							Refresh() override;
-				//virtual bool							IsClean() override;
+				virtual void									Loop() override;
+				virtual void									Refresh() override;
+				//virtual bool									IsClean() override;
+
+				virtual void									InitFocus(Interface::Panel::Default* panel) override;
+				virtual void									FreeFocus(Interface::Panel::Default* panel) override;
 			};
 		};
 

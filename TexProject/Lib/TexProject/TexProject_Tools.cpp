@@ -642,16 +642,18 @@ void										TexProject::Tool::Viewer::Default::funcWindowInit(Window::Render* 
 {
 	auto tool = (Tool::Viewer::Default*)window->GetUserData();
 
+	tool->oMousePos = MousePos();
+
 	tool->renderGLShader = new OpenGL::Shader(window);
-	tool->renderGLShader->Load("Media/Shaders/GLSL/3D/Material/Basic/V1/1.vs","","","","Media/Shaders/GLSL/3D/Material/Basic/V1/1.ps");
+	tool->renderGLShader->Load("Media/Shaders/GLSL/3D/Material/Texture/1.vs","","","","Media/Shaders/GLSL/3D/Material/Texture/1.ps");
 	tool->renderGLShader->Use();
 	tool->renderGLShader->SetInt("TextureDiffuse",0);
-	tool->renderGLShader->SetInt("TextureNormal",1);
+	/*tool->renderGLShader->SetInt("TextureNormal",1);
 	tool->renderGLShader->SetInt("TextureMaterial",2);
-	tool->renderGLShader->SetInt("TextureEnvironment",3);
+	tool->renderGLShader->SetInt("TextureEnvironment",3);*/
 	tool->renderGLShader->Unuse();
 
-	tool->skyGLShader = new OpenGL::Shader(window);
+	/*tool->skyGLShader = new OpenGL::Shader(window);
 	tool->skyGLShader->Load
 	(
 		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.vs",
@@ -661,16 +663,22 @@ void										TexProject::Tool::Viewer::Default::funcWindowInit(Window::Render* 
 		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.ps"
 	);
 	tool->skyGLShader->Use();
-	tool->skyGLShader->SetInt("Texture",3);
+	tool->skyGLShader->SetInt("Texture",3);*/
 
+	tool->currentPrimitiveType = PrimitiveType::Box;
 	auto m = new Geometry::Mesh();
-	//m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
-	m->CreateSphere(5.0f,vec2(1.0f),uvec2(32));
+	m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
 
 	tool->renderGLModel = new OpenGL::Model(window);
 	tool->renderGLModel->Create(m,tool->renderGLShader);
 
-	{
+	delete m;
+
+	tool->mMat.SetPos(vec3(0.0f));
+	tool->mMat.SetAng(vec3(0.0f));
+	tool->mMat.SetScale(vec3(1.0f));
+
+	/*{
 		auto t = new Texture::D2;
 
 		t->Load("Media/Images/Brick1_D.png");
@@ -684,14 +692,14 @@ void										TexProject::Tool::Viewer::Default::funcWindowInit(Window::Render* 
 		t->Load("Media/Images/Brick1_M.png");
 		tool->renderGLTextureMaterial = new OpenGL::Texture(window);
 		*tool->renderGLTextureMaterial = *t;
-	}
-	{
+	}*/
+	/*{
 		auto t = new Texture::Cube;
 		t->Load("Media/Images/Cubemap1.DDS");
 
 		tool->renderGLTextureEnvironment = new OpenGL::Texture(window);
 		*tool->renderGLTextureEnvironment = *t;
-	}
+	}*/
 }
 void										TexProject::Tool::Viewer::Default::funcWindowFree(Window::Render* window)
 {
@@ -702,14 +710,48 @@ void										TexProject::Tool::Viewer::Default::funcWindowFree(Window::Render* 
 		delete tool->renderGLShader;
 		tool->renderGLShader = nullptr;
 	}
+	if(tool->skyGLShader)
+	{
+		delete tool->skyGLShader;
+		tool->skyGLShader = nullptr;
+	}
+	if(tool->renderGLModel)
+	{
+		delete tool->renderGLModel;
+		tool->renderGLModel = nullptr;
+	}
 }
 void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* window)
 {
 	auto tool = (Tool::Viewer::Default*)window->GetUserData();
-
-	if(window->IsActive())
+	
+	if(tool->currentPrimitiveType != tool->primitiveType)
 	{
+		tool->currentPrimitiveType = tool->primitiveType;
+
+		auto m = new Geometry::Mesh();
+		switch(tool->currentPrimitiveType)
 		{
+		case TexProject::Tool::Viewer::Default::PrimitiveType::Box:
+			m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
+		break;
+		case TexProject::Tool::Viewer::Default::PrimitiveType::Sphere:
+			m->CreateSphere(0.5f,vec2(1.0f),uvec2(32));
+		break;
+		case TexProject::Tool::Viewer::Default::PrimitiveType::Cylinder:
+			m->CreateCylinder(0.25f,1.0f,vec2(2.0f,1.0f),vec2(1.0f),uvec2(32,1),0);
+		break;
+		}
+
+		tool->renderGLModel->Create(m,tool->renderGLShader);
+
+		delete m;
+	}
+
+	auto nMousePos = MousePos();
+	if(window->IsActive() && tool->oWindowActive)
+	{
+		/*{
 			float32 speed = 0.1f;
 			vec3 move(0.0f);
 			if(KeyState(Keys::W)) move.z += speed;
@@ -730,17 +772,39 @@ void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* 
 			if(KeyState(Keys::RIGHT)) rotate.y += speed;
 			if(KeyState(Keys::LEFT)) rotate.y -= speed;
 			tool->vMat.Rotate(rotate);
+		}*/
+
+		if(MouseLState())
+		{
+			vec2 d;
+			d.x = float32(nMousePos.y - tool->oMousePos.y);
+			d.y = float32(nMousePos.x - tool->oMousePos.x);
+			tool->viewAng.x -= d.x*0.25f;
+			tool->viewAng.y += d.y*0.25f;
+		}
+		if(MouseRState())
+		{
+			tool->viewDist += (nMousePos.x - tool->oMousePos.x)*0.04f;
+			tool->viewDist = block(tool->viewDist,1.5f,10.0f);
 		}
 
+		tool->mMat.SetPos(vec3(0.0f));
+		tool->mMat.SetScale(vec3(1.0f));
+		tool->mMat.SetAng(tool->mMat.GetAng() + vec3(0.0f,1.0f,0.0f));
 		//tool->mMat.Rotate(vec3(0.0f,1.0f,0.0f));
+
+		tool->vMat.SetPos(mat3::rotateZXY(tool->viewAng) * vec3(0.0f,0.0f,-tool->viewDist));
+		tool->vMat.SetAng(tool->viewAng);
 	}
+	tool->oMousePos = nMousePos;
+	tool->oWindowActive = window->IsActive();
 
 	glClearColor(0.16f,0.16f,0.16f,1.0f);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-	glDisable(GL_DEPTH_TEST);
+	/*glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
 	tool->skyGLShader->Use();
@@ -748,7 +812,7 @@ void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* 
 
 	tool->renderGLTextureEnvironment->Use(3);
 
-	glDrawArrays(GL_POINTS,0,1);
+	glDrawArrays(GL_POINTS,0,1);*/
 
 
 	glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LESS);
@@ -759,9 +823,9 @@ void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* 
 	//else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
-	tool->renderGLTextureDiffuse->Use(0);
-	tool->renderGLTextureNormals->Use(1);
-	tool->renderGLTextureMaterial->Use(2);
+	if(tool->renderGLTextureDiffuse) tool->renderGLTextureDiffuse->Use(0);
+	/*tool->renderGLTextureNormals->Use(1);
+	tool->renderGLTextureMaterial->Use(2);*/
 	tool->renderGLShader->Use();
 	tool->renderGLShader->SetVec3("lightPos",vec3(0.0f,10.0f,-20.0f) - tool->vMat.GetPos());
 	tool->renderGLShader->SetMat3("RotateMatrix",tool->mMat.GetRMat());
@@ -859,6 +923,22 @@ TexProject::Tool::Viewer::Default::~Default()
 		renderWindow = nullptr;
 	}
 }
+TexProject::Texture::D2*					TexProject::Tool::Viewer::Default::GetInput()
+{
+	if(buttonConnectorIn)
+	{
+		auto t = ((Interface::Button::Connector*)buttonConnectorIn)->GetTarget();
+		if(t)
+		{
+			auto data_ = (OutputData*)t->GetUserData();
+			if(data_->textureType == Texture::Type::D2)
+			{
+				return (Texture::D2*)data_->texture;
+			}
+		}
+	}
+	return nullptr;
+}
 void										TexProject::Tool::Viewer::Default::Loop()
 {
 	Basic::Loop();
@@ -875,6 +955,67 @@ void										TexProject::Tool::Viewer::Default::Refresh()
 		renderWindow->Create("Viewer");
 		renderWindow->SetSize(uvec2(600,400));
 		renderWindow->SetRenderContext(Window::RenderContext::Type::OpenGL);
+	}
+
+	{
+		if(renderGLTextureDiffuse) { delete renderGLTextureDiffuse; renderGLTextureDiffuse = nullptr; }
+
+		auto source = GetInput();
+		if(source)
+		{
+			renderGLTextureDiffuse = new OpenGL::Texture(renderWindow);
+			*renderGLTextureDiffuse = *source;
+		}
+	}
+}
+void										TexProject::Tool::Viewer::Default::InitFocus(Interface::Panel::Default* panel)
+{
+	focusPanel = (Interface::Panel::Default*)panel->AddPanel(Interface::PanelTypes::Default);
+	focusPanel->SetColor(vec4(vec3(0.32f),1.0f));
+	focusPanel->SetSize(vec2(panel->GetSize().x - 8.0f,300.0f));
+	focusPanel->SetPos(vec2(4.0f,panel->GetSize().y - focusPanel->GetSize().y - 204.0f));
+
+	auto size_ = focusPanel->GetSize();
+
+	focusButtonPrimitiveSwitcher = (Interface::Button::Switcher*)focusPanel->AddButton(Interface::ButtonTypes::Switcher);
+	focusButtonPrimitiveSwitcher->SetMaxState(3);
+	focusButtonPrimitiveSwitcher->SetSize(vec2(28.0f,28.0f*focusButtonPrimitiveSwitcher->GetMaxState()));
+	focusButtonPrimitiveSwitcher->SetPos(vec2(0.0f));//4.0f,focusPanel->GetSize().y - focusButtonPrimitiveSwitcher->GetSize().y - 4.0f));
+	focusButtonPrimitiveSwitcher->SetUserData(this);
+	focusButtonPrimitiveSwitcher->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			auto tool = (Tool::Viewer::Default*)item->GetUserData();
+			auto switcher = (Interface::Button::Switcher*)item;
+			auto type = tool->primitiveType;
+			switch(switcher->GetState())
+			{
+			case 0: tool->primitiveType = PrimitiveType::Box; break;
+			case 1: tool->primitiveType = PrimitiveType::Sphere; break;
+			case 2: tool->primitiveType = PrimitiveType::Cylinder; break;
+			}
+		}
+	);
+
+	for(uint32 i = 0; i < focusButtonPrimitiveSwitcher->GetMaxState(); ++i)
+	{
+		focusPanelPrimitiveText[i] = (Interface::Panel::Text*)focusPanel->AddPanel(Interface::PanelTypes::Text);
+		focusPanelPrimitiveText[i]->SetSize(vec2(80.0f,focusButtonPrimitiveSwitcher->GetSize().x));
+		focusPanelPrimitiveText[i]->SetPos(focusButtonPrimitiveSwitcher->GetLocalPos() + vec2(focusButtonPrimitiveSwitcher->GetSize().x + 4.0f,focusButtonPrimitiveSwitcher->GetSize().x*i));
+		focusPanelPrimitiveText[i]->SetAlignment(Interface::Panel::Text::Alignment::LeftCenter);
+	}
+	focusPanelPrimitiveText[0]->SetText("Box");
+	focusPanelPrimitiveText[1]->SetText("Sphere");
+	focusPanelPrimitiveText[2]->SetText("Cylinder");
+}
+void										TexProject::Tool::Viewer::Default::FreeFocus(Interface::Panel::Default* panel)
+{
+	if(focusPanel)
+	{
+		panel->RemovePanel(focusPanel);
+		focusPanel = nullptr;
 	}
 }
 

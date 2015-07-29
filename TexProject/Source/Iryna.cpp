@@ -42,7 +42,7 @@ Texture::D2* Blur(Texture::D2* tex)
 		color = vec4(vec3(color.x + color.y + color.z) / 3.0f, 1.0f);
 		res->SetPixel(uvec2(i, j), color);*/
 		float32 sum = 0;
-		vec4 color(tex->GetPixel(uvec2(i, j)));
+		vec4 color(0);
 		for (uint32 k = i - 3; k <= i + 3; ++k)
 		for (uint32 l = j - 3; l <= j + 3; ++l)
 		{
@@ -76,12 +76,8 @@ Texture::D2* Blur(Texture::D2* tex)
 					}
 				}
 			}
-			float32 w = 1.0f + 24 * (1.0f / 4) + 16 * (1.0f / 3) + 8 * (1.0f / 2);
-			if (sum == w)
-			{
-				res->SetPixel(uvec2(i, j), color / sum);
-			}
-			//res->SetPixel(uvec2(i, j), color / sum);
+			
+			res->SetPixel(uvec2(i, j), color / sum);
 		}
 
 	}
@@ -98,31 +94,30 @@ Texture::D2* HeightToNormal(Texture::D2* tex)
 	for (uint32 i = 0; i < tex->GetSize().x; ++i)
 	for (uint32 j = 0; j < tex->GetSize().y; ++j)
 	{
-		vec3 a(0);
+		vec3 a;
 		if (i != 0)
 		{
-			a += vec3(0.0f, 1.0f, tex->GetPixel(uvec2(i - 1, j)).x - tex->GetPixel(uvec2(i, j)).x);
+			if(i != tex->GetSize().x-1)
+				a.x = tex->GetPixel(uvec2(i-1,j)).x - tex->GetPixel(uvec2(i+1,j)).x;
+			else
+				a.x = tex->GetPixel(uvec2(i-1,j)).x - tex->GetPixel(uvec2(i,j)).x;
 		}
-		if (i != tex->GetSize().x - 1)
-		{
-			a += vec3(0.0f, 1.0f, tex->GetPixel(uvec2(i, j)).x - tex->GetPixel(uvec2(i + 1, j)).x);
-		}
+		else
+			a.x = tex->GetPixel(uvec2(i,j)).x - tex->GetPixel(uvec2(i+1,j)).x;
 
-		if (j != 0)
+		if(j != 0)
 		{
-			a += vec3(tex->GetPixel(uvec2(i, j - 1)).x - tex->GetPixel(uvec2(i, j)).x, 1.0f, 0.0f);
+			if(j != tex->GetSize().y-1)
+				a.y = tex->GetPixel(uvec2(i,j-1)).x - tex->GetPixel(uvec2(i,j+1)).x;
+			else
+				a.y = tex->GetPixel(uvec2(i,j-1)).x - tex->GetPixel(uvec2(i,j)).x;
 		}
-		if (j != tex->GetSize().y - 1)
-		{
-			a += vec3(tex->GetPixel(uvec2(i, j)).x - tex->GetPixel(uvec2(i, j + 1)).x, 1.0f, 0.0f);
-		}
-		a.y = 0.2f;
+		else
+			a.y = tex->GetPixel(uvec2(i,j)).x - tex->GetPixel(uvec2(i,j+1)).x;
+		a.z = 0.1f;
 		a.normalize();
-		a += vec3(1.0f, 1.0f, 1.0f);
-		a /= vec3(2.0f, 2.0f, 2.0f);
-		auto g = a.y;
-		a.y = a.z;
-		a.z = g;
+		a += vec3(1.0f);
+		a *= vec3(0.5f);
 		res->SetPixel(uvec2(i, j), vec4(a, 1.0f));
 	}
 
@@ -134,32 +129,46 @@ void fInit(Window::Render* window)
 {
 	auto panel1 = (Interface::Panel::Image*)window->AddPanel(Interface::PanelTypes::Image);
 	auto panel2 = (Interface::Panel::Image*)window->AddPanel(Interface::PanelTypes::Image);
-	/*
-	Створюємо панелі типу "зображення" і приводимо вказівник на неї до типу Interface::Panel::Image*
-	*/
+
 	panel1->SetPos(vec2(200.0f));
-	panel1->SetSize(vec2(256.0f));
-	panel2->SetSize(vec2(256.0f));
-	/*
-	Задаємо розмір панелей
-	*/
+	panel1->SetSize(vec2(512.0f));
+	panel2->SetSize(vec2(512.0f));
 
 	auto oldTex = new Texture::D2;
 	oldTex->Load("Media/Images/Stone_HeightMap.png");
-	/*
-	Завантажуємо зображення
-	*/
 
 	auto newTex = HeightToNormal(oldTex);
-	/*
-	Викликаємо функцію фільтру
-	*/
 
 	panel1->SetImage(oldTex);
 	panel2->SetImage(newTex);
-	/*
-	Задаємо зображення панелей
-	*/
+/*
+	auto panel = window->AddPanel(Interface::PanelTypes::Default);
+	auto im = panel -> AddPanel(Interface::PanelTypes::Image);
+	panel ->SetSize(vec2(256.0f));
+	im->SetSize(vec2(180.0f));
+	panel->SetColor(vec4(0.32f));
+	im->SetPos((panel->GetSize() - im->GetSize())/2.0f);
+	auto but = panel ->AddButton(Interface::ButtonTypes::Default);
+	but ->SetSize(vec2(80,20));
+	but->SetPos(vec2((panel->GetSize().x-but->GetSize().x)/2.0f,4));
+	auto butcl = panel ->AddButton(Interface::ButtonTypes::Close);
+	butcl ->SetSize(vec2(20,20));
+	butcl ->SetPos(panel->GetSize()-butcl->GetSize()-4.0f);
+	but->SetUserData(im);
+	but ->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			auto oldTex = new Texture::D2;
+			oldTex->Load("Media/Images/Stone_HeightMap.png");
+		
+			auto newTex = HeightToNormal(oldTex);
+
+			auto im = (Interface::Panel::Image*)item->GetUserData();
+			im->SetImage(newTex);
+		}
+	);*/
 }
 void fFree(Window::Render* window)
 {

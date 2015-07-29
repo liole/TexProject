@@ -14,7 +14,7 @@ void										TexProject::Interface::Basic::RefreshPicked()
 	for(auto i: item)
 	{
 		auto j = i->IsSelect();
-		if(j && (!picked || j->GetPriority() > picked->GetPriority()))
+		if(window->IsActive() && j && (!picked || j->GetPriority() > picked->GetPriority()))
 		{
 			picked = j;
 		}
@@ -23,7 +23,7 @@ void										TexProject::Interface::Basic::RefreshPicked()
 void										TexProject::Interface::Basic::RefreshSelected()
 {
 	//selected = NULL;
-	if(dragging)
+	if(dragging && window->IsActive())
 	{
 		if(selected)
 		{
@@ -448,6 +448,7 @@ TexProject::Interface::Button::Trigger::Trigger(GUI* interface_,Item* parent_):
 void					TexProject::Interface::Button::Trigger::Loop()
 {
 	Basic::Loop();
+
 	if(IsLocalSelect() && inter->GetPicked() && GetBase() == inter->GetPicked()->GetBase())
 	{
 		if(inter->mouse.stateL && !inter->mouse.stateOL)
@@ -465,7 +466,7 @@ TexProject::Interface::Button::Switcher::Switcher(GUI* interface_,Item* parent_)
 }
 void					TexProject::Interface::Button::Switcher::Loop()
 {
-	Basic::Loop();
+	//Basic::Loop();
 
 	if(IsLocalSelect() && inter->GetPicked() && GetBase() == inter->GetPicked()->GetBase())
 	{
@@ -485,6 +486,8 @@ void					TexProject::Interface::Button::Switcher::Loop()
 			}
 		}
 	}
+
+	Basic::Loop();
 }
 
 
@@ -904,8 +907,11 @@ void										TexProject::Interface::Default::Button::Switcher::_win_WMPaint()
 
 		for(uint32 i = 0; i < maxState; ++i)
 		{
-			vec2 p1 = vec2(pos_.x,pos_.y + size_.y*(float32(i)/float32(maxState)));
-			vec2 p2 = vec2(pos_.x + size_.x,pos_.y + size_.y*(float32(i+1)/float32(maxState)));
+			float32 di = (float32(i)/float32(maxState));
+			float32 di1 = (float32(i+1)/float32(maxState));
+
+			vec2 p1 = vec2(pos_.x,pos_.y + size_.y*di);
+			vec2 p2 = vec2(pos_.x + size_.x,pos_.y + size_.y*di1);
 
 			vec2 p;
 			p = wnd->ToWindowSpace(p1 + border); rect.left = LONG(p.x); rect.bottom = LONG(p.y);

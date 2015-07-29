@@ -57,7 +57,22 @@
     <ClCompile Include="Lib\TexProject\TexProject_Tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Script.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Test\Test_Tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Translator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Lexer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Script_Checker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -113,6 +128,21 @@
     <ClInclude Include="Lib\TexProject\TexProject_Tools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Script.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Translator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Lexer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Script_Checker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Media\Shaders\GLSL\1.gs" />
@@ -134,6 +164,10 @@
     <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.gs" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.ps" />
     <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Texture\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Texture\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Empty\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Empty\1.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Media\Images\Test.bmp">

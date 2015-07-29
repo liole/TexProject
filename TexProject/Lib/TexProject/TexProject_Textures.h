@@ -32,6 +32,9 @@ namespace TexProject
 			Cube
 		};
 
+		struct D1
+		{
+		};
 		struct D2
 		{
 		protected:
@@ -64,6 +67,9 @@ namespace TexProject
 #if __TEXPROJECT_OPENGL__
 			inline D2&						operator = (OpenGL::Texture& source);
 #endif
+		};
+		struct D3
+		{
 		};
 		struct Cube
 		{
