@@ -97,7 +97,7 @@ void TexProject::Tool::Init(Window::Render* window_)
 			Interface::Item::ActionTypes::Click,
 			[](Interface::Item* item) -> void
 			{
-				Tool::Add<Tool::Filter::D2::Correction::Color>(item->GetWindow());
+				Tool::Add<Tool::Filter::D2::Correction::Grayscale>(item->GetWindow());
 			}
 		);
 	}
@@ -106,6 +106,20 @@ void TexProject::Tool::Init(Window::Render* window_)
 		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
 		t->SetSize(vec2(24.0f));
 		t->SetPos(vec2(4.0f) + vec2(32.0f*3,0.0f));
+		t->SetAction
+		(
+			Interface::Item::ActionTypes::Click,
+			[](Interface::Item* item) -> void
+			{
+				Tool::Add<Tool::Filter::D2::Correction::Color>(item->GetWindow());
+			}
+		);
+	}
+
+	{
+		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
+		t->SetSize(vec2(24.0f));
+		t->SetPos(vec2(4.0f) + vec2(32.0f*4,0.0f));
 		t->SetAction
 		(
 			Interface::Item::ActionTypes::Click,
@@ -847,6 +861,138 @@ void										TexProject::Tool::Filter::D2::Correction::Color::Refresh()
 bool										TexProject::Tool::Filter::D2::Correction::Color::IsClean()
 {
 	return !generationFlag || generationFinish;
+}
+
+
+// Tool::Filter::D2::Correction::Grayscale
+TexProject::Tool::Filter::D2::Correction::Grayscale::Grayscale(Window::Render* window_):
+	Tool::D2(window_)
+{
+	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
+	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
+	panelBase->SetSize(vec2(200.0f));
+	panelBase->SetUserData(this);
+	panelBase->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			Tool::SetFocus( (Tool::Filter::D2::Correction::Grayscale*)item->GetUserData() );
+		}
+	);
+	panelBase->SetAction
+	(
+		Interface::Item::ActionTypes::Destruction,
+		[](Interface::Item* item)
+		{
+			((Tool::Filter::D2::Correction::Grayscale*)item->GetUserData())->destruction = true;
+		}
+	);
+
+	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
+	panelTitle->SetSize(vec2(160.0f,14.0f));
+	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f -  panelTitle->GetSize().x*0.5f,panelBase->GetSize().y - panelTitle->GetSize().y));
+	panelTitle->SetText("Grayscale");
+	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
+
+	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
+	panelImage->SetSize(vec2(128.0f));
+	panelImage->SetPos( (panelBase->GetSize().x-panelImage->GetSize())*0.5f );
+
+	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
+	buttonRefresh->SetSize(vec2(64.0f,16.0f));
+	buttonRefresh->SetPos(vec2((panelBase->GetSize().x-buttonRefresh->GetSize().x)*0.5f,4.0f));
+	buttonRefresh->SetUserData(this);
+	buttonRefresh->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+		{
+			((Tool::Filter::D2::Correction::Grayscale*)item->GetUserData())->Refresh();
+		}
+	);
+
+	buttonConnectorIn = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::InputConnector);
+	buttonConnectorIn->SetSize(vec2(8.0f));
+	buttonConnectorIn->SetPos(vec2(4.0f,(panelBase->GetSize().y - buttonConnectorIn->GetSize().y)*0.5f));
+	buttonConnectorIn->connectDirection = vec2(-64.0f,0.0f);
+	buttonConnectorIn->SetUserData(this);
+	buttonConnectorIn->SetAction
+	(
+		Interface::Item::ActionTypes::Refresh,
+		[](Interface::Item* item)
+		{
+			((Tool::Filter::D2::Correction::Grayscale*)item->GetUserData())->Refresh();
+		}
+	);
+
+	buttonConnectorOut = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::OutputConnector);
+	buttonConnectorOut->SetSize(vec2(8.0f));
+	buttonConnectorOut->SetPos(vec2(panelBase->GetSize().x - buttonConnectorOut->GetSize().x - 4.0f,(panelBase->GetSize().y - buttonConnectorOut->GetSize().y)*0.5f));
+	buttonConnectorOut->connectDirection = vec2(64.0f,0.0f);
+	buttonConnectorOut->SetUserData(new OutputData(this,Texture::Type::D2,nullptr),true);
+
+	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
+	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
+	buttonClose->SetSize(vec2(16.0f));
+}
+TexProject::Tool::Filter::D2::Correction::Grayscale::~Grayscale()
+{
+	if(texture) delete texture;
+}
+TexProject::Texture::D2*					TexProject::Tool::Filter::D2::Correction::Grayscale::GetInput()
+{
+	if(buttonConnectorIn)
+	{
+		auto t = ((Interface::Button::Connector*)buttonConnectorIn)->GetTarget();
+		if(t)
+		{
+			auto data_ = (OutputData*)t->GetUserData();
+			if(data_->textureType == Texture::Type::D2)
+			{
+				return (Texture::D2*)data_->texture;
+			}
+		}
+	}
+	return nullptr;
+}
+void										TexProject::Tool::Filter::D2::Correction::Grayscale::Loop()
+{
+	Basic::Loop();
+
+	if(panelBase)
+	{
+		panelBase->SetAnchor(Tool::GetAnchor());
+	}
+}
+void										TexProject::Tool::Filter::D2::Correction::Grayscale::Refresh()
+{
+	panelImage->SetImage(nullptr);
+
+	((OutputData*)buttonConnectorOut->GetUserData())->texture = nullptr;
+
+	if(texture) { delete texture; texture = nullptr; }
+
+	auto source = GetInput();
+
+	if(source)
+	{
+		texture = new Texture::D2;
+		texture->Create(source->GetSize());
+		for(uint32 x = 0; x < texture->GetSize().x; ++x)
+		for(uint32 y = 0; y < texture->GetSize().y; ++y)
+		{
+			auto p = source->GetPixel(uvec2(x,y));
+			p = vec4(vec3(p.xyz().length()/3.0f),1.0f);
+			texture->SetPixel(uvec2(x,y),p);
+		}
+
+		((OutputData*)buttonConnectorOut->GetUserData())->texture = texture;
+
+		panelImage->SetImage(texture);
+
+		buttonConnectorOut->RefreshObservers();
+	}
 }
 
 

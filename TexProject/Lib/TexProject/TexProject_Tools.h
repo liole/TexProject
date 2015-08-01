@@ -214,6 +214,29 @@ namespace TexProject
 					friend Tool;
 				public:
 
+					struct Grayscale:
+						private Tool::D2
+					{
+						friend Tool;
+					private:
+						Interface::Panel::Default*				panelBase = nullptr;
+						Interface::Panel::Text*					panelTitle = nullptr;
+						Interface::Panel::Image*				panelImage = nullptr;
+						Interface::Button::Default*				buttonRefresh = nullptr;
+						Interface::Button::Connector*			buttonConnectorIn = nullptr;
+						Interface::Button::Connector*			buttonConnectorOut = nullptr;
+						Interface::Button::Default*				buttonClose = nullptr;
+
+						Texture::D2*							texture = nullptr;
+
+						Texture::D2*							GetInput();
+
+						Grayscale(Window::Render* window_);
+						~Grayscale();
+
+						virtual void							Loop() override;
+						virtual void							Refresh() override;
+					};
 					struct Color:
 						private Tool::D2
 					{
