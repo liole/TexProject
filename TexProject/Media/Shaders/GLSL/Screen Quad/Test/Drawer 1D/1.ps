@@ -1,10 +1,10 @@
 #version 330 core
 
 
-uniform sampler2D	Texture;
+uniform sampler1D	Texture;
 
 
-in vec2		P_Tex;
+in float		P_Tex;
 
 
 out vec4	Out_Color;
@@ -13,6 +13,6 @@ out vec4	Out_Color;
 void main()
 {
 	Out_Color = texture(Texture, P_Tex);
-	//Out_Color = vec4(P_Tex,1,1);
+	//Out_Color = vec4(P_Tex,0,0,1);
 	//Out_Color = vec4(1,1,1,1);
 }

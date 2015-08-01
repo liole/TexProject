@@ -136,6 +136,57 @@ namespace TexProject
 					virtual void								InitFocus(Interface::Panel::Default* panel) override;
 					virtual void								FreeFocus(Interface::Panel::Default* panel) override;
 				};
+
+				struct Noise
+				{
+					friend Tool;
+				public:
+
+					struct Simple:
+						private Tool::D2
+					{
+						friend Tool;
+					private:
+						Interface::Panel::Default*					panelBase = nullptr;
+						Interface::Panel::Text*						panelTitle = nullptr;
+						Interface::Panel::Image*					panelImage = nullptr;
+						Interface::Button::Default*					buttonRefresh = nullptr;
+						Interface::Button::Connector*				buttonConnectorOut = nullptr;
+						Interface::Button::Default*					buttonClose = nullptr;
+
+						Interface::Panel::Default*					focusPanel = nullptr;
+						Interface::Panel::Default*					focusPanelSizeX = nullptr;
+						Interface::Panel::Default*					focusPanelSizeY = nullptr;
+						Interface::Panel::Text*						focusPanelSizeXText = nullptr;
+						Interface::Panel::Text*						focusPanelSizeYText = nullptr;
+						Interface::Button::Default*					focusButtonRefresh = nullptr;
+
+						uvec2										size = uvec2(128,128);
+						Texture::D2*								texture = nullptr;
+
+						Simple(Window::Render* window_);
+						~Simple();
+
+						virtual void								Loop() override;
+						virtual void								Refresh() override;
+						//virtual bool								IsClean() override;
+
+						virtual void								InitFocus(Interface::Panel::Default* panel) override;
+						virtual void								FreeFocus(Interface::Panel::Default* panel) override;
+					};
+					struct Perlin:
+						private Tool::D2
+					{
+					};
+					struct Worley:
+						private Tool::D2
+					{
+					};
+					struct Simplex:
+						private Tool::D2
+					{
+					};
+				};
 			};
 		};
 		struct Filter
@@ -148,7 +199,17 @@ namespace TexProject
 				friend Tool;
 			public:
 
-				struct Correction
+				struct NormalsGenerator:
+					private Tool::D2
+				{
+				};
+				struct OcclusionGenerator:
+					private Tool::D2
+				{
+				};
+
+				struct Correction:
+					public Tool::D2
 				{
 					friend Tool;
 				public:
@@ -182,6 +243,10 @@ namespace TexProject
 						virtual void							Loop() override;
 						virtual void							Refresh() override;
 						virtual bool							IsClean() override;
+					};
+					struct Blur:
+						private Tool::D2
+					{
 					};
 				};
 			};

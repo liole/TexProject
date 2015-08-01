@@ -41,6 +41,9 @@ __TEXPROJECT_LIN__ і __TEXPROJECT_MAC__ будуть використовуватись
 #define __TEXPROJECT_DIRECT3D__				1
 
 
+#define __TEXPROJECT_RTGSCRIPT__			0
+
+
 /*
 Замість використаня константи _DEBUG в перевідках дебаг режиму -
 будемо використовувати власну константу __TEXPROJECT_DEBUG__
@@ -347,11 +350,11 @@ namespace TexProject
 
 
 	//
-	struct Lexer;
-	struct Parser;
-	struct Checker;
-	struct Translator;
-	struct Script;
+	class	Lexer;
+	struct	Parser;
+	struct	Checker;
+	struct	Translator;
+	struct	Script;
 }
 
 

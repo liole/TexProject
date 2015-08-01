@@ -159,6 +159,7 @@ namespace TexProject
 		extern PFNGLACTIVETEXTUREPROC							glActiveTexture;
 		extern PFNGLGETTEXPARAMETERIIVPROC						glGetTexParameterIiv;
 		extern PFNGLGENERATEMIPMAPPROC							glGenerateMipmap;
+		extern PFNGLTEXIMAGE3DPROC								glTexImage3D;
 		// Shader func
 		extern bool												initFuncShader;
 		extern PFNGLCREATEPROGRAMPROC							glCreateProgram;

@@ -16,6 +16,9 @@
 #include <TexProject/TexProject_Script_Translator.h>
 
 
+#if __TEXPROJECT_RTGSCRIPT__
+
+
 namespace TexProject
 {
 	struct Script
@@ -96,8 +99,10 @@ namespace TexProject
 			void 		(*func)() = nullptr;
 		};
 
+		static Lexer						lexer;
+		static Translator					translator;
+
 		Input								input;
-		Translator							translator;
 		Computer							computer;
 
 	public:
@@ -153,7 +158,7 @@ namespace TexProject
 };
 
 
-
+#endif
 
 
 

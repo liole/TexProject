@@ -2,6 +2,13 @@
 using namespace TexProject;
 
 
+#if __TEXPROJECT_RTGSCRIPT__
+
+
+TexProject::Lexer							TexProject::Script::lexer("Media/Scripts/Lexer.lxr");
+TexProject::Translator						TexProject::Script::translator;
+
+
 TexProject::Script::Output					TexProject::Script::Run()
 {
 	uint32 x,y,z,w,face;
@@ -109,7 +116,7 @@ void										TexProject::Script::Compile()
 }
 
 
-
+#endif
 
 
 

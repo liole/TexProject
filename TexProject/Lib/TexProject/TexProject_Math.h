@@ -705,6 +705,8 @@ namespace TexProject
 
 	/*Повертає таке val, що minVal < val < maxVal*/
 	inline float32							block(float32 val,float32 minVal,float32 maxVal);
+	inline vec2								block(const vec2& val,const vec2& minVal,const vec2& maxVal);
+	inline vec3								block(const vec3& val,const vec3& minVal,const vec3& maxVal);
 	inline vec4								block(const vec4& val,const vec4& minVal,const vec4& maxVal);
 
 	/*Конвертує радіани в градуси*/
@@ -3838,14 +3840,32 @@ inline TexProject::float32					TexProject::block(float32 val,float32 minVal,floa
 {
 	return (val < minVal) ? (minVal) : ((val > maxVal) ? maxVal : val);
 }
+inline TexProject::vec2						TexProject::block(const vec2& val,const vec2& minVal,const vec2& maxVal)
+{
+	return vec2
+	(
+		block(val.x,minVal.x,maxVal.x),
+		block(val.y,minVal.y,maxVal.y)
+	);
+}
+inline TexProject::vec3						TexProject::block(const vec3& val,const vec3& minVal,const vec3& maxVal)
+{
+	return vec3
+	(
+		block(val.x,minVal.x,maxVal.x),
+		block(val.y,minVal.y,maxVal.y),
+		block(val.z,minVal.z,maxVal.z)
+	);
+}
 inline TexProject::vec4						TexProject::block(const vec4& val,const vec4& minVal,const vec4& maxVal)
 {
-	return vec4(
+	return vec4
+	(
 		block(val.x,minVal.x,maxVal.x),
 		block(val.y,minVal.y,maxVal.y),
 		block(val.z,minVal.z,maxVal.z),
 		block(val.w,minVal.w,maxVal.w)
-		);
+	);
 }
 
 inline TexProject::float32					TexProject::degrees(const float32 rads)

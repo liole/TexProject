@@ -34,6 +34,37 @@ namespace TexProject
 
 		struct D1
 		{
+		protected:
+
+			vec4*	data = nullptr;
+			uint32	size = 0;
+
+		public:
+
+			inline D1() = default;
+			inline D1(const D1& source);
+			inline ~D1();
+
+			inline void						Create(uint32 size_);
+			inline void						Delete();
+			//bool							Load(const string& filename);
+			inline void						Fill(const vec4& color_);
+
+			inline uint32					GetSize() const;
+
+			// Direct storage access
+			inline void						SetPixel(uint32 pos_,const vec4& color_);
+			inline vec4						GetPixel(uint32 pos_);
+			inline vec4*					GetData() const;
+			inline void*					GetDataRGBA32F() const;
+
+			// Logic acess with interpolation
+			inline vec4						GetPixelNearestClamp(float32 pos_) const;
+			inline vec4						GetPixelLinearClamp(float32 pos_) const;
+
+#if __TEXPROJECT_OPENGL__
+			inline D1&						operator = (OpenGL::Texture& source);
+#endif
 		};
 		struct D2
 		{
@@ -44,7 +75,7 @@ namespace TexProject
 
 		public:
 
-			inline D2();
+			inline D2() = default;
 			inline D2(const D2& source);
 			inline ~D2();
 
@@ -61,6 +92,10 @@ namespace TexProject
 			inline vec4*					GetData() const;
 			inline void*					GetDataRGBA32F() const;
 
+			// Logic acess with interpolation
+			inline vec4						GetPixelNearestClamp(const vec2& pos_) const;
+			inline vec4						GetPixelLinearClamp(const vec2& pos_) const;
+
 #if __TEXPROJECT_DEVIL__
 			bool							_DevIL_Load(const string& filename);
 #endif
@@ -70,6 +105,37 @@ namespace TexProject
 		};
 		struct D3
 		{
+		protected:
+
+			vec4*	data = nullptr;
+			uvec3	size = 0;
+
+		public:
+
+			inline D3() = default;
+			inline D3(const D3& source);
+			inline ~D3();
+
+			inline void						Create(const uvec3& size_);
+			inline void						Delete();
+			//bool							Load(const string& filename);
+			inline void						Fill(const vec4& color_);
+
+			inline uvec3					GetSize() const;
+
+			// Direct storage access
+			inline void						SetPixel(const uvec3& pos_,const vec4& color_);
+			inline vec4						GetPixel(const uvec3& pos_);
+			inline vec4*					GetData() const;
+			inline void*					GetDataRGBA32F() const;
+
+			// Logic acess with interpolation
+			inline vec4						GetPixelNearestClamp(const vec3& pos_) const;
+			inline vec4						GetPixelLinearClamp(const vec3& pos_) const;
+
+#if __TEXPROJECT_OPENGL__
+			inline D3&						operator = (OpenGL::Texture& source);
+#endif
 		};
 		struct Cube
 		{
@@ -102,8 +168,8 @@ namespace TexProject
 			inline uint32					GetSize() const;
 
 			// Direct storage access
-			inline void						SetPixel(Face& face_,const uvec2& pos_,const vec4& color_);
-			inline vec4						GetPixel(Face& face_,const uvec2& pos_);
+			inline void						SetPixel(Face face_,const uvec2& pos_,const vec4& color_);
+			inline vec4						GetPixel(Face face_,const uvec2& pos_);
 			inline void*					GetDataRGBA32F() const;
 			inline void*					GetDataRGBA32F(Face face_) const;
 
@@ -299,7 +365,9 @@ namespace TexProject
 			inline Texture(Window::RenderContext::Basic* renderContext_);
 			inline ~Texture();
 
+			inline Texture&					operator = (const TexProject::Texture::D1& source);
 			inline Texture&					operator = (const TexProject::Texture::D2& source);
+			inline Texture&					operator = (const TexProject::Texture::D3& source);
 			inline Texture&					operator = (const TexProject::Texture::Cube& source);
 
 			inline Type						GetType() const
@@ -375,9 +443,120 @@ namespace TexProject
 }
 
 
-inline TexProject::Texture::D2::D2()
+inline TexProject::Texture::D1::D1(const D1& source):
+	size(source.size),
+	data(new vec4[source.size])
 {
+	for(uint32 i = 0; i < size; ++i) data[i] = source.data[i];
 }
+inline TexProject::Texture::D1::~D1()
+{
+	Delete();
+}
+inline void									TexProject::Texture::D1::Create(uint32 size_)
+{
+	Delete();
+
+	size = size_;
+
+	data = new vec4[size];
+}
+inline void									TexProject::Texture::D1::Delete()
+{
+	if(size > 0)
+	{
+		if(data) delete[] data;
+		size = 0;
+	}
+}
+inline void									TexProject::Texture::D1::Fill(const vec4& color_)
+{
+	for(uint32 i = 0; i < size; ++i) data[i] = color_;
+}
+inline TexProject::uint32					TexProject::Texture::D1::GetSize() const
+{
+	return size;
+}
+inline void									TexProject::Texture::D1::SetPixel(uint32 pos_,const vec4& color_)
+{
+#if __TEXPROJECT_DEBUG__
+	if(pos_ >= size) throw Exception::InvalidTextureCoord();
+#endif
+	data[pos_] = color_;
+}
+inline TexProject::vec4						TexProject::Texture::D1::GetPixel(uint32 pos_)
+{
+#if __TEXPROJECT_DEBUG__
+	if(pos_ >= size) throw Exception::InvalidTextureCoord();
+#endif
+	return data[pos_];
+}
+inline TexProject::vec4*					TexProject::Texture::D1::GetData() const
+{
+	auto data_ = new vec4[size];
+	for(uint32 i = 0; i < size; ++i)
+	{
+		data_[i] = data[i];
+	}
+	return data_;
+}
+inline void*								TexProject::Texture::D1::GetDataRGBA32F() const
+{
+	auto data_ = new float32[size*4];
+	for(uint32 i = 0; i < size; ++i)
+	{
+		data_[i*4+0] = data[i].x;
+		data_[i*4+1] = data[i].y;
+		data_[i*4+2] = data[i].z;
+		data_[i*4+3] = data[i].w;
+	}
+	return data_;
+}
+inline TexProject::vec4						TexProject::Texture::D1::GetPixelNearestClamp(float32 pos_) const
+{
+	static uint32 t;
+
+	t = uint32(block(pos_,0.0f,1.0f)*float32(size));
+
+	return data[t];
+}
+inline TexProject::vec4						TexProject::Texture::D1::GetPixelLinearClamp(float32 pos_) const
+{
+	static float32 t;
+	static uint32 nearPos,farPos;
+
+	t = block(pos_,0.0f,1.0f)*float32(size-1);
+
+	nearPos = uint32(std::floor(t));
+	farPos = uint32(std::ceil(t));
+
+	t -= float32(nearPos);
+
+	return bezier(data[nearPos],data[farPos],t);
+}
+
+#if __TEXPROJECT_OPENGL__
+
+inline TexProject::Texture::D1&				TexProject::Texture::D1::operator = (OpenGL::Texture& source)
+{
+	if(source.GetType() == OpenGL::Texture::Type::D1)
+	{
+		Create(source.GetSize().x);
+		auto t = source.GetDataRGBA32F();
+		for(uint32 i = 0; i < size; ++i)
+		{
+			data[i] = t[i];
+		}
+		delete[] t;
+	}
+	return *this;
+}
+
+#endif
+
+
+
+
 inline TexProject::Texture::D2::D2(const D2& source):
 	size(source.size),
 	data(new vec4[source.size.x*source.size.y])
@@ -447,6 +626,34 @@ inline void*								TexProject::Texture::D2::GetDataRGBA32F() const
 	}
 	return data_;
 }
+inline TexProject::vec4						TexProject::Texture::D2::GetPixelNearestClamp(const vec2& pos_) const
+{
+	static uvec2 t;
+
+	t = block(pos_,vec2(0.0f),vec2(1.0f))*vec2(size);
+
+	return data[t.y*size.x + t.x];
+}
+inline TexProject::vec4						TexProject::Texture::D2::GetPixelLinearClamp(const vec2& pos_) const
+{
+	static vec2 t;
+	static uvec2 nearPos,farPos;
+
+	t = block(pos_,vec2(0.0f),vec2(1.0f))*vec2(size-1);
+
+	nearPos = uvec2(uint32(std::floor(t.x)),uint32(std::floor(t.y)));
+	farPos = uvec2(uint32(std::ceil(t.x)),uint32(std::ceil(t.y)));
+
+	t -= vec2(nearPos);
+
+	return bezier
+	(
+		bezier(data[nearPos.y*size.x + nearPos.x],data[nearPos.y*size.x + farPos.x],t.x),
+		bezier(data[farPos.y*size.x + nearPos.x],data[farPos.y*size.x + farPos.x],t.x),
+		t.y
+	);
+}
+
 #if __TEXPROJECT_OPENGL__
 
 inline TexProject::Texture::D2&				TexProject::Texture::D2::operator = (OpenGL::Texture& source)
@@ -465,6 +672,139 @@ inline TexProject::Texture::D2&				TexProject::Texture::D2::operator = (OpenGL::
 }
 
 #endif
+
+
+
+
+inline TexProject::Texture::D3::D3(const D3& source):
+	size(source.size),
+	data(new vec4[source.size.x*source.size.y*source.size.z])
+{
+	for(uint32 i = 0; i < source.size.x*source.size.y*source.size.z; ++i) data[i] = source.data[i];
+}
+inline TexProject::Texture::D3::~D3()
+{
+	Delete();
+}
+inline void									TexProject::Texture::D3::Create(const uvec3& size_)
+{
+	Delete();
+
+	size = size_;
+
+	data = new vec4[size.x*size.y*size.z];
+}
+inline void									TexProject::Texture::D3::Delete()
+{
+	if(size.x*size.y*size.z > 0)
+	{
+		if(data) delete[] data;
+		size = 0;
+	}
+}
+inline void									TexProject::Texture::D3::Fill(const vec4& color_)
+{
+	for(uint32 i = 0; i < size.x*size.y*size.z; ++i) data[i] = color_;
+}
+inline TexProject::uvec3					TexProject::Texture::D3::GetSize() const
+{
+	return size;
+}
+inline void									TexProject::Texture::D3::SetPixel(const uvec3& pos_,const vec4& color_)
+{
+#if __TEXPROJECT_DEBUG__
+	if(pos_.x >= size.x || pos_.y >= size.y || pos_.z >= size.z) throw Exception::InvalidTextureCoord();
+#endif
+	data[(pos_.z*size.y + pos_.y)*size.x + pos_.x] = color_;
+}
+inline TexProject::vec4						TexProject::Texture::D3::GetPixel(const uvec3& pos_)
+{
+#if __TEXPROJECT_DEBUG__
+	if(pos_.x >= size.x || pos_.y >= size.y || pos_.z >= size.z) throw Exception::InvalidTextureCoord();
+#endif
+	return data[(pos_.z*size.y + pos_.y)*size.x + pos_.x];
+}
+inline TexProject::vec4*					TexProject::Texture::D3::GetData() const
+{
+	auto data_ = new vec4[size.x*size.y*size.z];
+	for(uint32 i = 0; i < size.x*size.y*size.z; ++i)
+	{
+		data_[i] = data[i];
+	}
+	return data_;
+}
+inline void*								TexProject::Texture::D3::GetDataRGBA32F() const
+{
+	auto data_ = new float32[size.x*size.y*size.z*4];
+	for(uint32 i = 0; i < size.x*size.y*size.z; ++i)
+	{
+		data_[i*4+0] = data[i].x;
+		data_[i*4+1] = data[i].y;
+		data_[i*4+2] = data[i].z;
+		data_[i*4+3] = data[i].w;
+	}
+	return data_;
+}
+inline TexProject::vec4						TexProject::Texture::D3::GetPixelNearestClamp(const vec3& pos_) const
+{
+	static uvec3 t;
+
+	t = uvec3(block(pos_,vec3(0.0f),vec3(1.0f))*vec3(size));
+
+	return data[(t.z*size.y + t.y)*size.x + t.x];
+}
+inline TexProject::vec4						TexProject::Texture::D3::GetPixelLinearClamp(const vec3& pos_) const
+{
+	static vec3 t;
+	static uvec3 nearPos,farPos;
+
+	t = block(pos_,vec3(0.0f),vec3(1.0f))*vec3(size-1);
+
+	nearPos = uvec3(uint32(std::floor(t.x)),uint32(std::floor(t.y)),uint32(std::floor(t.z)));
+	farPos = uvec3(uint32(std::ceil(t.x)),uint32(std::ceil(t.y)),uint32(std::ceil(t.z)));
+
+	t -= vec3(nearPos);
+
+	return bezier
+	(
+		bezier
+		(
+			//bezier(data[nearPos.y*size.x + nearPos.x],data[nearPos.y*size.x + farPos.x],t.x),
+			//bezier(data[farPos.y*size.x + nearPos.x],data[farPos.y*size.x + farPos.x],t.x),
+			bezier(data[(nearPos.z*size.y + nearPos.y)*size.x + nearPos.x],data[(nearPos.z*size.y + nearPos.y)*size.x + farPos.x],t.x),
+			bezier(data[(nearPos.z*size.y + farPos.y)*size.x+ nearPos.x],data[(nearPos.z*size.y + farPos.y)*size.x + farPos.x],t.x),
+			t.y
+		),
+		bezier
+		(
+			bezier(data[(farPos.z*size.y + nearPos.y)*size.x + nearPos.x],data[(farPos.z*size.y + nearPos.y)*size.x + farPos.x],t.x),
+			bezier(data[(farPos.z*size.y + farPos.y)*size.x + nearPos.x],data[(farPos.z*size.y + farPos.y)*size.x + farPos.x],t.x),
+			t.y
+		),
+		t.z
+	);
+}
+
+
+#if __TEXPROJECT_OPENGL__
+
+inline TexProject::Texture::D3&				TexProject::Texture::D3::operator = (OpenGL::Texture& source)
+{
+	if(source.GetType() == OpenGL::Texture::Type::D3)
+	{
+		Create(source.GetSize());
+		auto t = source.GetDataRGBA32F();
+		for(uint32 i = 0; i < size.x*size.y*size.z; ++i)
+		{
+			data[i] = t[i];
+		}
+		delete[] t;
+	}
+	return *this;
+}
+
+#endif
+
 
 
 
@@ -517,14 +857,14 @@ inline TexProject::uint32					TexProject::Texture::Cube::GetSize() const
 {
 	return size;
 }
-inline void									TexProject::Texture::Cube::SetPixel(Face& face_,const uvec2& pos_,const vec4& color_)
+inline void									TexProject::Texture::Cube::SetPixel(Face face_,const uvec2& pos_,const vec4& color_)
 {
 #if __TEXPROJECT_DEBUG__
 	if(pos_.x >= size || pos_.y >= size) throw Exception::InvalidTextureCoord();
 #endif
 	data[(uint32)face_][pos_.y*size + pos_.x] = color_;
 }
-inline TexProject::vec4						TexProject::Texture::Cube::GetPixel(Face& face_,const uvec2& pos_)
+inline TexProject::vec4						TexProject::Texture::Cube::GetPixel(Face face_,const uvec2& pos_)
 {
 #if __TEXPROJECT_DEBUG__
 	if(pos_.x >= size || pos_.y >= size) throw Exception::InvalidTextureCoord();
@@ -670,6 +1010,25 @@ inline										TexProject::OpenGL::Texture::~Texture()
 {
 	Delete();
 }
+inline TexProject::OpenGL::Texture&			TexProject::OpenGL::Texture::operator = (const TexProject::Texture::D1& source)
+{
+	{
+		auto data_ = source.GetDataRGBA32F();
+		Create
+		(
+			Type::D1,
+			IFormat::RGBA32F,
+			Format::RGBA,
+			Component::Float32,
+			Wrap::Repeat,
+			Filter::Mipmap,
+			uvec3(source.GetSize(),0,0),
+			data_
+		);
+		delete[] data_;
+	}
+	return *this;
+}
 inline TexProject::OpenGL::Texture&			TexProject::OpenGL::Texture::operator = (const TexProject::Texture::D2& source)
 {
 	{
@@ -683,6 +1042,25 @@ inline TexProject::OpenGL::Texture&			TexProject::OpenGL::Texture::operator = (c
 			Wrap::Repeat,
 			Filter::Mipmap,
 			uvec3(source.GetSize(),0),
+			data_
+		);
+		delete[] data_;
+	}
+	return *this;
+}
+inline TexProject::OpenGL::Texture&			TexProject::OpenGL::Texture::operator = (const TexProject::Texture::D3& source)
+{
+	{
+		auto data_ = source.GetDataRGBA32F();
+		Create
+		(
+			Type::D3,
+			IFormat::RGBA32F,
+			Format::RGBA,
+			Component::Float32,
+			Wrap::Repeat,
+			Filter::Mipmap,
+			source.GetSize(),
 			data_
 		);
 		delete[] data_;
@@ -745,37 +1123,39 @@ inline void									TexProject::OpenGL::Texture::Create(Type type_,InternalForma
 	}
 	switch(type)
 	{
-		case Type::D1: break;
-		case Type::D1Array: break;
-		case Type::D2:
-			glTexImage2D((GLenum)type,0,(GLint)internalFormat,size.x,size.y,0,(GLenum)format,(GLenum)component,data_);
+		case Type::D1:
+		{
+			glTexImage1D((GLenum)type,0,(GLint)internalFormat,size.x,0,(GLenum)format,(GLenum)component,data_);
+		}
 		break;
-		case Type::D2Array: break;
-		case Type::D3: break;
+		//case Type::D1Array: break;
+		case Type::D2:
+		{
+			glTexImage2D((GLenum)type,0,(GLint)internalFormat,size.x,size.y,0,(GLenum)format,(GLenum)component,data_);
+		}
+		break;
+		//case Type::D2Array: break;
+		case Type::D3:
+		{
+			glTexImage3D((GLenum)type,0,(GLint)internalFormat,size.x,size.y,size.z,0,(GLenum)format,(GLenum)component,data_);
+		}
+		break;
 		case Type::Cube:
+		{
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[0] : NULL);
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[1] : NULL);
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[2] : NULL);
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[3] : NULL);
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[4] : NULL);
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,0,(GLint)internalFormat,size.x,size.x,0,(GLenum)format,(GLenum)component,data_ ? ((void**)data_)[5] : NULL);
+		}
 		break;
-		case Type::CubeArray: break;
+		//case Type::CubeArray: break;
 		default: throw Exception(); break;
 	}
 	{
 		if(filter.min != Filter::Min::Off && filter.min != Filter::Min::Linear) glGenerateMipmap((GLenum)type);
 	}
-	/*{
-		glGenTextures(1,&texture);
-		glBindTexture(GL_TEXTURE_2D,texture);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,64,64,0,GL_RGBA,GL_FLOAT,data_);
-	}*/
 
 #if __TEXPROJECT_DEBUG__
 	OpenGL::ErrorTest();

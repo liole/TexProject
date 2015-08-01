@@ -10,6 +10,7 @@ bool										TexProject::OpenGL::initFuncTexture = false;
 PFNGLACTIVETEXTUREPROC						TexProject::OpenGL::glActiveTexture = nullptr;
 PFNGLGETTEXPARAMETERIIVPROC					TexProject::OpenGL::glGetTexParameterIiv = nullptr;
 PFNGLGENERATEMIPMAPPROC						TexProject::OpenGL::glGenerateMipmap = nullptr;
+PFNGLTEXIMAGE3DPROC							TexProject::OpenGL::glTexImage3D = nullptr;
 // Shader func
 bool										TexProject::OpenGL::initFuncShader = false;
 PFNGLCREATEPROGRAMPROC						TexProject::OpenGL::glCreateProgram = nullptr;
@@ -85,11 +86,13 @@ bool										TexProject::OpenGL::Init()
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLACTIVETEXTUREPROC,glActiveTexture);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGETTEXPARAMETERIIVPROC,glGetTexParameterIiv);
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLGENERATEMIPMAPPROC,glGenerateMipmap);
+	_TEXPROJECT_OPENGL_GET_PROC(PFNGLTEXIMAGE3DPROC,glTexImage3D);
 	initFuncTexture =
 	(
 		glActiveTexture != nullptr &&
 		glGetTexParameterIiv != nullptr &&
-		glGenerateMipmap != nullptr
+		glGenerateMipmap != nullptr &&
+		glTexImage3D != nullptr
 	);
 	// Shader Func
 	_TEXPROJECT_OPENGL_GET_PROC(PFNGLCREATEPROGRAMPROC,glCreateProgram);
