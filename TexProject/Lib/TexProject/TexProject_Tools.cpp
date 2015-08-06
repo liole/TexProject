@@ -130,6 +130,20 @@ void TexProject::Tool::Init(Window::Render* window_)
 		);
 	}
 
+	{
+		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
+		t->SetSize(vec2(24.0f));
+		t->SetPos(vec2(4.0f) + vec2(32.0f * 6, 0.0f));
+		t->SetAction
+			(
+			Interface::Item::ActionTypes::Click,
+			[](Interface::Item* item) -> void
+		{
+			Tool::Add<Tool::Generator::D2::Noise::Worley>(item->GetWindow());
+		}
+		);
+	}
+
 }
 void TexProject::Tool::Free()
 {
@@ -682,6 +696,284 @@ void					TexProject::Tool::Generator::D2::Noise::Simple::InitFocus(Interface::Pa
 void					TexProject::Tool::Generator::D2::Noise::Simple::FreeFocus(Interface::Panel::Default* panel)
 {
 	if(focusPanel)
+	{
+		panel->RemovePanel(focusPanel);
+		focusPanel = nullptr;
+	}
+}
+
+//Tool::Generator::D2::Noise::Worley
+TexProject::Tool::Generator::D2::Noise::Worley::Worley(Window::Render* window_):
+Tool::D2(window_)
+{
+	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
+	panelBase->SetColor(vec4(0.64f, 0.64f, 0.64f, 1.0f));
+	panelBase->SetSize(vec2(200.0f));
+	panelBase->SetUserData(this);
+	panelBase->SetAction
+		(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+	{
+		Tool::SetFocus((Tool::Generator::D2::Noise::Simple*)item->GetUserData());
+	}
+	);
+	panelBase->SetAction
+		(
+		Interface::Item::ActionTypes::Destruction,
+		[](Interface::Item* item)
+	{
+		((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->destruction = true;
+	}
+	);
+
+	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
+	panelTitle->SetSize(vec2(160.0f, 14.0f));
+	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f - panelTitle->GetSize().x*0.5f, panelBase->GetSize().y - panelTitle->GetSize().y));
+	panelTitle->SetText("Worley");
+	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
+
+	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
+	panelImage->SetSize(vec2(128.0f));
+	panelImage->SetPos((panelBase->GetSize().x - panelImage->GetSize())*0.5f);
+
+	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
+	buttonRefresh->SetSize(vec2(64.0f, 16.0f));
+	buttonRefresh->SetPos(vec2((panelBase->GetSize().x - buttonRefresh->GetSize().x)*0.5f, 4.0f));
+	buttonRefresh->SetUserData(this);
+	buttonRefresh->SetAction
+	(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+	{
+		((Tool::Generator::D2::Noise::Worley*)item->GetUserData())->Refresh();
+	}
+	);
+	
+	buttonConnectorOut = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::OutputConnector);
+	buttonConnectorOut->SetSize(vec2(8.0f));
+	buttonConnectorOut->SetPos(vec2(panelBase->GetSize().x - buttonConnectorOut->GetSize().x - 4.0f, (panelBase->GetSize().y - buttonConnectorOut->GetSize().y)*0.5f));
+	buttonConnectorOut->connectDirection = vec2(64.0f, 0.0f);
+	buttonConnectorOut->SetUserData(new OutputData(this, Texture::Type::D2, nullptr), true);
+
+	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
+	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
+	buttonClose->SetSize(vec2(16.0f));
+}
+void					TexProject::Tool::Generator::D2::Noise::Worley::Loop()
+{
+	Basic::Loop();
+
+	if (panelBase)
+	{
+		panelBase->SetAnchor(Tool::GetAnchor());
+	}
+
+	if (focusPanel)
+	{
+		focusPanelSizeXText->SetText(std::to_string(size.x));
+		focusPanelSizeYText->SetText(std::to_string(size.y));
+		if (focusButtonSliderDotsNumber->GetValue() == 0)
+			DotsNumber = 1;
+		else
+			DotsNumber = focusButtonSliderDotsNumber->GetValue() * 200.0f;
+	}
+
+	if (generationFlag)
+	{
+		if (generationFinish)
+		{
+			generationThread.join();
+			generationFlag = false;
+
+			texture = generationTexture;
+			generationTexture = nullptr;
+
+			((OutputData*)buttonConnectorOut->GetUserData())->texture = texture;
+
+			panelImage->SetImage(texture);
+
+			buttonConnectorOut->RefreshObservers();
+		}
+	}
+
+}
+void					TexProject::Tool::Generator::D2::Noise::Worley::Refresh()
+{
+	if (!generationFlag)
+	{
+		panelImage->SetImage(nullptr);
+
+		((OutputData*)buttonConnectorOut->GetUserData())->texture = nullptr;
+
+		if (texture) { delete texture; texture = nullptr; }
+
+		generationTexture = new Texture::D2;
+		generationDotsNumber = DotsNumber;
+		generationSize = size;
+		generationTexture->Create(generationSize);
+		generationFlag = true;
+		generationFinish = false;
+		generationThread = std::thread
+		(
+		[this]()
+		{
+			uint32 width = generationSize.x;
+			float32 wcoef = 1.0f / width;
+
+			uint32 height = generationSize.y;
+			float32 hcoef = 1.0f / height;
+			vec2* dotArr = new vec2[generationDotsNumber];
+
+			for (uint32 i = 0; i < generationDotsNumber; ++i)
+			{
+				dotArr[i].x = rnd(0.0f, 1.0f);// (rand() % width)*wcoef;
+				dotArr[i].y = rnd(0.0f, 1.0f);
+			}
+
+
+			vec4 color;
+			for (uint32 x = 0; x < width; ++x)
+			{
+				for (uint32 y = 0; y < height; ++y)
+				{
+					float32 mindist = 2.0f;
+
+
+					for (int i = 0; i < generationDotsNumber; ++i)
+					{
+						float32 absx = fabs(float32(x)*wcoef - dotArr[i].x);
+						float32 absy = fabs(float32(y)*hcoef - dotArr[i].y);
+						if (absx > 1.0f / 2) absx = 1.0f - absx;
+						if (absy > 1.0f / 2) absy = 1.0f - absy;
+						float32 dist = sqrtf(absx*absx + absy*absy);
+						if (dist < mindist) mindist = dist;
+					}
+
+
+					color.x = (1.0f - mindist)*1.0f;
+					color.y = (1.0f - mindist)*1.0f;
+					color.z = (1.0f - mindist)*1.0f;
+					color.w = (1.0f - mindist)*1.0f;
+
+					generationTexture->SetPixel(uvec2(x, y), color);
+				}
+			}
+
+			generationFinish = true;
+		}
+		);
+	}
+
+	
+
+	((OutputData*)buttonConnectorOut->GetUserData())->texture = texture;
+	buttonConnectorOut->RefreshObservers();
+
+}
+void					TexProject::Tool::Generator::D2::Noise::Worley::InitFocus(Interface::Panel::Default* panel)
+{
+	focusPanel = (Interface::Panel::Default*)panel->AddPanel(Interface::PanelTypes::Default);
+	focusPanel->SetColor(vec4(vec3(0.32f), 1.0f));
+	focusPanel->SetSize(vec2(panel->GetSize().x - 8.0f, 300.0f));
+	focusPanel->SetPos(vec2(4.0f, panel->GetSize().y - focusPanel->GetSize().y - 4.0f));
+	
+	auto size_ = focusPanel->GetSize();
+
+	focusButtonRefresh = (Interface::Button::Default*)focusPanel->AddButton(Interface::ButtonType::Default);
+	focusButtonRefresh->SetSize(vec2(80.0f, 20.0f));
+	focusButtonRefresh->SetPos(vec2((size_.x - focusButtonRefresh->GetSize().x)*0.5f, size_.y - focusButtonRefresh->GetSize().y - 4.0f));
+	focusButtonRefresh->SetUserData(this);
+	focusButtonRefresh->SetAction
+		(
+		Interface::Item::ActionTypes::Click,
+		[](Interface::Item* item)
+	{
+		((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->Refresh();
+	}
+	);
+	focusPanelSizeX = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
+	focusPanelSizeX->SetSize(vec2(64.0f, 16.0f));
+	focusPanelSizeX->SetPos(vec2(4.0f, size_.y - 32.0f * 2));
+
+	focusPanelSizeXText = (Interface::Panel::Text*)focusPanelSizeX->AddPanel(Interface::PanelTypes::Text);
+	focusPanelSizeXText->SetSize(vec2(40.0f, 14.0f));
+	focusPanelSizeXText->SetPos(vec2(1.0f));
+	focusPanelSizeXText->SetText("test");
+	focusPanelSizeXText->SetColor(vec4(vec3(0.5f), 1.0f));
+
+	{
+		auto t1 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
+		t1->SetSize(vec2(10.0f, 6.0f));
+		t1->SetPos(vec2(focusPanelSizeX->GetSize().x - 11.0f, 9.0f));
+		t1->SetUserData(this);
+		auto ft1 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Noise::Worley*)item->GetUserData())->size.x;
+			if (t < 1024) ++t;
+		};
+		t1->SetAction(Interface::Item::ActionTypes::Click, ft1);
+		t1->SetAction(Interface::Item::ActionTypes::Clamp, ft1);
+		auto t2 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
+		t2->SetSize(vec2(10.0f, 6.0f));
+		t2->SetPos(vec2(focusPanelSizeX->GetSize().x - 11.0f, 1.0f));
+		t2->SetUserData(this);
+		auto ft2 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Noise::Worley*)item->GetUserData())->size.x;
+			if (t > 0) --t;
+		};
+		t2->SetAction(Interface::Item::ActionTypes::Click, ft2);
+		t2->SetAction(Interface::Item::ActionTypes::Clamp, ft2);
+	}
+
+	focusPanelSizeY = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
+	focusPanelSizeY->SetSize(vec2(64.0f, 16.0f));
+	focusPanelSizeY->SetPos(vec2(focusPanelSizeX->GetPos().x + focusPanelSizeX->GetSize().x + 4.0f, size_.y - 32.0f * 2));
+
+	focusPanelSizeYText = (Interface::Panel::Text*)focusPanelSizeY->AddPanel(Interface::PanelTypes::Text);
+	focusPanelSizeYText->SetSize(vec2(40.0f, 14.0f));
+	focusPanelSizeYText->SetPos(vec2(1.0f));
+	focusPanelSizeYText->SetText("test");
+	focusPanelSizeYText->SetColor(vec4(vec3(0.5f), 1.0f));
+
+	{
+		auto t1 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
+		t1->SetSize(vec2(10.0f, 6.0f));
+		t1->SetPos(vec2(focusPanelSizeY->GetSize().x - 11.0f, 9.0f));
+		t1->SetUserData(this);
+		auto ft1 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Noise::Worley*)item->GetUserData())->size.y;
+			if (t < 1024) ++t;
+		};
+		t1->SetAction(Interface::Item::ActionTypes::Click, ft1);
+		t1->SetAction(Interface::Item::ActionTypes::Clamp, ft1);
+		auto t2 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
+		t2->SetSize(vec2(10.0f, 6.0f));
+		t2->SetPos(vec2(focusPanelSizeY->GetSize().x - 11.0f, 1.0f));
+		t2->SetUserData(this);
+		auto ft2 = [](Interface::Item* item)
+		{
+			auto &t = ((Tool::Generator::D2::Noise::Worley*)item->GetUserData())->size.y;
+			if (t > 0) --t;
+		};
+		t2->SetAction(Interface::Item::ActionTypes::Click, ft2);
+		t2->SetAction(Interface::Item::ActionTypes::Clamp, ft2);
+	}
+
+	
+	focusButtonSliderDotsNumber = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonTypes::Slider);
+	focusButtonSliderDotsNumber->SetSize(vec2(focusPanelSizeY->GetLocalPos().x + focusPanelSizeY->GetSize().x - focusPanelSizeX->GetLocalPos().x, focusPanelSizeX->GetSize().y));
+	focusButtonSliderDotsNumber->SetPos(vec2(focusPanelSizeX->GetLocalPos().x,focusPanelSizeX->GetLocalPos().y - focusPanelSizeX->GetSize().y - 8.0f));
+	focusButtonSliderDotsNumber->SetColor(focusPanelSizeX->GetColor());
+	focusButtonSliderDotsNumber->SetUserData(this);
+	focusButtonSliderDotsNumber->SetValue(DotsNumber/200.0f);
+	
+}
+void					TexProject::Tool::Generator::D2::Noise::Worley::FreeFocus(Interface::Panel::Default* panel)
+{
+	if (focusPanel)
 	{
 		panel->RemovePanel(focusPanel);
 		focusPanel = nullptr;

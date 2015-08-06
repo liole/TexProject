@@ -181,6 +181,44 @@ namespace TexProject
 					struct Worley:
 						private Tool::D2
 					{
+						friend Tool;
+					private:
+						Interface::Panel::Default*					panelBase = nullptr;
+						Interface::Panel::Text*						panelTitle = nullptr;
+						Interface::Panel::Image*					panelImage = nullptr;
+						Interface::Button::Default*					buttonRefresh = nullptr;
+						Interface::Button::Connector*				buttonConnectorOut = nullptr;
+						Interface::Button::Default*					buttonClose = nullptr;
+
+						Interface::Panel::Default*					focusPanel = nullptr;
+						Interface::Panel::Default*					focusPanelSizeX = nullptr;
+						Interface::Panel::Default*					focusPanelSizeY = nullptr;
+						Interface::Panel::Text*						focusPanelSizeXText = nullptr;
+						Interface::Panel::Text*						focusPanelSizeYText = nullptr;
+						Interface::Button::Default*					focusButtonRefresh = nullptr;
+						Interface::Button::Slider*					focusButtonSliderDotsNumber = nullptr;
+
+						uvec2										generationSize;
+						uint32										generationDotsNumber;
+						bool										generationFlag = false;
+						volatile std::atomic<bool>					generationFinish = false;
+						std::thread									generationThread;
+						Texture::D2*								generationTexture = nullptr;
+
+						uint32										DotsNumber = 50;
+						uvec2										size = uvec2(128, 128);
+						Texture::D2*								texture = nullptr;
+
+						Worley(Window::Render* window_);
+						~Worley(){}
+
+						
+						virtual void								Loop() override;
+						virtual void								Refresh() override;
+						//virtual bool								IsClean() override;
+
+						virtual void								InitFocus(Interface::Panel::Default* panel) override;
+						virtual void								FreeFocus(Interface::Panel::Default* panel) override;
 					};
 					struct Simplex:
 						private Tool::D2
