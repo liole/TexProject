@@ -351,7 +351,7 @@ namespace TexProject
 
 	//
 	class	Lexer;
-	struct	Parser;
+	class	Parser;
 	struct	Checker;
 	struct	Translator;
 	struct	Script;
