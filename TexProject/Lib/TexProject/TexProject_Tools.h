@@ -37,7 +37,9 @@ namespace TexProject
 			namespace Correction
 			{
 				class Grayscale;
+				class Blur;
 			}
+			class HeightToNormal;
 		}
 		namespace Viewer
 		{

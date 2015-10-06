@@ -265,3 +265,5 @@ TexProject/TexProject.vcxproj.filters
 TexProject/TexProject.vcxproj
 TexProject/TexProject.vcxproj.filters
 TexProject/TexProject.vcxproj
+TexProject/Lib/TexProject/TexProject_Script_Parser.h
+TexProject/Lib/TexProject/TexProject_Script_Parser.h

@@ -185,7 +185,7 @@ namespace TexProject
 #pragma endregion
 #pragma region RTGScript
 	class	Lexer;
-	struct	Parser;
+	class	Parser;
 	struct	Checker;
 	struct	Translator;
 	struct	Script;
