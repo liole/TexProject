@@ -245,6 +245,13 @@ TexProject::GUI::Button*					TexProject::GraphicUserInterface::Panel::AddButton(
 }
 #pragma endregion
 #pragma region Basic
+TexProject::GraphicUserInterface::Panel::~Panel()
+{
+	for(auto i : item)
+	{
+		delete i;
+	}
+}
 void										TexProject::GraphicUserInterface::Panel::Loop()
 {
 	Item::Loop();
@@ -488,7 +495,16 @@ TexProject::GUI::Buttons::Connector::Connector(GUI* gui_,Item* parent_):
 }
 TexProject::GUI::Buttons::Connector::~Connector()
 {
-
+	if(binder == this) binder = nullptr;
+	if(oBinder == this) oBinder = nullptr;
+	if(target)
+	{
+		target->observers.remove(this);
+	}
+	for(auto i : observers)
+	{
+		i->target = nullptr;
+	}
 }
 TexProject::GUI::Buttons::Connector::Type						TexProject::GUI::Buttons::Connector::GetType() const
 {

@@ -234,7 +234,7 @@ namespace TexProject
 #pragma endregion
 #pragma region Basic
 											Panel(GUI* gui_,Item* parent_ = nullptr);
-			virtual							~Panel() = default;
+			virtual							~Panel() override;
 			virtual void					Loop() override;
 #pragma endregion
 #pragma region Child

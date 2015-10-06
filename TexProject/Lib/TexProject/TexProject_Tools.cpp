@@ -146,6 +146,7 @@ TexProject::Tool::Tool(ToolSet* toolSet_):
 			}
 		);
 		panelFieldBase->SetSize(vec2(180.0f));
+		panelFieldBase->SetPos(vec2(toolSet->GetWindow()->GetSize())*0.5f - toolSet->anchor - panelFieldBase->GetSize()*0.5f);
 		panelFieldBase->SetColor(vec4(vec3(0.32f),1.0f));
 	}
 
