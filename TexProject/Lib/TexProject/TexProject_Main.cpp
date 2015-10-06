@@ -7,9 +7,6 @@ using namespace TexProject;
 #include <ctime>
 #endif
 
-#include <TexProject/TexProject_DevIL.h>
-#include <TexProject/TexProject_Textures.h>
-
 
 #if __TEXPROJECT_WIN__
 
@@ -33,7 +30,15 @@ int WINAPI				WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLin
 		EntryPointData::nShowCmd = nShowCmd;
 	}
 
-	EntryPointSafeCall();
+	srand(static_cast <unsigned> (time(0)));
+	//try
+	{
+		Main();
+	}
+	/*catch(Exception exc)
+	{
+		Message(exc.Get());
+	}*/
 
 	return 0;
 }
@@ -47,19 +52,6 @@ int WINAPI				WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLin
 #endif
 #endif
 #endif
-
-
-void					TexProject::EntryPointSafeCall()
-{
-	srand(static_cast <unsigned> (time(0)));
-
-	DevIL::Init();
-	Window::Init();
-
-	ErrorException::SecureCall(Main);
-
-	Window::Free();
-}
 
 
 void					TexProject::Message(const string& text)
@@ -82,7 +74,7 @@ void					TexProject::Error(const string& text)
 {
 #ifdef __TEXPROJECT_WIN__
 
-	throw ErrorException(text);
+	throw Exception(text);
 
 #else
 #ifdef __TEXPROJECT_LIN__

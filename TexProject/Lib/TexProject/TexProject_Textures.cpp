@@ -1,14 +1,16 @@
 #include "TexProject_Textures.h"
 using namespace TexProject;
-using namespace TexProject::OpenGL;
-
 
 #include <TexProject/TexProject_Windows.h>
 
+#if __TEXPROJECT_OPENGL__
+#include <TexProject/TexProject_OpenGL.h>
+using namespace TexProject::OpenGL;
+#endif
 
 
 
-bool					TexProject::Texture::D2::Load(const string& filename)
+bool										TexProject::Texture::D2::Load(const string& filename)
 {
 #if __TEXPROJECT_DEVIL__
 	return _DevIL_Load(filename);
@@ -16,8 +18,7 @@ bool					TexProject::Texture::D2::Load(const string& filename)
 	throw TexProject::Exception();
 }
 #if __TEXPROJECT_DEVIL__
-
-bool					TexProject::Texture::D2::_DevIL_Load(const string& filename)
+bool										TexProject::Texture::D2::_DevIL_Load(const string& filename)
 {
 	Delete();
 
@@ -185,7 +186,6 @@ bool					TexProject::Texture::D2::_DevIL_Load(const string& filename)
 				}
 			}
 			data[y*size.x + x] = color;
-			//Get(x,y,z) = color;
 		}
 	}
 
@@ -193,7 +193,23 @@ bool					TexProject::Texture::D2::_DevIL_Load(const string& filename)
 
 	return true;
 }
+#endif
+#if __TEXPROJECT_OPENGL__
 
+TexProject::Texture::D2&					TexProject::Texture::D2::operator = (OpenGL::Texture& source)
+{
+	if(source.GetType() == OpenGL::Texture::Type::D2)
+	{
+		Create(source.GetSize().xy());
+		auto t = source.GetDataRGBA32F();
+		for(uint32 i = 0; i < size.x*size.y; ++i)
+		{
+			data[i] = t[i];
+		}
+		delete[] t;
+	}
+	return *this;
+}
 #endif
 
 
@@ -205,7 +221,6 @@ bool					TexProject::Texture::Cube::Load(const string& filename)
 	throw TexProject::Exception();
 }
 #if __TEXPROJECT_DEVIL__
-
 bool					TexProject::Texture::Cube::_DevIL_Load(const string& filename)
 {
 	Delete();
@@ -385,104 +400,9 @@ bool					TexProject::Texture::Cube::_DevIL_Load(const string& filename)
 
 	return true;
 }
-
 #endif
 
 
-
-
-#if __TEXPROJECT_OPENGL__
-
-
-const TexProject::OpenGL::Texture::Filter	TexProject::OpenGL::Texture::Filter::Off(Minification::Off,Magnification::Off);
-const TexProject::OpenGL::Texture::Filter	TexProject::OpenGL::Texture::Filter::Linear(Minification::Linear,Magnification::Linear);
-const TexProject::OpenGL::Texture::Filter	TexProject::OpenGL::Texture::Filter::Mipmap(Minification::Mipmap,Magnification::Linear);
-
-
-#endif
-
-/*
-// Generator::Noise
-TexProject::Texture*			TexProject::Generator::Noise::SimpleMono(const uvec3& size)
-{
-	auto tex = new Texture;
-	tex->Resize(size);
-
-	for(uint32 x = 0; x < tex->GetSize().x; ++x)
-	for(uint32 y = 0; y < tex->GetSize().y; ++y)
-	for(uint32 z = 0; z < tex->GetSize().z; ++z)
-	{
-		tex->SetPixel(uvec3(x,y,z),vec4(vec3(rnd()),1.0f));
-	}
-
-	return tex;
-}
-TexProject::Texture*			TexProject::Generator::Noise::Perlin(const uvec3& size)
-{
-	auto noiseTex = Noise::SimpleMono(size);
-	auto tex = new Texture; tex->Resize(size);
-
-	const uint32 iterations = 8;
-
-	for(uint32 i = 1; i < iterations; ++i)
-	{
-		float32 v = pow(float32(i)/iterations*(3.0f/5.0f), 1.5f);
-		vec3 t = (1.0f / pow(2.0f,float32(i))) / vec3(size);
-		for(uint32 x = 0; x < tex->GetSize().x; ++x)
-		for(uint32 y = 0; y < tex->GetSize().y; ++y)
-		for(uint32 z = 0; z < tex->GetSize().z; ++z)
-		{
-			tex->SetPixel
-			(
-				uvec3(x,y,z), 
-				block
-				(
-					tex->GetPixel(uvec3(x,y,z)) +
-					block(noiseTex->GetPixelCosine(vec3(float32(x),float32(y),float32(z))*t)*v,vec4(0.0f),vec4(1.0f)),
-					vec4(0.0f),
-					vec4(1.0f)
-				)
-			);
-		}
-	}
-
-	return tex;
-}
-
-// Generator::Filter
-TexProject::Texture*			TexProject::Filter::Noise::Perlin(Texture* in,uint32 iterations)
-{
-	auto noiseTex = in;
-	auto tex = new Texture; tex->Resize(noiseTex->GetSize());
-
-	float32 v = 6.0f/10.0f;
-	for(uint32 i = 1; i < iterations; ++i)
-	{
-		//v *= v;
-		v = (1.0f - v) * v;
-
-		vec3 t = (1.0f / pow(2.0f,float32(i))) / vec3(noiseTex->GetSize());
-		for(uint32 x = 0; x < tex->GetSize().x; ++x)
-		for(uint32 y = 0; y < tex->GetSize().y; ++y)
-		for(uint32 z = 0; z < tex->GetSize().z; ++z)
-		{
-			tex->SetPixel
-			(
-				uvec3(x,y,z), 
-				block
-				(
-					tex->GetPixel(uvec3(x,y,z)) +
-					block(noiseTex->GetPixelCosine(vec3(float32(x),float32(y),float32(z))*t)*v,vec4(0.0f),vec4(1.0f)),
-					vec4(0.0f),
-					vec4(1.0f)
-				)
-			);
-		}
-	}
-
-	return tex;
-}
-*/
 
 
 

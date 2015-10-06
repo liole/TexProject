@@ -4,36 +4,29 @@ using namespace TexProject;
 
 #if __TEXPROJECT_DEVIL__
 
-bool					TexProject::DevIL::isInit = false;
-
-bool					TexProject::DevIL::Init()
+TexProject::DevIL::Initer::Initer()
 {
-	if(!isInit)
-	{
-		if(ilGetInteger(IL_VERSION_NUM) < IL_VERSION) return false;
-		if(iluGetInteger(ILU_VERSION_NUM) < ILU_VERSION) return false;
-		if(ilutGetInteger(ILUT_VERSION_NUM) < ILUT_VERSION) return false;
+	if(ilGetInteger(IL_VERSION_NUM) < IL_VERSION) throw Exception();
+	if(iluGetInteger(ILU_VERSION_NUM) < ILU_VERSION) throw Exception();
+	if(ilutGetInteger(ILUT_VERSION_NUM) < ILUT_VERSION) throw Exception();
 
-		ilInit();
-		iluInit();
-		ilutInit();
+	ilInit();
+	iluInit();
+	ilutInit();
 
-		ilEnable(IL_FILE_OVERWRITE);
-		ilSetInteger(IL_KEEP_DXTC_DATA,IL_TRUE);
-		ilutRenderer(ILUT_OPENGL);
-		ilutEnable(ILUT_GL_AUTODETECT_TEXTURE_TARGET);
-		ilutEnable(ILUT_OPENGL_CONV);
-		ilutEnable(ILUT_GL_USE_S3TC);
+	ilEnable(IL_FILE_OVERWRITE);
+	ilSetInteger(IL_KEEP_DXTC_DATA,IL_TRUE);
+	ilutRenderer(ILUT_OPENGL);
+	ilutEnable(ILUT_GL_AUTODETECT_TEXTURE_TARGET);
+	ilutEnable(ILUT_OPENGL_CONV);
+	ilutEnable(ILUT_GL_USE_S3TC);
 
-		ilEnable(IL_ORIGIN_SET);
-		ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
+	ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
 
-		DevIL::ErrorTest();
+	if(DevIL::ErrorTest()) throw Exception();
 
-		isInit = true;
-	}
-
-	return true;
+	isInit = true;
 }
 bool					TexProject::DevIL::ErrorTest()
 {

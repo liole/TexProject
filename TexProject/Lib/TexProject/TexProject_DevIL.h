@@ -22,9 +22,15 @@ namespace TexProject
 #if __TEXPROJECT_DEVIL__
 	namespace DevIL
 	{
-		extern bool							isInit;
+		class Initer
+		{
+		protected:
+			bool							isInit = false;
+		public:
+			Initer();
+		};
+		static Initer						initer;
 
-		bool								Init();
 		bool								ErrorTest();
 	}
 #endif

@@ -1,10 +1,9 @@
-﻿#include "TexProject_OpenGL.h"
+#include "TexProject_OpenGL.h"
 using namespace TexProject;
 
 
-#ifdef __TEXPROJECT_OPENGL__
-
-
+#if __TEXPROJECT_OPENGL__
+#pragma region Func
 // Texture func
 bool										TexProject::OpenGL::initFuncTexture = false;
 PFNGLACTIVETEXTUREPROC						TexProject::OpenGL::glActiveTexture = nullptr;
@@ -72,14 +71,68 @@ PFNGLCHECKFRAMEBUFFERSTATUSPROC				TexProject::OpenGL::glCheckFramebufferStatus 
 PFNGLFRAMEBUFFERTEXTUREPROC					TexProject::OpenGL::glFramebufferTexture = nullptr;
 PFNGLFRAMEBUFFERTEXTURE2DPROC				TexProject::OpenGL::glFramebufferTexture2D = nullptr;
 PFNGLDRAWBUFFERSPROC						TexProject::OpenGL::glDrawBuffers = nullptr;
-
-
-bool										TexProject::OpenGL::isInit = false;
-bool										TexProject::OpenGL::initFunc = false;
-
-bool										TexProject::OpenGL::Init()
+#pragma endregion
+#pragma region Initer
+TexProject::OpenGL::Initer										TexProject::OpenGL::initer;
+PFNWGLCREATECONTEXTATTRIBSARBPROC								TexProject::OpenGL::wglCreateContextAttribsARB = NULL;
+TexProject::OpenGL::Initer::Initer()
 {
-	if(isInit) return true;
+#if __TEXPROJECT_WIN__
+	WNDCLASS tempWinClass;
+
+	DWORD style =	WS_DISABLED;
+
+	tempWinClass.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	tempWinClass.lpfnWndProc	= DefWindowProc;
+	tempWinClass.cbClsExtra		= NULL;
+	tempWinClass.cbWndExtra		= NULL;
+	tempWinClass.hInstance		= EntryPointData::hInstance;
+	tempWinClass.hIcon			= LoadIcon(NULL,IDI_APPLICATION);
+	tempWinClass.hCursor		= LoadCursor(NULL,IDC_ARROW);
+	tempWinClass.hbrBackground	= (HBRUSH)GetStockObject(GRAY_BRUSH);
+	tempWinClass.lpszMenuName	= NULL;
+	tempWinClass.lpszClassName	= "Temp Window Class";
+
+	if(!RegisterClass(&tempWinClass)) throw Exception("Cannot register temp class.");
+
+	HWND tempWin = CreateWindow
+	(
+		"Temp Window Class",
+		"Temp Window",
+		style,
+		0,0,0,0,
+		NULL,NULL,
+		EntryPointData::hInstance,
+		NULL
+	);
+
+	if(!tempWin) throw Exception("Cannot create window.");
+
+	HDC tempDC = GetDC(tempWin);
+	if(!tempDC) throw Exception("Cannot create Temp Device Context.");
+
+	PIXELFORMATDESCRIPTOR pfd;
+	memset(&pfd,0,sizeof(pfd));
+	pfd.nSize			= sizeof(pfd);
+	pfd.nVersion		= 1;
+	pfd.dwFlags			= PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	pfd.iPixelType		= PFD_TYPE_RGBA;
+	pfd.cColorBits		= 32;
+	pfd.cStencilBits	= 32;
+	pfd.cDepthBits		= 32;
+
+	int PixelFormat = ChoosePixelFormat(tempDC,&pfd);
+	if(!PixelFormat) throw Exception("Can't Chose A Pixel Format.\nChoosePixelFormat");
+
+	if(!SetPixelFormat(tempDC,PixelFormat,&pfd)) throw Exception("Can't Set A Pixel Format.\nSetPixelFormat");
+
+	HGLRC tempRC = wglCreateContext(tempDC);
+	if(!tempRC) throw Exception("Can't Create Temp GL Render Context.\nwglCreateContext");
+
+	if(!wglMakeCurrent(tempDC,tempRC)) throw Exception("Can't Activate Temp GL Render Context.\nwglMakeCurrent");
+
+	wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
+#endif
 
 	// GL_VERSION_2_0
 	// Texture Func
@@ -210,19 +263,100 @@ bool										TexProject::OpenGL::Init()
 	);
 
 
-	initFunc =	initFuncShader &&
-				initFuncTexture &&
-				initFuncBuffer &&
-				initFuncFramebuffer;
+	auto initFunc =	initFuncShader &&
+					initFuncTexture &&
+					initFuncBuffer &&
+					initFuncFramebuffer;
 
-	//glGetString​(GL_VERSION​);
-	isInit = true;
+	if(!initFunc) throw Exception();
+
+#if __TEXPROJECT_WIN__
+	if(!wglMakeCurrent(NULL,NULL)) throw Exception("Can't Release Render Context.\nwglMakeCurrent(NULL, NULL)");
+
+	if(!wglDeleteContext(tempRC)) throw Exception("Can't Delete Temp GL Render Context.\nwglDeleteContext(Temp_hRC)");
+
+	DestroyWindow(tempWin);
+	UnregisterClass("Temp Window Class",EntryPointData::hInstance);
+#endif
+}
+#pragma endregion
+#pragma region RenderContext
+TexProject::OpenGL::RenderContext::RenderContext(Window* window_):
+	TexProject::RenderContext(window_)
+{
+	const int32 attribs[] =
+	{
+		WGL_CONTEXT_MAJOR_VERSION_ARB,3,
+		WGL_CONTEXT_MINOR_VERSION_ARB,3,
+		WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+		WGL_CONTEXT_PROFILE_MASK_ARB,WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, //WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		0,0
+	};
+
+	_wnd_RenderContextHandle = wglCreateContextAttribsARB(window->_win_windowDeviceContextHandle,0,attribs);
+
+	if(!_wnd_RenderContextHandle) throw Exception("Can't create OpenGL render context.");
+
+	Use();
+
+	{
+		glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,&textureMaxSlots);
+		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS,&bufferFrameMaxColorAttachment);
+	}
+
+	{
+		currentTexture = new TexProject::OpenGL::Texture*[GetTextureMaxSlots()];
+		for(int32 i = 0; i < GetTextureMaxSlots(); ++i) currentTexture[i] = nullptr;
+	}
+
+#if __TEXPROJECT_DEBUG__
+	ErrorTest();
+#endif
+
+	Unuse();	
+}
+TexProject::OpenGL::RenderContext::~RenderContext()
+{
+}
+TexProject::RenderContext::Type									TexProject::OpenGL::RenderContext::GetType() const
+{
+	return Type::OpenGL;
+}
+bool															TexProject::OpenGL::RenderContext::Use()
+{
+	if(!wglMakeCurrent(window->_win_windowDeviceContextHandle,_wnd_RenderContextHandle))
+	{
+		Message("Fail to use OpenGL render context.");
+		return false;
+	}
+
+#ifdef __TEXPROJECT_DEBUG__
+	//TexProject::OpenGL::ErrorTest();
+#endif
 
 	return true;
 }
+void															TexProject::OpenGL::RenderContext::Unuse()
+{
+	SetCurrentBufferAttribute(nullptr);
+	SetCurrentBufferData(nullptr);
+	SetCurrentBufferIndex(nullptr);
+	SetCurrentBufferFrame(nullptr);
+	SetCurrentShader(nullptr);
+	for(int32 i = 0; i < GetTextureMaxSlots(); ++i) SetCurrentTexture(i,nullptr);
+}
+void															TexProject::OpenGL::RenderContext::Loop()
+{
+	SwapBuffers(window->_win_windowDeviceContextHandle);
+}
+#pragma endregion
+#pragma region Texture
+const TexProject::OpenGL::Texture::Filter	TexProject::OpenGL::Texture::Filter::Off(Minification::Off,Magnification::Off);
+const TexProject::OpenGL::Texture::Filter	TexProject::OpenGL::Texture::Filter::Linear(Minification::Linear,Magnification::Linear);
+const TexProject::OpenGL::Texture::Filter	TexProject::OpenGL::Texture::Filter::Mipmap(Minification::Mipmap,Magnification::Linear);
+#pragma endregion
 bool										TexProject::OpenGL::ErrorTest()
 {
-	//if(BVE::exit) return false;
 	GLenum error;
 	bool result = false;
 	while((error = glGetError()) != GL_NO_ERROR)
@@ -263,12 +397,11 @@ bool										TexProject::OpenGL::ErrorTest()
 	}
 	return result;
 }
-
-
 #endif
 
 
-
+#pragma region Func
+#pragma endregion
 
 
 

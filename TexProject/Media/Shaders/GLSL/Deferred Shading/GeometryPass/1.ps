@@ -1,0 +1,96 @@
+#version 330 core
+
+uniform sampler2D	TextureDiffuse;
+uniform sampler2D	TextureNormals;
+uniform sampler2D	TextureMaterial;
+
+uniform vec3 camView;
+
+in vec3	pPos;
+in vec2	pTex;
+in mat3	pTBN;
+
+out vec4	Out1;
+out vec4	Out2;
+
+vec2 encodeNormal(vec3 n);
+vec3 decodeNormal(vec2 n);
+
+void main()
+{
+	vec4 TexDif = texture(TextureDiffuse,pTex);
+	vec4 TexNor = texture(TextureNormals,pTex);
+	vec4 TexMat = texture(TextureMaterial,pTex);
+
+	vec3 viewVec = normalize(pPos);
+
+	vec3 Normal = normalize(pTBN * (TexNor.xyz*2-1));
+
+	Out1 = vec4(TexDif.xyz,1.0f);
+	Out2 = vec4(encodeNormal(Normal),1.0f,1.0f);
+	//Out2 = vec4(decodeNormal(encodeNormal(Normal)),1.0f);
+	//Out2 = vec4(Normal*0.5f+0.5f,1.0f);
+}
+
+
+vec2 encodeNormal(vec3 n)
+{
+	return vec2(degrees(atan(-n.y,length(n.xz)))/90.0f,degrees(atan(n.x,n.z))/180.0f)*0.5f+0.5f;
+}
+vec3 decodeNormal(vec2 n)
+{
+	n = n*2-1;
+	n = vec2(radians(n.x*90.0f),radians(n.y*180.0f));
+	float c = cos(n.x);
+	return vec3(c*sin(n.y),-sin(n.x),c*cos(n.y));
+}
+
+
+vec2 encodeNormal2(vec3 n, vec3 view)
+{
+    vec2 enc = normalize(n.xy) * (sqrt(-n.z*0.5f+0.5f));
+    enc = enc*0.5f+0.5f;
+    return enc;
+}
+vec3 decodeNormal2(vec2 enc, vec3 view)
+{
+    vec4 nn = vec4(enc*2-1,1,-1);
+    float l = dot(nn.xyz,-nn.xyw);
+    nn.z = l;
+    nn.xy *= sqrt(l);
+    return nn.xyz * 2 + vec3(0,0,-1);
+}
+
+vec2 encodeNormal1(vec3 n, vec3 view)
+{
+    float f = sqrt(8*n.z+8);
+    return n.xy / f + 0.5;
+}
+vec3 decodeNormal1(vec2 enc, vec3 view)
+{
+    vec2 fenc = enc*4-2;
+    float f = dot(fenc,fenc);
+    float g = sqrt(1-f/4);
+    vec3 n;
+    n.xy = fenc*g;
+    n.z = 1-f/2;
+    return n;
+}
+
+/*
+half2 encode (half3 n, float3 view)
+{
+    half f = sqrt(8*n.z+8);
+    return n.xy / f + 0.5;
+}
+half3 decode (half4 enc, float3 view)
+{
+    half2 fenc = enc*4-2;
+    half f = dot(fenc,fenc);
+    half g = sqrt(1-f/4);
+    half3 n;
+    n.xy = fenc*g;
+    n.z = 1-f/2;
+    return n;
+}
+*/

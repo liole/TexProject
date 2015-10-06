@@ -1,0 +1,52 @@
+#version 330 core
+
+uniform sampler2D Texture1;
+uniform sampler2D Texture2;
+uniform sampler2D TextureDepth;
+
+uniform samplerCube TextureEnvironment;
+
+uniform float camFar;
+uniform float camFarXNear;
+uniform float camFarMNear;
+
+in vec4	pView;
+in vec2 pTex;
+
+out vec4	Out_Color;
+
+vec3 decodeNormal(vec2 n);
+
+void main()
+{
+	vec4 Tex1 = texture(Texture1,pTex);
+	vec4 Tex2 = texture(Texture2,pTex);
+
+	float depth = texture(TextureDepth,pTex).x; if(depth >= 1.0f) discard;
+	depth = camFarXNear / (camFar - depth * camFarMNear); 
+	vec3 pPos = pView.xyz * depth;
+
+	vec3 viewVec = normalize(pPos);
+
+	//vec3 Normal = normalize(Tex2.xyz*2-1);
+	vec3 Normal = normalize(decodeNormal(Tex2.xy));
+
+	vec3 refVec = reflect(viewVec,Normal);
+
+	vec4 TexEnv = texture(TextureEnvironment,refVec);
+
+	Out_Color = vec4(TexEnv.xyz * Tex1.xyz,0.0f);
+	//Out_Color = vec4(TexEnv.xyz,0.0f);
+	//Out_Color = vec4(Normal,1);
+	//Out_Color = vec4(pPos,1);
+	//Out_Color = vec4(vec3(depth),1);
+	//Out_Color = vec4(1,1,1,1);
+}
+
+vec3 decodeNormal(vec2 n)
+{
+	n = n*2-1;
+	n = vec2(radians(n.x*90.0f),radians(n.y*180.0f));
+	float c = cos(n.x);
+	return vec3(c*sin(n.y),-sin(n.x),c*cos(n.y));
+}

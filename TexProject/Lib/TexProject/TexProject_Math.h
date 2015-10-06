@@ -7,6 +7,8 @@
 
 #include <math.h>
 
+#pragma region
+#pragma endregion
 
 namespace TexProject
 {
@@ -666,6 +668,7 @@ namespace TexProject
 		static inline mat4					rotateYXZ(vec3 ang);
 		static inline mat4					perspective(float32 FOV,float32 aspect,float32 zNear,float32 zFar);
 		static inline mat4					perspectiveInv(float32 FOV,float32 aspect,float32 zNear,float32 zFar);
+		static inline mat4					orthogonal(float32 left,float32 right,float32 bottom,float32 top,float32 back,float32 front);
 
 		float32								val[16];
 
@@ -767,6 +770,8 @@ namespace TexProject
 	inline vec3								cross(const vec3& a,const vec3& b);
 
 	inline float32							getAng(const vec2& a,const vec2& b);
+	inline float32							getAng(const vec2& a);
+	inline vec2								getAng(const vec3& a);
 	inline vec3								getAng(const mat3& mat);
 	inline vec3								getAng(const mat4& mat);
 
@@ -797,7 +802,7 @@ namespace TexProject
 }
 
 
-// vec2
+#pragma region vec2
 inline										TexProject::vec2::vec2()
 {
 }
@@ -1026,8 +1031,8 @@ inline void									TexProject::vec2::normalize()
 	x /= len;
 	y /= len;
 }
-
-// ivec2
+#pragma endregion
+#pragma region ivec2
 inline										TexProject::ivec2::ivec2()
 {
 }
@@ -1240,8 +1245,8 @@ inline TexProject::ivec2					TexProject::operator / (const int32 a,const ivec2& 
 		a / b.y
 		);
 }
-
-// uvec2
+#pragma endregion
+#pragma region uvec2
 inline TexProject::uvec2::uvec2()
 {
 }
@@ -1446,9 +1451,8 @@ inline TexProject::uvec2					TexProject::operator / (const uint32 a,const uvec2&
 		a / b.y
 		);
 }
-
-
-// vec3
+#pragma endregion
+#pragma region vec3
 inline										TexProject::vec3::vec3()
 {
 }
@@ -1744,8 +1748,8 @@ inline void									TexProject::vec3::normalize()
 	y /= len;
 	z /= len;
 }
-
-// ivec3;
+#pragma endregion
+#pragma region ivec3
 inline										TexProject::ivec3::ivec3()
 {
 }
@@ -2015,8 +2019,8 @@ inline TexProject::ivec2					TexProject::ivec3::yz() const
 		z
 		);
 }
-
-// uvec3
+#pragma endregion
+#pragma region  uvec3
 inline										TexProject::uvec3::uvec3()
 {
 }
@@ -2286,9 +2290,8 @@ inline TexProject::uvec2					TexProject::uvec3::yz() const
 		z
 		);
 }
-
-
-// vec4
+#pragma endregion
+#pragma region vec4
 inline										TexProject::vec4::vec4(const float32& a_):
 x(a_),y(a_),z(a_),w(a_)
 {
@@ -2637,9 +2640,8 @@ inline void									TexProject::vec4::normalize()
 	z /= len;
 	w /= len;
 }
-
-
-// ivec4
+#pragma endregion
+#pragma region ivec4
 inline										TexProject::ivec4::ivec4(const ivec3& xyz_,const int32 w_):
 x(xyz_.x),
 y(xyz_.y),
@@ -2967,9 +2969,8 @@ inline TexProject::ivec3					TexProject::ivec4::yzw() const
 		w
 		);
 }
-
-
-// uvec4
+#pragma endregion
+#pragma region uvec4
 inline										TexProject::uvec4::uvec4(const uvec3& xyz_,const uint32 w_):
 x(xyz_.x),
 y(xyz_.y),
@@ -3297,9 +3298,8 @@ inline TexProject::uvec3					TexProject::uvec4::yzw() const
 		w
 		);
 }
-
-
-// mat3
+#pragma endregion
+#pragma region mat3
 inline TexProject::mat3						TexProject::mat3::null()
 {
 	mat3 res; res.makeNull(); return res;
@@ -3461,9 +3461,8 @@ inline void									TexProject::mat3::makeRotateYXZ(vec3 angle)
 	val[7] = sX_;
 	val[8] = cY_*cX_;
 }
-
-
-// mat4
+#pragma endregion
+#pragma region mat4
 inline TexProject::mat4						TexProject::mat4::null()
 {
 	mat4 res; res.makeNull(); return res;
@@ -3495,6 +3494,10 @@ inline TexProject::mat4						TexProject::mat4::perspective(float32 FOV,float32 a
 /*inline TexProject::mat4						TexProject::mat4::perspectiveInv(float32 FOV,float32 aspect,float32 zNear,float32 zFar)
 {
 }*/
+inline TexProject::mat4						TexProject::mat4::orthogonal(float32 left,float32 right,float32 bottom,float32 top,float32 back,float32 front)
+{
+	mat4 res; res.makeProjectionOrthogonal(left,right,bottom,top,back,front); return res;
+}
 
 inline TexProject::mat4::mat4(const mat3& source)
 {
@@ -3820,9 +3823,8 @@ inline void									TexProject::mat4::makeProjectionOrthogonal(float32 left,floa
 inline void									TexProject::mat4::makeProjectionOrthogonalInverse(float32 left,float32 right,float32 bottom,float32 top,float32 back,float32 front)
 {
 }
-
-
-// functions;
+#pragma endregion
+#pragma region functions;
 inline TexProject::float32					TexProject::rnd()
 {
 	return static_cast <float32> (rand()) / static_cast <float32> (RAND_MAX);
@@ -3990,15 +3992,27 @@ inline TexProject::float32					TexProject::getAng(const vec2& a,const vec2& b)
 {
 	return acosDg(dot(a,b) / (length(a)*length(b)));
 }
+inline TexProject::float32					TexProject::getAng(const vec2& a)
+{
+	return degrees(atan2(a.x,a.y));
+}
+inline TexProject::vec2						TexProject::getAng(const vec3& a)
+{
+	vec2 out;
+	out.x = getAng(vec2(-a.y,sqrt(a.x*a.x + a.z*a.z)));
+	out.y = getAng(vec2(a.x,a.z));
+	return out;
+}
 inline TexProject::vec3						TexProject::getAng(const mat3& mat)
 {
-	vec3	result,
-		v_xz,v_y;
+	vec3	result(0.0f),v_xz(0.0f),v_y(0.0f);
 
 	v_xz = mat * vec3(0.0f,0.0f,1.0f);
 
-	result.x = TexProject::degrees(atan2(-v_xz.y,sqrt(v_xz.x*v_xz.x+v_xz.z*v_xz.z)));
-	result.y = TexProject::degrees(atan2(v_xz.x,v_xz.z));
+	auto t = getAng(v_xz);
+
+	result.x = t.x;
+	result.y = t.y;
 
 	v_y = (mat * mat3::rotateYXZ(vec3(-result.x,-result.y,0.0f))) * vec3(0.0f,1.0f,0.0f);
 
@@ -4013,8 +4027,8 @@ inline TexProject::vec3						TexProject::getAng(const mat4& mat)
 
 	v_xz = mat * vec3(0.0f,0.0f,1.0f);
 
-	result.x = TexProject::degrees(atan2(-v_xz.y,sqrt(v_xz.x*v_xz.x+v_xz.z*v_xz.z)));
-	result.y = TexProject::degrees(atan2(v_xz.x,v_xz.z));
+	result.x = degrees(atan2(-v_xz.y,sqrt(v_xz.x*v_xz.x + v_xz.z*v_xz.z)));
+	result.y = degrees(atan2(v_xz.x,v_xz.z));
 
 	v_y = (mat * mat4::rotateYXZ(vec3(-result.x,-result.y,0.0f))) * vec3(0.0f,1.0f,0.0f);
 
@@ -4022,7 +4036,6 @@ inline TexProject::vec3						TexProject::getAng(const mat4& mat)
 
 	return result;
 }
-
 
 inline TexProject::float32					TexProject::bezier(float32 t1,float32 t2,float32 t)
 {
@@ -4108,6 +4121,7 @@ void										TexProject::bezier(const vec2& t1,const vec2& t2,const vec2& t3,co
 		pred(bezier(t1,t2,t3,t4,t),bezier(t1,t2,t3,t4,nt));
 	}
 }
+#pragma endregion
 
 
 

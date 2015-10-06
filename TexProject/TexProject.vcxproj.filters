@@ -15,194 +15,114 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Lib\TexProject\TexProject_Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Lib\TexProject\Empty\TexProject_Empty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Lib\TexProject\TexProject_Math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Lib\TexProject\TexProject_Windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\TexProject\TexProject_WinAPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Lib\TexProject\TexProject_Helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_OpenGL.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Textures.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Shaders.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Interface.cpp">
+    <ClCompile Include="Lib\TexProject\TexProject_GUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Lib\TexProject\TexProject_DevIL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Geometry.cpp">
+    <ClCompile Include="Lib\TexProject\TexProject_Textures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Buffers.cpp">
+    <ClCompile Include="Lib\TexProject\TexProject_OpenGL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Direct3D.cpp">
+    <ClCompile Include="Source\Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Lib\TexProject\TexProject_Tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Script.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Test\Test_Tool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Script_Translator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Script_Parser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Script_Lexer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Lib\TexProject\TexProject_Script_Checker.cpp">
+    <ClCompile Include="Lib\TexProject\TexProject_Geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Lib\TexProject\TexProject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\HalfFloat\half.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Main.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Lib\TexProject\Empty\TexProject_Empty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_Header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_Windows.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\HalfFloat\half.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\TexProject\TexProject_WinAPI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_OpenGL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Textures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Shaders.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Interface.h">
+    <ClInclude Include="Lib\TexProject\TexProject_GUI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_DevIL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Geometry.h">
+    <ClInclude Include="Lib\TexProject\TexProject_Textures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Buffers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Direct3D.h">
+    <ClInclude Include="Lib\TexProject\TexProject_OpenGL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lib\TexProject\TexProject_Tools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Script.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Script_Translator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Script_Parser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Script_Lexer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lib\TexProject\TexProject_Script_Checker.h">
+    <ClInclude Include="Lib\TexProject\TexProject_Geometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Media\Shaders\GLSL\1.gs" />
-    <None Include="Media\Shaders\GLSL\1.ps" />
-    <None Include="Media\Shaders\GLSL\1.vs" />
-    <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.ps" />
-    <None Include="Media\Shaders\GLSL\3D\Material\Basic\V1\1.vs" />
-    <None Include="Media\Shaders\HLSL\1.fx" />
-    <None Include="Media\Shaders\GLSL\Simple\1.vs" />
-    <None Include="Media\Shaders\GLSL\Simple\1.ps" />
-    <None Include="Media\Shaders\GLSL\Simple Texture\1.ps" />
-    <None Include="Media\Shaders\GLSL\Simple Texture\1.vs" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.gs" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.ps" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Skybox\V1\1.vs" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.gs" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.ps" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Test\1.vs" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.gs" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.ps" />
-    <None Include="Media\Shaders\GLSL\Screen Quad\Normals Generator\1.vs" />
-    <None Include="Media\Shaders\GLSL\3D\Material\Texture\1.ps" />
-    <None Include="Media\Shaders\GLSL\3D\Material\Texture\1.vs" />
-    <None Include="Media\Shaders\GLSL\3D\Material\Empty\1.ps" />
-    <None Include="Media\Shaders\GLSL\3D\Material\Empty\1.vs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Media\Images\Test.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Brick1_N.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Brick1_M.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Brick1_D.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\3.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Example.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Stone_HeightMap.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Stone_NormalMap.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Cubemap1.dds" />
-    <Image Include="Media\Images\Tiles1_D.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Tiles1_M.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Media\Images\Tiles1_N.png">
-      <Filter>Resource Files</Filter>
-    </Image>
+    <None Include="Media\Shaders\GLSL\Deferred Shading\GeometryPass\1.vs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\GeometryPass\1.ps" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Light\Point\1.vs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Light\Point\1.ps" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Light\Point\1.gs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Environment\Cubemap\1.gs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Environment\Cubemap\1.ps" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Environment\Cubemap\1.vs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Diffuse\Point\1.gs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Diffuse\Point\1.ps" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Diffuse\Point\1.vs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Environment\Blend\1.gs" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Environment\Blend\1.ps" />
+    <None Include="Media\Shaders\GLSL\Deferred Shading\Environment\Blend\1.vs" />
+    <None Include="Media\Shaders\GLSL\Empty\1.gs" />
+    <None Include="Media\Shaders\GLSL\Empty\1.ps" />
+    <None Include="Media\Shaders\GLSL\Empty\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Basic\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Basic\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Flat\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Flat\1.vs" />
   </ItemGroup>
 </Project>

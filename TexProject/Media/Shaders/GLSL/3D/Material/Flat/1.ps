@@ -1,0 +1,18 @@
+#version 330 core
+#define ParallaxMapping 0
+
+
+uniform sampler2D	Texture;
+
+
+in vec2	pTex;
+
+
+out vec4	pixelColor;
+
+
+void main()
+{
+	pixelColor = texture(Texture,pTex);
+	//pixelColor = vec4(pTex,1,1);
+}

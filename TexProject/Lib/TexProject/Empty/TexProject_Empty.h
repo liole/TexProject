@@ -1,21 +1,13 @@
-/*
-Це порожній шаблон для окремого модуля.
-В першу чергу підключаємо головний хедер проекту,
-потім, в неймспейсі проекту, оголошуємо потрібні
-класи, функції і т.д.
-Визначати не шаблонні і не інлайн функції слід в
-відповідному cpp файлі.
-*/
 #pragma once
+#pragma region TexProject Includes
 #include <TexProject/TexProject_Header.h>
+#pragma endregion
+#pragma region Includes
+#pragma endregion
 
 
-/*
-Після підключення головного хедеру - можна підключати
-решту необхідних хедерів TexProject.
-Після них підключаємо сторонні хедери/бібіліотеки.
-Як будемо це робити у випадку бібліотек з .lib файлами ще вирішуємо.
-*/
+#pragma region Test
+#pragma endregion
 
 
 namespace TexProject

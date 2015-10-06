@@ -1,0 +1,130 @@
+#version 330 core
+#define ParallaxMapping 0
+
+
+uniform sampler2D	TextureDiffuse;
+uniform sampler2D	TextureNormals;
+uniform sampler2D	TextureMaterial;
+uniform samplerCube	TextureEnvironment;
+
+
+uniform vec3	lightPos;
+uniform float	lightAmbient = 0.1f;
+uniform float	lightNearRange = 15.0f;
+uniform float	lightCoof = 1.0f/20.0f;	// 1.0f / (Far-Near)
+uniform float	emboss = 0.16f;
+
+
+in vec3	pPos;
+in vec2	pTex;
+in mat3	pTBN;
+
+
+out vec4	pixelColor;
+
+
+float specularPhong(vec3 normal, vec3 light, vec3 view, float power)
+{
+	return pow(clamp( dot(light,normalize(reflect(view,normal))), 0.0f, 1.0f), power);
+}
+float specularPhong(vec3 light, vec3 refVec, float power)
+{
+	return pow(clamp( dot(light,refVec), 0.0f, 1.0f), power);
+}
+float specularCookTorrance(vec3 _normal, vec3 _light, vec3 _view, float roughness_val)
+{
+	if(roughness_val <= 0.0) return 0.0;
+	vec3  half_vec = normalize( _view + _light );
+	float NdotL    = max( dot( _normal, _light ), 0.0 );
+	float NdotV    = max( dot( _normal, _view ), 0.0 );
+	float NdotH    = max( dot( _normal, half_vec ), 1.0e-7 );
+	float VdotH    = max( dot( _view,   half_vec ), 0.0 );
+	float geometric = 2.0 * NdotH / VdotH;
+	geometric = min( 1.0, geometric * min(NdotV, NdotL) );
+	float r_sq          = roughness_val * roughness_val;
+	float NdotH_sq      = NdotH * NdotH;
+	float NdotH_sq_r    = 1.0 / (NdotH_sq * r_sq);
+	float roughness_exp = (NdotH_sq - 1.0) * ( NdotH_sq_r );
+	float roughness     = exp(roughness_exp) * NdotH_sq_r / (4.0 * NdotH_sq );
+	float fresnel       = 1.0 / (1.0 + NdotV);
+	float Rs = min(1.0, (fresnel * geometric * roughness) / (NdotV * NdotL + 1.0e-7));
+	return Rs;
+}
+
+void main()
+{
+#if ParallaxMapping
+	vec3 ViewVec = normalize(pPos);
+	float steps = 1.0f / int( 32.0f + (abs(dot(pTBN[2],ViewVec)))*20.0f );
+
+	vec2 NewTex = pTex;
+	vec2 dTex = vec2( dot(pTBN[0],ViewVec) , dot(pTBN[1],ViewVec) ) * steps * emboss;
+
+	float THeight = 1.0f;
+	float Height = texture(TextureNormal, NewTex).w;
+	float OldHeight = Height;
+
+	while( THeight > Height )
+	{
+		NewTex += dTex;
+		THeight -= steps;
+		OldHeight = Height;
+		Height = texture(TextureNormal, NewTex).w;
+	}
+	NewTex = NewTex + dTex*( (THeight+steps-OldHeight) / (Height-OldHeight+steps) - 1.0f );
+
+	vec4 TexDif = texture(TextureDiffuse,NewTex);
+	vec4 TexNor = texture(TextureNormals,NewTex);
+	vec4 TexMat = texture(TextureMaterial,NewTex);
+#else
+	vec4 TexDif = texture(TextureDiffuse,pTex);
+	vec4 TexNor = texture(TextureNormals,pTex);
+	vec4 TexMat = texture(TextureMaterial,pTex);
+#endif
+
+	#define DiffuseColor		TexDif.xyz
+	#define AlphaColor			TexDif.w
+	#define NormalData			TexNor.xyz
+	#define HeightData			TexNor.w
+	#define SpecularIntensity	TexMat.x*0.5f
+	#define SpecularPower		128.0f
+	#define Roughtness			TexMat.y
+	#define SelfIllumination	TexMat.z
+
+
+	vec3 Normal = normalize(pTBN * (NormalData*2-1));
+	//vec3 Normal = normalize(pTBN[2]);
+
+	vec3 lightDir = lightPos - pPos;
+	float rangeInt = clamp( 1.0f - ((length(lightDir) - lightNearRange)*lightCoof), lightAmbient, 1.0f);
+
+	lightDir = normalize(lightDir);
+	float diffInt = clamp( dot(lightDir,Normal), lightAmbient, 1.0f);
+
+	vec3 refVec = normalize(reflect(pPos,Normal));
+
+	vec4 TexEnv = texture(TextureEnvironment,refVec);
+
+	float specInt = specularCookTorrance(Normal,lightDir,normalize(pPos),0.05f) * SpecularIntensity;
+	//float specInt = specularPhong(lightDir,refVec,SpecularPower) * SpecularIntensity;
+	//float specInt = specularPhong(Normal,lightDir,pPos,SpecularPower) * SpecularIntensity;
+	//float specInt = specularCookTorrance(Normal,-lightDir,pPos,0.1f);
+
+	pixelColor.xyz = DiffuseColor*rangeInt*diffInt + (vec3(1.0f)*specInt + TexEnv.xyz*1.0f)*SpecularIntensity;
+	//pixelColor.xyz = mix( DiffuseColor*rangeInt*diffInt, (vec3(1.0f)*specInt + TexEnv.xyz*1.0f),SpecularIntensity);
+	//pixelColor.xyz = mix( DiffuseColor*rangeInt*diffInt, vec3(1.0f),specInt);
+	//pixelColor.xyz = mix( DiffuseColor*rangeInt*diffInt, TexEnv.xyz,specInt);
+	pixelColor.w = 1.0f;
+
+	pixelColor = vec4(DiffuseColor,1.0f);
+	//pixelColor = vec4(TexEnv.xyz,1.0f);
+	//pixelColor = vec4(refVec,1.0f);
+	//pixelColor = TexDif;
+	//pixelColor = vec4(pPos,1.0f);
+	//pixelColor = vec4(vec3(specInt),1.0f);
+	//pixelColor = vec4(vec3(rangeInt),1.0f);
+	//pixelColor = vec4(vec3(diffInt),1.0f);
+	//pixelColor = vec4(Normal,1.0f);
+	//pixelColor = vec4(pTex,1.0f,1.0f);
+	//pixelColor = vec4(1,1,1,1);
+}

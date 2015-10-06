@@ -1,0 +1,48 @@
+#version 330 core
+
+uniform sampler2D Texture1;
+uniform sampler2D Texture2;
+uniform sampler2D TextureDepth;
+
+uniform vec3 camView;
+uniform float camFar;
+uniform float camFarXNear;
+uniform float camFarMNear;
+
+uniform vec3 lightPos;
+
+in vec4	pView;
+in vec2 pTex;
+
+out vec4	Out_Color;
+
+vec3 decodeNormal(vec2 enc, vec3 view);
+
+void main()
+{
+	vec4 Tex1 = texture(Texture1,pTex);
+	vec4 Tex2 = texture(Texture2,pTex);
+
+	//vec3 Pos = P_Rec.xyz * ( Camera_zFarXNear / (Camera_zFar - Tex4*Camera_zFar_Near) );
+	float depth = texture(TextureDepth,pTex).x; if(depth >= 1.0f) discard;
+	depth = camFarXNear / (camFar - depth * camFarMNear); 
+	vec3 pPos = pView.xyz * depth;
+
+	vec3 viewVec = normalize(pPos);
+	//vec3 Normal = normalize(decodeNormal(Tex2.xy*2-1,camView));
+	vec3 Normal = normalize(Tex2.xyz*2-1);
+
+	vec3 dir = normalize(lightPos - pPos);
+
+	float diffInt = clamp( dot(dir,Normal), 0.0f,1.0f);	//min(max( length(lightPos-pPos)/20.0f ,0.0f),1.0f);
+
+	Out_Color = vec4( Tex1.xyz*diffInt ,1.0f);
+
+	//Out_Color = vec4(dir,1.0f);
+	//Out_Color = vec4(vec3(diffInt),1.0f);
+	//Out_Color = vec4(pPos,1.0f);
+	//Out_Color = vec4(depth,0,0,1);//texture(Texture1, pTex);
+	//Out_Color = vec4(Normal,1.0f);
+	//Out_Color = vec4(normalize(pView.xyz),1.0f);
+	//Out_Color = vec4(1,1,1,1);
+}

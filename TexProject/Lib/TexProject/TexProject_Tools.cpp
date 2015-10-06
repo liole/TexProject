@@ -1,1382 +1,936 @@
 #include "TexProject_Tools.h"
 using namespace TexProject;
 
+#pragma region
+#pragma endregion
 
-
-
-// Tool
-std::list<TexProject::Tool::Basic*>			TexProject::Tool::tool;
-std::list<TexProject::Tool::Basic*>			TexProject::Tool::clean;
-
-TexProject::vec2							TexProject::Tool::panAnchor(0.0f);
-
-TexProject::Window::Render*					TexProject::Tool::window = nullptr;
-TexProject::Interface::Panel::Default*		TexProject::Tool::panelConfig = nullptr;
-TexProject::Interface::Panel::Default*		TexProject::Tool::panelTools = nullptr;
-
-TexProject::Tool::Basic*					TexProject::Tool::focus = nullptr;
-
-
-void					TexProject::Tool::SetFocus(Basic* source)
+#pragma region ToolSet
+TexProject::ToolSet::ToolSet(Window* window_):
+	WindowBind(window_)
 {
-	if(panelConfig && focus != source)
+	auto gui = window->GetGUI();
+
+	panelConfig = (GUI::Panels::Default*)gui->AddPanel(GUI::PanelTypes::Default);
 	{
-		if(focus)
-		{
-			focus->FreeFocus(panelConfig);
-			focus = nullptr;
-		}
-		if(source)
-		{
-			focus = source;
-			focus->InitFocus(panelConfig);
-		}
+		panelConfig->DisableDragging();
+		panelConfig->EnableTopMost();
+		panelConfig->SetSize(vec2(128.0f,float32(window->GetSize().y)));
+		panelConfig->SetPos(vec2(0.0f));
 	}
-}
-void					TexProject::Tool::UnsetFocus(Basic* source)
-{
-	if(panelConfig && focus == source)
+	panelTools = (GUI::Panels::Default*)gui->AddPanel(GUI::PanelTypes::Default);
 	{
-		if(focus)
+		panelTools->DisableDragging();
+		panelTools->EnableTopMost();
+		panelTools->EnableScrolling();
+		panelTools->SetScrollingSize(vec2(100.0f,0.0f));
+		panelTools->SetSize(vec2(window->GetSize().x - panelConfig->GetSize().x - 16.0f,40.0f));
+		panelTools->SetPos(vec2(panelConfig->GetSize().x + 8.0f,window->GetSize().y - panelTools->GetSize().y));
 		{
-			focus->FreeFocus(panelConfig);
-			focus = nullptr;
-		}
-	}
-}
-
-
-void TexProject::Tool::Init(Window::Render* window_)
-{
-	window = window_;
-
-	panelConfig = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
-	panelConfig->SetSize(vec2(180.0f,float32(window->GetSize().y)));
-	panelConfig->SetPos(vec2(0.0f));
-	panelConfig->LockMove();
-
-	panelTools = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
-	panelTools->SetSize(vec2(float32(window->GetSize().x - panelConfig->GetSize().x),32.0f));
-	panelTools->SetPos(vec2(panelConfig->GetPos().x + panelConfig->GetSize().x,0.0f));
-	panelTools->LockMove();
-
-	{
-		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
-		t->SetSize(vec2(24.0f));
-		t->SetPos(vec2(4.0f) + vec2(32.0f*0,0.0f));
-		t->SetAction
-		(
-			Interface::Item::ActionTypes::Click,
-			[](Interface::Item* item) -> void
+			auto SummonButton = [this](GUI::Item::Action action)
 			{
-				Tool::Add<Tool::Generator::D2::Blank>(item->GetWindow());
-			}
-		);
-	}
-
-	{
-		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
-		t->SetSize(vec2(24.0f));
-		t->SetPos(vec2(4.0f) + vec2(32.0f*1,0.0f));
-		t->SetAction
-		(
-			Interface::Item::ActionTypes::Click,
-			[](Interface::Item* item) -> void
-			{
-				Tool::Add<Tool::Generator::D2::Noise::Simple>(item->GetWindow());
-			}
-		);
-	}
-
-	{
-		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
-		t->SetSize(vec2(24.0f));
-		t->SetPos(vec2(4.0f) + vec2(32.0f*2,0.0f));
-		t->SetAction
-		(
-			Interface::Item::ActionTypes::Click,
-			[](Interface::Item* item) -> void
-			{
-				Tool::Add<Tool::Filter::D2::Correction::Grayscale>(item->GetWindow());
-			}
-		);
-	}
-
-	{
-		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
-		t->SetSize(vec2(24.0f));
-		t->SetPos(vec2(4.0f) + vec2(32.0f*3,0.0f));
-		t->SetAction
-		(
-			Interface::Item::ActionTypes::Click,
-			[](Interface::Item* item) -> void
-			{
-				Tool::Add<Tool::Filter::D2::Correction::Color>(item->GetWindow());
-			}
-		);
-	}
-
-	{
-		auto t = (Interface::Button::Default*)panelTools->AddButton(Interface::ButtonTypes::Default);
-		t->SetSize(vec2(24.0f));
-		t->SetPos(vec2(4.0f) + vec2(32.0f*4,0.0f));
-		t->SetAction
-		(
-			Interface::Item::ActionTypes::Click,
-			[](Interface::Item* item) -> void
-			{
-				Tool::Add<Tool::Viewer::Default>(item->GetWindow());
-			}
-		);
-	}
-
-}
-void TexProject::Tool::Free()
-{
-	for(auto i: tool)
-	{
-		delete i;
-	}
-	tool.clear();
-
-	window->RemoveItem(panelConfig); panelConfig = nullptr;
-	window->RemoveItem(panelTools); panelTools = nullptr;
-}
-void TexProject::Tool::Loop()
-{
-	{
-		static vec2 oMouse(0.0f);
-		vec2 nMouse = vec2(MousePos());
-
-		if(KeyState(Keys::SPACE))
-		{
-			window->GetInterface()->DisableDragging();
-
-			if(MouseLState())
-			{
-				panAnchor += nMouse - oMouse;
-			}
-		}
-		else
-		{
-			window->GetInterface()->EnableDragging();
-		}
-
-		oMouse = nMouse;
-	}
-
-	{
-		auto i = tool.begin();
-		while(i != tool.end())
-		{
-			try
-			{
-				(*i)->Loop();
-			}
-			catch(Tool::Destruction)
-			{
-				(*i)->FlushFocus();
-				clean.push_back(*i); //delete *i;
-				(*i)->iter = tool.end();
-				i = tool.erase(i);
-				continue;
-			}
-			++i;
-		}
-	}
-	{
-		auto i = clean.begin();
-		while(i != clean.end())
-		{
-			if( (*i)->IsClean() )
-			{
-				delete *i;
-				i = clean.erase(i);
-				continue;
-			}
-			++i;
-		}
-	}
-}
-
-
-// Tool::Basic
-TexProject::Tool::Basic::Basic(Window::Render* window_):
-	window(window_),
-	iter(tool.end())
-{
-}
-TexProject::Tool::Basic::~Basic()
-{
-	FlushFocus();
-}
-void					TexProject::Tool::Basic::Loop()
-{
-	if(destruction)
-	{
-		throw Tool::Destruction();
-	}
-}
-void					TexProject::Tool::Basic::Refresh()
-{
-}
-bool					TexProject::Tool::Basic::IsClean()
-{
-	return true;
-}
-void					TexProject::Tool::Basic::InitFocus(Interface::Panel::Default* panel)
-{
-}
-void					TexProject::Tool::Basic::FreeFocus(Interface::Panel::Default* panel)
-{
-}
-
-
-// Tool::Generator::D2::Blank
-TexProject::Tool::Generator::D2::Blank::Blank(Window::Render* window_):
-Tool::D2(window_)
-{
-	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
-	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
-	panelBase->SetSize(vec2(200.0f));
-	panelBase->SetUserData(this);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			Tool::SetFocus( (Tool::Generator::D2::Blank*)item->GetUserData() );
-		}
-	);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Destruction,
-		[](Interface::Item* item)
-		{
-			((Tool::Generator::D2::Blank*)item->GetUserData())->destruction = true;
-		}
-	);
-
-	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
-	panelTitle->SetSize(vec2(160.0f,14.0f));
-	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f -  panelTitle->GetSize().x*0.5f,panelBase->GetSize().y - panelTitle->GetSize().y));
-	panelTitle->SetText("Blank");
-	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
-
-	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
-	panelImage->SetSize(vec2(128.0f));
-	panelImage->SetPos( (panelBase->GetSize().x-panelImage->GetSize())*0.5f );
-
-	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
-	buttonRefresh->SetSize(vec2(64.0f,16.0f));
-	buttonRefresh->SetPos(vec2((panelBase->GetSize().x-buttonRefresh->GetSize().x)*0.5f,4.0f));
-	buttonRefresh->SetUserData(this);
-	buttonRefresh->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			((Tool::Generator::D2::Blank*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonConnectorOut = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::OutputConnector);
-	buttonConnectorOut->SetSize(vec2(8.0f));
-	buttonConnectorOut->SetPos(vec2(panelBase->GetSize().x - buttonConnectorOut->GetSize().x - 4.0f,(panelBase->GetSize().y - buttonConnectorOut->GetSize().y)*0.5f));
-	buttonConnectorOut->connectDirection = vec2(64.0f,0.0f);
-	buttonConnectorOut->SetUserData(new OutputData(this,Texture::Type::D2,nullptr),true);
-
-	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
-	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
-	buttonClose->SetSize(vec2(16.0f));
-}
-TexProject::Tool::Generator::D2::Blank::~Blank()
-{
-	if(generationFlag)
-	{
-		while(!generationFinish);
-		generationThread.join();
-
-		if(generationTexture) delete generationTexture;
-	}
-
-	if(texture) delete texture;
-}
-void					TexProject::Tool::Generator::D2::Blank::Loop()
-{
-	Basic::Loop();
-
-	if(panelBase)
-	{
-		panelBase->SetAnchor(Tool::GetAnchor());
-	}
-
-	if(focusPanel)
-	{
-		focusPanelSizeXText->SetText(std::to_string(size.x));
-		focusPanelSizeYText->SetText(std::to_string(size.y));
-
-		color.x = focusButtonSliderColorRed->GetValue();
-		color.y = focusButtonSliderColorGreen->GetValue();
-		color.z = focusButtonSliderColorBlue->GetValue();
-		color.w = focusButtonSliderColorAlpha->GetValue();
-	}
-
-	if(generationFlag)
-	{
-		if(generationFinish)
-		{
-			generationThread.join();
-			generationFlag = false;
-
-			texture = generationTexture;
-			generationTexture = nullptr;
-
-			((OutputData*)buttonConnectorOut->GetUserData())->texture = texture;
-
-			panelImage->SetImage(texture);
-
-			buttonConnectorOut->RefreshObservers();
-		}
-	}
-}
-void					TexProject::Tool::Generator::D2::Blank::Refresh()
-{
-	if(!generationFlag)
-	{
-		panelImage->SetImage(nullptr);
-
-		((OutputData*)buttonConnectorOut->GetUserData())->texture = nullptr;
-
-		if(texture) { delete texture; texture = nullptr; }
-
-		generationSize = size;
-		generationColor = color;
-		generationFlag = true;
-		generationFinish = false;
-		generationThread = std::thread
-		(
-			[this]()
-			{
-				generationTexture = new Texture::D2;
-				generationTexture->Create(generationSize);
-				generationTexture->Fill(generationColor);
-
-				generationFinish = true;
-			}
-		);
-	}
-}
-bool					TexProject::Tool::Generator::D2::Blank::IsClean()
-{
-	return !generationFlag || generationFinish;
-}
-void					TexProject::Tool::Generator::D2::Blank::InitFocus(Interface::Panel::Default* panel)
-{
-	focusPanel = (Interface::Panel::Default*)panel->AddPanel(Interface::PanelTypes::Default);
-	focusPanel->SetColor(vec4(vec3(0.32f),1.0f));
-	focusPanel->SetSize(vec2(panel->GetSize().x - 8.0f,300.0f));
-	focusPanel->SetPos(vec2(4.0f,panel->GetSize().y - focusPanel->GetSize().y - 4.0f));
-
-	auto size_ = focusPanel->GetSize();
-
-	focusButtonRefresh = (Interface::Button::Default*)focusPanel->AddButton(Interface::ButtonType::Default);
-	focusButtonRefresh->SetSize(vec2(80.0f,20.0f));
-	focusButtonRefresh->SetPos(vec2((size_.x - focusButtonRefresh->GetSize().x)*0.5f,size_.y - focusButtonRefresh->GetSize().y - 4.0f));
-	focusButtonRefresh->SetUserData(this);
-	focusButtonRefresh->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			((Tool::Generator::D2::Blank*)item->GetUserData())->Refresh();
-		}
-	);
-
-	focusPanelSizeX = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
-	focusPanelSizeX->SetSize(vec2(64.0f,16.0f));
-	focusPanelSizeX->SetPos(vec2(4.0f,size_.y - 32.0f*2));
-
-	focusPanelSizeXText = (Interface::Panel::Text*)focusPanelSizeX->AddPanel(Interface::PanelTypes::Text);
-	focusPanelSizeXText->SetSize(vec2(40.0f,14.0f));
-	focusPanelSizeXText->SetPos(vec2(1.0f));
-	focusPanelSizeXText->SetText("test");
-	focusPanelSizeXText->SetColor(vec4(vec3(0.5f),1.0f));
-
-	{
-		auto t1 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
-		t1->SetSize(vec2(10.0f,6.0f));
-		t1->SetPos(vec2(focusPanelSizeX->GetSize().x - 11.0f,9.0f));
-		t1->SetUserData(this);
-		auto ft1 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.x;
-			if(t < 1024) ++t;
-		};
-		t1->SetAction(Interface::Item::ActionTypes::Click,ft1);
-		t1->SetAction(Interface::Item::ActionTypes::Clamp,ft1);
-		auto t2 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
-		t2->SetSize(vec2(10.0f,6.0f));
-		t2->SetPos(vec2(focusPanelSizeX->GetSize().x - 11.0f,1.0f));
-		t2->SetUserData(this);
-		auto ft2 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.x;
-			if(t > 0) --t;
-		};
-		t2->SetAction(Interface::Item::ActionTypes::Click,ft2);
-		t2->SetAction(Interface::Item::ActionTypes::Clamp,ft2);
-	}
-
-	focusPanelSizeY = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
-	focusPanelSizeY->SetSize(vec2(64.0f,16.0f));
-	focusPanelSizeY->SetPos(vec2(focusPanelSizeX->GetPos().x + focusPanelSizeX->GetSize().x + 4.0f,size_.y - 32.0f*2));
-
-	focusPanelSizeYText = (Interface::Panel::Text*)focusPanelSizeY->AddPanel(Interface::PanelTypes::Text);
-	focusPanelSizeYText->SetSize(vec2(40.0f,14.0f));
-	focusPanelSizeYText->SetPos(vec2(1.0f));
-	focusPanelSizeYText->SetText("test");
-	focusPanelSizeYText->SetColor(vec4(vec3(0.5f),1.0f));
-
-	{
-		auto t1 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
-		t1->SetSize(vec2(10.0f,6.0f));
-		t1->SetPos(vec2(focusPanelSizeY->GetSize().x - 11.0f,9.0f));
-		t1->SetUserData(this);
-		auto ft1 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.y;
-			if(t < 1024) ++t;
-		};
-		t1->SetAction(Interface::Item::ActionTypes::Click,ft1);
-		t1->SetAction(Interface::Item::ActionTypes::Clamp,ft1);
-		auto t2 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
-		t2->SetSize(vec2(10.0f,6.0f));
-		t2->SetPos(vec2(focusPanelSizeY->GetSize().x - 11.0f,1.0f));
-		t2->SetUserData(this);
-		auto ft2 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Blank*)item->GetUserData())->size.y;
-			if(t > 0) --t;
-		};
-		t2->SetAction(Interface::Item::ActionTypes::Click,ft2);
-		t2->SetAction(Interface::Item::ActionTypes::Clamp,ft2);
-	}
-
-	focusButtonSliderColorRed = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
-	focusButtonSliderColorRed->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorRed->SetPos(vec2((size_.x - focusButtonSliderColorRed->GetSize().x)*0.5f,size_.y - 32.0f*3));
-	focusButtonSliderColorRed->SetValue(color.x);
-
-	focusButtonSliderColorGreen = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
-	focusButtonSliderColorGreen->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorGreen->SetPos(vec2((size_.x - focusButtonSliderColorRed->GetSize().x)*0.5f,size_.y - 32.0f*4));
-	focusButtonSliderColorGreen->SetValue(color.y);
-
-	focusButtonSliderColorBlue = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
-	focusButtonSliderColorBlue->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorBlue->SetPos(vec2((size_.x - focusButtonSliderColorRed->GetSize().x)*0.5f,size_.y - 32.0f*5));
-	focusButtonSliderColorBlue->SetValue(color.z);
-
-	focusButtonSliderColorAlpha = (Interface::Button::Slider*)focusPanel->AddButton(Interface::ButtonType::Slider);
-	focusButtonSliderColorAlpha->SetSize(vec2(120.0f,20.0f));
-	focusButtonSliderColorAlpha->SetPos(vec2((size_.x - focusButtonSliderColorRed->GetSize().x)*0.5f,size_.y - 32.0f*6));
-	focusButtonSliderColorAlpha->SetValue(color.w);
-}
-void					TexProject::Tool::Generator::D2::Blank::FreeFocus(Interface::Panel::Default* panel)
-{
-	if(focusPanel)
-	{
-		panel->RemovePanel(focusPanel);
-		focusPanel = nullptr;
-	}
-}
-
-
-// Tool::Generator::D2::Noise::Simple
-TexProject::Tool::Generator::D2::Noise::Simple::Simple(Window::Render* window_):
-Tool::D2(window_)
-{
-	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
-	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
-	panelBase->SetSize(vec2(200.0f));
-	panelBase->SetUserData(this);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			Tool::SetFocus((Tool::Generator::D2::Noise::Simple*)item->GetUserData());
-		}
-	);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Destruction,
-		[](Interface::Item* item)
-		{
-			((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->destruction = true;
-		}
-	);
-
-	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
-	panelTitle->SetSize(vec2(160.0f,14.0f));
-	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f -  panelTitle->GetSize().x*0.5f,panelBase->GetSize().y - panelTitle->GetSize().y));
-	panelTitle->SetText("Noise");
-	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
-
-	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
-	panelImage->SetSize(vec2(128.0f));
-	panelImage->SetPos((panelBase->GetSize().x-panelImage->GetSize())*0.5f);
-
-	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
-	buttonRefresh->SetSize(vec2(64.0f,16.0f));
-	buttonRefresh->SetPos(vec2((panelBase->GetSize().x-buttonRefresh->GetSize().x)*0.5f,4.0f));
-	buttonRefresh->SetUserData(this);
-	buttonRefresh->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			((Tool::Generator::D2::Blank*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonConnectorOut = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::OutputConnector);
-	buttonConnectorOut->SetSize(vec2(8.0f));
-	buttonConnectorOut->SetPos(vec2(panelBase->GetSize().x - buttonConnectorOut->GetSize().x - 4.0f,(panelBase->GetSize().y - buttonConnectorOut->GetSize().y)*0.5f));
-	buttonConnectorOut->connectDirection = vec2(64.0f,0.0f);
-	buttonConnectorOut->SetUserData(new OutputData(this,Texture::Type::D2,nullptr),true);
-
-	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
-	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
-	buttonClose->SetSize(vec2(16.0f));
-}
-TexProject::Tool::Generator::D2::Noise::Simple::~Simple()
-{
-	if(texture) delete texture;
-}
-void					TexProject::Tool::Generator::D2::Noise::Simple::Loop()
-{
-	Basic::Loop();
-
-	if(panelBase)
-	{
-		panelBase->SetAnchor(Tool::GetAnchor());
-	}
-
-	if(focusPanel)
-	{
-		focusPanelSizeXText->SetText(std::to_string(size.x));
-		focusPanelSizeYText->SetText(std::to_string(size.y));
-	}
-}
-void					TexProject::Tool::Generator::D2::Noise::Simple::Refresh()
-{
-	if(!texture) texture = new Texture::D2;
-
-	texture->Create(size);
-
-	for(uint32 x = 0; x < size.x; ++x)
-	for(uint32 y = 0; y < size.y; ++y)
-	{
-		texture->SetPixel(uvec2(x,y),vec4(rnd(0.0f,1.0f),rnd(0.0f,1.0f),rnd(0.0f,1.0f),1.0f));
-	}
-
-	panelImage->SetImage(texture);
-
-	((OutputData*)buttonConnectorOut->GetUserData())->texture = texture;
-	buttonConnectorOut->RefreshObservers();
-}
-void					TexProject::Tool::Generator::D2::Noise::Simple::InitFocus(Interface::Panel::Default* panel)
-{
-	focusPanel = (Interface::Panel::Default*)panel->AddPanel(Interface::PanelTypes::Default);
-	focusPanel->SetColor(vec4(vec3(0.32f),1.0f));
-	focusPanel->SetSize(vec2(panel->GetSize().x - 8.0f,300.0f));
-	focusPanel->SetPos(vec2(4.0f,panel->GetSize().y - focusPanel->GetSize().y - 4.0f));
-
-	auto size_ = focusPanel->GetSize();
-
-	focusButtonRefresh = (Interface::Button::Default*)focusPanel->AddButton(Interface::ButtonType::Default);
-	focusButtonRefresh->SetSize(vec2(80.0f,20.0f));
-	focusButtonRefresh->SetPos(vec2((size_.x - focusButtonRefresh->GetSize().x)*0.5f,size_.y - focusButtonRefresh->GetSize().y - 4.0f));
-	focusButtonRefresh->SetUserData(this);
-	focusButtonRefresh->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->Refresh();
-		}
-	);
-
-	focusPanelSizeX = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
-	focusPanelSizeX->SetSize(vec2(64.0f,16.0f));
-	focusPanelSizeX->SetPos(vec2(4.0f,size_.y - 32.0f*2));
-
-	focusPanelSizeXText = (Interface::Panel::Text*)focusPanelSizeX->AddPanel(Interface::PanelTypes::Text);
-	focusPanelSizeXText->SetSize(vec2(40.0f,14.0f));
-	focusPanelSizeXText->SetPos(vec2(1.0f));
-	focusPanelSizeXText->SetText("test");
-	focusPanelSizeXText->SetColor(vec4(vec3(0.5f),1.0f));
-
-	{
-		auto t1 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
-		t1->SetSize(vec2(10.0f,6.0f));
-		t1->SetPos(vec2(focusPanelSizeX->GetSize().x - 11.0f,9.0f));
-		t1->SetUserData(this);
-		auto ft1 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->size.x;
-			if(t < 1024) ++t;
-		};
-		t1->SetAction(Interface::Item::ActionTypes::Click,ft1);
-		t1->SetAction(Interface::Item::ActionTypes::Clamp,ft1);
-		auto t2 = focusPanelSizeX->AddButton(Interface::ButtonTypes::Default);
-		t2->SetSize(vec2(10.0f,6.0f));
-		t2->SetPos(vec2(focusPanelSizeX->GetSize().x - 11.0f,1.0f));
-		t2->SetUserData(this);
-		auto ft2 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->size.x;
-			if(t > 0) --t;
-		};
-		t2->SetAction(Interface::Item::ActionTypes::Click,ft2);
-		t2->SetAction(Interface::Item::ActionTypes::Clamp,ft2);
-	}
-
-	focusPanelSizeY = (Interface::Panel::Default*)focusPanel->AddPanel(Interface::PanelTypes::Default);
-	focusPanelSizeY->SetSize(vec2(64.0f,16.0f));
-	focusPanelSizeY->SetPos(vec2(focusPanelSizeX->GetPos().x + focusPanelSizeX->GetSize().x + 4.0f,size_.y - 32.0f*2));
-
-	focusPanelSizeYText = (Interface::Panel::Text*)focusPanelSizeY->AddPanel(Interface::PanelTypes::Text);
-	focusPanelSizeYText->SetSize(vec2(40.0f,14.0f));
-	focusPanelSizeYText->SetPos(vec2(1.0f));
-	focusPanelSizeYText->SetText("test");
-	focusPanelSizeYText->SetColor(vec4(vec3(0.5f),1.0f));
-
-	{
-		auto t1 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
-		t1->SetSize(vec2(10.0f,6.0f));
-		t1->SetPos(vec2(focusPanelSizeY->GetSize().x - 11.0f,9.0f));
-		t1->SetUserData(this);
-		auto ft1 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->size.y;
-			if(t < 1024) ++t;
-		};
-		t1->SetAction(Interface::Item::ActionTypes::Click,ft1);
-		t1->SetAction(Interface::Item::ActionTypes::Clamp,ft1);
-		auto t2 = focusPanelSizeY->AddButton(Interface::ButtonTypes::Default);
-		t2->SetSize(vec2(10.0f,6.0f));
-		t2->SetPos(vec2(focusPanelSizeY->GetSize().x - 11.0f,1.0f));
-		t2->SetUserData(this);
-		auto ft2 = [](Interface::Item* item)
-		{
-			auto &t = ((Tool::Generator::D2::Noise::Simple*)item->GetUserData())->size.y;
-			if(t > 0) --t;
-		};
-		t2->SetAction(Interface::Item::ActionTypes::Click,ft2);
-		t2->SetAction(Interface::Item::ActionTypes::Clamp,ft2);
-	}
-}
-void					TexProject::Tool::Generator::D2::Noise::Simple::FreeFocus(Interface::Panel::Default* panel)
-{
-	if(focusPanel)
-	{
-		panel->RemovePanel(focusPanel);
-		focusPanel = nullptr;
-	}
-}
-
-
-// Tool::Filter::D2::Correction::Color
-TexProject::Tool::Filter::D2::Correction::Color::Color(Window::Render* window_):
-	Tool::D2(window_)
-{
-	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
-	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
-	panelBase->SetSize(vec2(200.0f));
-	panelBase->SetUserData(this);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			Tool::SetFocus( (Tool::Filter::D2::Correction::Color*)item->GetUserData() );
-		}
-	);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Destruction,
-		[](Interface::Item* item)
-		{
-			((Tool::Filter::D2::Correction::Color*)item->GetUserData())->destruction = true;
-		}
-	);
-
-	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
-	panelTitle->SetSize(vec2(160.0f,14.0f));
-	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f -  panelTitle->GetSize().x*0.5f,panelBase->GetSize().y - panelTitle->GetSize().y));
-	panelTitle->SetText("Color Correction");
-	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
-
-	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
-	panelImage->SetSize(vec2(128.0f));
-	panelImage->SetPos( (panelBase->GetSize().x-panelImage->GetSize())*0.5f );
-
-	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
-	buttonRefresh->SetSize(vec2(64.0f,16.0f));
-	buttonRefresh->SetPos(vec2((panelBase->GetSize().x-buttonRefresh->GetSize().x)*0.5f,4.0f));
-	buttonRefresh->SetUserData(this);
-	buttonRefresh->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			((Tool::Filter::D2::Correction::Color*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonConnectorIn = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::InputConnector);
-	buttonConnectorIn->SetSize(vec2(8.0f));
-	buttonConnectorIn->SetPos(vec2(4.0f,(panelBase->GetSize().y - buttonConnectorIn->GetSize().y)*0.5f));
-	buttonConnectorIn->connectDirection = vec2(-64.0f,0.0f);
-	buttonConnectorIn->SetUserData(this);
-	buttonConnectorIn->SetAction
-	(
-		Interface::Item::ActionTypes::Refresh,
-		[](Interface::Item* item)
-		{
-			((Tool::Filter::D2::Correction::Color*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonConnectorOut = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::OutputConnector);
-	buttonConnectorOut->SetSize(vec2(8.0f));
-	buttonConnectorOut->SetPos(vec2(panelBase->GetSize().x - buttonConnectorOut->GetSize().x - 4.0f,(panelBase->GetSize().y - buttonConnectorOut->GetSize().y)*0.5f));
-	buttonConnectorOut->connectDirection = vec2(64.0f,0.0f);
-	buttonConnectorOut->SetUserData(new OutputData(this,Texture::Type::D2,nullptr),true);
-
-	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
-	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
-	buttonClose->SetSize(vec2(16.0f));
-}
-TexProject::Tool::Filter::D2::Correction::Color::~Color()
-{
-	if(generationFlag)
-	{
-		while(!generationFinish);
-		generationThread.join();
-
-		if(generationTexture) delete generationTexture;
-	}
-
-	if(texture) delete texture;
-}
-TexProject::Texture::D2*					TexProject::Tool::Filter::D2::Correction::Color::GetInput()
-{
-	if(buttonConnectorIn)
-	{
-		auto t = ((Interface::Button::Connector*)buttonConnectorIn)->GetTarget();
-		if(t)
-		{
-			auto data_ = (OutputData*)t->GetUserData();
-			if(data_->textureType == Texture::Type::D2)
-			{
-				return (Texture::D2*)data_->texture;
-			}
-		}
-	}
-	return nullptr;
-}
-void										TexProject::Tool::Filter::D2::Correction::Color::Loop()
-{
-	Basic::Loop();
-
-	if(panelBase)
-	{
-		panelBase->SetAnchor(Tool::GetAnchor());
-	}
-
-	if(generationFlag)
-	{
-		if(generationFinish)
-		{
-			generationThread.join();
-			generationFlag = false;
-
-			texture = generationTexture;
-			generationTexture = nullptr;
-
-			((OutputData*)buttonConnectorOut->GetUserData())->texture = texture;
-
-			panelImage->SetImage(texture);
-
-			buttonConnectorOut->RefreshObservers();
-		}
-	}
-}
-void										TexProject::Tool::Filter::D2::Correction::Color::Refresh()
-{
-	if(!generationFlag)
-	{
-
-		panelImage->SetImage(nullptr);
-
-		((OutputData*)buttonConnectorOut->GetUserData())->texture = nullptr;
-
-		if(texture) { delete texture; texture = nullptr; }
-
-		auto source = GetInput();
-		if(source)
-		{
-			if(!generationInputTexture) delete generationInputTexture;
-			generationInputTexture = new Texture::D2(*source);
-
-			generationFlag = true;
-			generationFinish = false;
-			generationThread = std::thread
-			(
-				[this]()
+				static uint32 pos = 0;
+				auto button = (GUI::Buttons::Default*)panelTools->AddButton(GUI::ButtonTypes::Default);
 				{
-					generationTexture = new Texture::D2;
-					generationTexture->Create(generationInputTexture->GetSize());
-					
-					for(uint32 x = 0; x < generationTexture->GetSize().x; ++x)
-					for(uint32 y = 0; y < generationTexture->GetSize().y; ++y)
-					{
-						auto sourcePixel = generationInputTexture->GetPixel(uvec2(x,y));
-						generationTexture->SetPixel(uvec2(x,y),vec4(vec3(1.0f) - sourcePixel.xyz(),1.0f));
-					}
-
-					delete generationInputTexture;
-					generationInputTexture = nullptr;
-
-					generationFinish = true;
+					button->SetUserData(this);
+					button->SetColor(vec4(0,1,0,1));
+					button->SetSize(vec2(32.0f));
+					button->SetPos(vec2(20.0f - button->GetSize().x*0.5f + 40.0f * pos,(panelTools->GetSize().y - button->GetSize().y)*0.5f));
+					button->SetAction(GUI::Item::ActionType::Click,action);
 				}
-			);
+				++pos;
+				return button;
+			};
+
+			SummonButton([](GUI::Item* item) { new Tools::Generator::Noise::Simple((ToolSet*)item->GetUserData()); });
+			SummonButton([](GUI::Item* item) { new Tools::Generator::Noise::Worley((ToolSet*)item->GetUserData()); });
+			SummonButton([](GUI::Item* item) { new Tools::Filter::Correction::Grayscale((ToolSet*)item->GetUserData()); });
+			SummonButton([](GUI::Item* item) { new Tools::Filter::Correction::Blur((ToolSet*)item->GetUserData()); });
+			SummonButton([](GUI::Item* item) { new Tools::Filter::Physics::HeightToNormal((ToolSet*)item->GetUserData()); });
+			SummonButton([](GUI::Item* item) { new Tools::Viewer::Simple((ToolSet*)item->GetUserData()); });
 		}
 	}
 }
-bool										TexProject::Tool::Filter::D2::Correction::Color::IsClean()
+TexProject::ToolSet::~ToolSet()
 {
-	return !generationFlag || generationFinish;
+	auto i = tool.begin();
+	while(i != tool.end())
+	{
+		auto del = *i;
+		i = tool.erase(i);
+		delete del;
+		continue;
+	}
 }
-
-
-// Tool::Filter::D2::Correction::Grayscale
-TexProject::Tool::Filter::D2::Correction::Grayscale::Grayscale(Window::Render* window_):
-	Tool::D2(window_)
+void										TexProject::ToolSet::FocusSet(Tool* tool)
 {
-	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
-	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
-	panelBase->SetSize(vec2(200.0f));
-	panelBase->SetUserData(this);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			Tool::SetFocus( (Tool::Filter::D2::Correction::Grayscale*)item->GetUserData() );
-		}
-	);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Destruction,
-		[](Interface::Item* item)
-		{
-			((Tool::Filter::D2::Correction::Grayscale*)item->GetUserData())->destruction = true;
-		}
-	);
-
-	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
-	panelTitle->SetSize(vec2(160.0f,14.0f));
-	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f -  panelTitle->GetSize().x*0.5f,panelBase->GetSize().y - panelTitle->GetSize().y));
-	panelTitle->SetText("Grayscale");
-	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
-
-	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
-	panelImage->SetSize(vec2(128.0f));
-	panelImage->SetPos( (panelBase->GetSize().x-panelImage->GetSize())*0.5f );
-
-	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
-	buttonRefresh->SetSize(vec2(64.0f,16.0f));
-	buttonRefresh->SetPos(vec2((panelBase->GetSize().x-buttonRefresh->GetSize().x)*0.5f,4.0f));
-	buttonRefresh->SetUserData(this);
-	buttonRefresh->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			((Tool::Filter::D2::Correction::Grayscale*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonConnectorIn = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::InputConnector);
-	buttonConnectorIn->SetSize(vec2(8.0f));
-	buttonConnectorIn->SetPos(vec2(4.0f,(panelBase->GetSize().y - buttonConnectorIn->GetSize().y)*0.5f));
-	buttonConnectorIn->connectDirection = vec2(-64.0f,0.0f);
-	buttonConnectorIn->SetUserData(this);
-	buttonConnectorIn->SetAction
-	(
-		Interface::Item::ActionTypes::Refresh,
-		[](Interface::Item* item)
-		{
-			((Tool::Filter::D2::Correction::Grayscale*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonConnectorOut = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::OutputConnector);
-	buttonConnectorOut->SetSize(vec2(8.0f));
-	buttonConnectorOut->SetPos(vec2(panelBase->GetSize().x - buttonConnectorOut->GetSize().x - 4.0f,(panelBase->GetSize().y - buttonConnectorOut->GetSize().y)*0.5f));
-	buttonConnectorOut->connectDirection = vec2(64.0f,0.0f);
-	buttonConnectorOut->SetUserData(new OutputData(this,Texture::Type::D2,nullptr),true);
-
-	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
-	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
-	buttonClose->SetSize(vec2(16.0f));
+	if(focus)
+	{
+		focus->FocusFree();
+	}
+	focus = tool;
+	if(focus)
+	{
+		focus->FocusInit();
+	}
 }
-TexProject::Tool::Filter::D2::Correction::Grayscale::~Grayscale()
+void										TexProject::ToolSet::Loop()
+{
+	panelConfig->SetSize(vec2(128.0f,float32(window->GetSize().y)));
+	panelConfig->SetPos(vec2(0.0f));
+
+	panelTools->SetSize(vec2(window->GetSize().x - panelConfig->GetSize().x - 16.0f,40.0f));
+	panelTools->SetPos(vec2(panelConfig->GetSize().x + 8.0f,window->GetSize().y - panelTools->GetSize().y));
+
+	oMouse = nMouse;
+	nMouse = vec2(MousePos());
+
+	if(KeyState(Key::SPACE))
+	{
+		if(MouseLState())
+		{
+			anchor += nMouse - oMouse;
+		}
+	}
+
+	auto i = tool.begin();
+	while(i != tool.end())
+	{		
+		try
+		{
+			(*i)->Loop();
+		}
+		catch(Tool::Destruction)
+		{
+			auto del = *i;
+			i = tool.erase(i);
+			delete del;
+			continue;
+		}
+		++i;
+	}
+}
+#pragma endregion
+#pragma region ToolSetBind
+TexProject::ToolSetBind::ToolSetBind(ToolSet* toolSet_):
+	toolSet(toolSet_)
+{
+}
+#pragma endregion
+#pragma region Tool
+TexProject::Tool::Tool(ToolSet* toolSet_):
+	ToolSetBind(toolSet_)
+{
+	toolSet->tool.push_back(this);
+
+	auto gui = toolSet->GetWindow()->GetGUI();
+
+	panelFieldBase = (GUI::Panels::Default*)gui->AddPanel(GUI::PanelTypes::Default);
+	{
+		panelFieldBase->SetUserData(this);
+		panelFieldBase->EnableClosing();
+		panelFieldBase->SetAction
+		(
+			GUI::Item::ActionType::Destruction,
+			[](GUI::Item* item)
+			{
+				((Tool*)item->GetUserData())->panelFieldBase = nullptr;
+			}
+		);
+		panelFieldBase->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				auto tool = (Tool*)item->GetUserData();
+				tool->toolSet->FocusSet(tool);
+			}
+		);
+		panelFieldBase->SetSize(vec2(180.0f));
+		panelFieldBase->SetColor(vec4(vec3(0.32f),1.0f));
+	}
+
+	panelFieldTitle = (GUI::Panels::Text*)panelFieldBase->AddPanel(GUI::PanelTypes::Text);
+	{
+		panelFieldTitle->SetText("Title");
+		panelFieldTitle->SetSize(vec2(120.0f,20.0f));
+		panelFieldTitle->SetPos(vec2((panelFieldBase->GetSize().x - panelFieldTitle->GetSize().x)*0.5f,panelFieldBase->GetSize().y - panelFieldTitle->GetSize().y));
+	}
+
+	panelFieldImage = (GUI::Panels::Image*)panelFieldBase->AddPanel(GUI::PanelTypes::Image);
+	{
+		panelFieldImage->DisableDragging();
+		panelFieldImage->SetSize(vec2(128.0f));
+		panelFieldImage->SetPos(vec2((panelFieldBase->GetSize() - panelFieldImage->GetSize())*0.5f));
+		panelFieldImage->SetColor(vec4(1,0,0,1));
+	}
+
+	buttonFieldRefresh = (GUI::Buttons::Default*)panelFieldBase->AddButton(GUI::ButtonTypes::Default);
+	{
+		buttonFieldRefresh->DisableDragging();
+		buttonFieldRefresh->SetColor(vec4(0,1,0,1));
+		buttonFieldRefresh->SetSize(vec2(80.0f,12.0f));
+		buttonFieldRefresh->SetPos(vec2((panelFieldBase->GetSize().x - buttonFieldRefresh->GetSize().x)*0.5f,4.0f));
+	}
+}
+TexProject::Tool::~Tool()
+{
+	if(toolSet->focus == this)
+	{
+		toolSet->FocusSet(nullptr);
+	}
+
+	toolSet->tool.remove(this);
+}
+void										TexProject::Tool::Loop()
+{
+	if(panelFieldBase)
+	{
+		panelFieldBase->SetAnchor(toolSet->anchor);
+	}
+	else
+	{
+		throw Destruction();
+	}
+}
+void										TexProject::Tool::FocusInit()
+{
+	panelConfigBase = (GUI::Panels::Default*)toolSet->panelConfig->AddPanel(GUI::PanelTypes::Default);
+	{
+		panelConfigBase->SetColor(vec4(1,0,0,1));
+		panelConfigBase->SetSize(vec2(toolSet->panelConfig->GetSize().x - 8.0f,100.0f));
+		panelConfigBase->SetPos(vec2(4.0f,toolSet->panelConfig->GetSize().y - panelConfigBase->GetSize().y - 4.0f));
+	}
+}
+void										TexProject::Tool::FocusFree()
+{
+	if(panelConfigBase)
+	{
+		toolSet->panelConfig->RemoveItem(panelConfigBase);
+		panelConfigBase = nullptr;
+	}
+}
+#pragma endregion
+#pragma region Tools
+#pragma region Generator
+#pragma region Noise
+#pragma region Simple
+TexProject::Tools::Generator::Noise::Simple::Simple(ToolSet* toolSet_):
+	Tool(toolSet_)
+{
+	panelFieldTitle->SetText("Simple Noise");
+	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonOutput->SetUserData
+		(
+			new OutputData
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
+		);
+		buttonOutput->DisableDragging();
+		buttonOutput->SetSize(vec2(8.0f));
+		buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f, (panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
+		buttonOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				((Tools::Generator::Noise::Simple*)item->GetUserData())->Refresh();
+			}
+		);
+	}
+}
+TexProject::Tools::Generator::Noise::Simple::~Simple()
 {
 	if(texture) delete texture;
 }
-TexProject::Texture::D2*					TexProject::Tool::Filter::D2::Correction::Grayscale::GetInput()
+void										TexProject::Tools::Generator::Noise::Simple::Refresh()
 {
-	if(buttonConnectorIn)
+	texture->Create(uvec2(256));
 	{
-		auto t = ((Interface::Button::Connector*)buttonConnectorIn)->GetTarget();
-		if(t)
+		for(uint32 x = 0; x < texture->GetSize().x; ++x)
+		for(uint32 y = 0; y < texture->GetSize().y; ++y)
 		{
-			auto data_ = (OutputData*)t->GetUserData();
-			if(data_->textureType == Texture::Type::D2)
+			texture->SetPixel(uvec2(x,y),vec4(rnd(),rnd(),rnd(),1.0f));
+		}
+	}
+	panelFieldImage->SetImage(texture);
+	((OutputData*)buttonOutput->GetUserData())->data = texture;
+	buttonOutput->RefreshObservers();
+}
+#pragma endregion
+#pragma region Worley
+TexProject::Tools::Generator::Noise::Worley::Worley(ToolSet* toolSet_):
+Tool(toolSet_)
+{
+	panelFieldTitle->SetText("Worley Noise");
+	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonOutput->SetUserData
+			(
+			new OutputData
+		{
+			OutputData::Type::Texture2D,
+			nullptr
+		},
+		true
+		);
+			buttonOutput->DisableDragging();
+			buttonOutput->SetSize(vec2(8.0f));
+			buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
+			buttonOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+			(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+		{
+			((Tools::Generator::Noise::Worley*)item->GetUserData())->Refresh();
+		}
+		);
+	}
+}
+TexProject::Tools::Generator::Noise::Worley::~Worley()
+{
+	if(texture) delete texture;
+}
+void										TexProject::Tools::Generator::Noise::Worley::Refresh()
+{
+	texture->Create(uvec2(128));
+	{
+		uint32 width = texture->GetSize().x;
+		float32 wcoef = 1.0f / width;
+
+		uint32 height = texture->GetSize().y;
+		float32 hcoef = 1.0f / height;
+		vec2* dotArr = new vec2[generationDotsNumber];
+
+		for (uint32 i = 0; i < generationDotsNumber; ++i)
+		{
+			dotArr[i].x = rnd(0.0f, 1.0f);// (rand() % width)*wcoef;
+			dotArr[i].y = rnd(0.0f, 1.0f);
+		}
+
+
+		vec4 color;
+		for (uint32 x = 0; x < width; ++x)
+		{
+			for (uint32 y = 0; y < height; ++y)
 			{
-				return (Texture::D2*)data_->texture;
+				float32 mindist = 2.0f;
+
+
+				for (int i = 0; i < int32(generationDotsNumber); ++i)
+				{
+					float32 absx = fabs(float32(x)*wcoef - dotArr[i].x);
+					float32 absy = fabs(float32(y)*hcoef - dotArr[i].y);
+					if (absx > 1.0f / 2) absx = 1.0f - absx;
+					if (absy > 1.0f / 2) absy = 1.0f - absy;
+					float32 dist = sqrtf(absx*absx + absy*absy);
+					if (dist < mindist) mindist = dist;
+				}
+
+
+				color.x = (1.0f - mindist)*1.0f;
+				color.y = (1.0f - mindist)*1.0f;
+				color.z = (1.0f - mindist)*1.0f;
+				color.w = (1.0f - mindist)*1.0f;
+
+				texture->SetPixel(uvec2(x, y), color);
 			}
 		}
 	}
-	return nullptr;
+	panelFieldImage->SetImage(texture);
+	((OutputData*)buttonOutput->GetUserData())->data = texture;
+	buttonOutput->RefreshObservers();
 }
-void										TexProject::Tool::Filter::D2::Correction::Grayscale::Loop()
+#pragma endregion
+#pragma endregion
+#pragma endregion
+#pragma region Filter
+#pragma region Correction
+#pragma region Grayscale
+TexProject::Tools::Filter::Correction::Grayscale::Grayscale(ToolSet* toolSet_):
+	Tool(toolSet_)
 {
-	Basic::Loop();
-
-	if(panelBase)
+	panelFieldTitle->SetText("Grayscale Filter");
+	buttonInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		panelBase->SetAnchor(Tool::GetAnchor());
+		buttonInput->SetRecipient();
+		buttonInput->SetUserData(this);
+		buttonInput->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Grayscale*)item->GetUserData())->Refresh();
+			}
+		);
+		buttonInput->DisableDragging();
+		buttonInput->SetSize(vec2(8.0f));
+		buttonInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonInput->GetSize().y)*0.5f));
+		buttonInput->direction = vec2(-100.0f,0.0f);
+	}
+	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonOutput->SetUserData
+		(
+			new OutputData
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
+		);
+		buttonOutput->DisableDragging();
+		buttonOutput->SetSize(vec2(8.0f));
+		buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f, (panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
+		buttonOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Grayscale*)item->GetUserData())->Refresh();
+			}
+		);
 	}
 }
-void										TexProject::Tool::Filter::D2::Correction::Grayscale::Refresh()
+TexProject::Tools::Filter::Correction::Grayscale::~Grayscale()
 {
-	panelImage->SetImage(nullptr);
 
-	((OutputData*)buttonConnectorOut->GetUserData())->texture = nullptr;
-
-	if(texture) { delete texture; texture = nullptr; }
-
+}
+void										TexProject::Tools::Filter::Correction::Grayscale::Refresh()
+{
 	auto source = GetInput();
 
 	if(source)
 	{
-		texture = new Texture::D2;
 		texture->Create(source->GetSize());
-		for(uint32 x = 0; x < texture->GetSize().x; ++x)
-		for(uint32 y = 0; y < texture->GetSize().y; ++y)
 		{
-			auto p = source->GetPixel(uvec2(x,y));
-			p = vec4(vec3(p.xyz().length()/3.0f),1.0f);
-			texture->SetPixel(uvec2(x,y),p);
+			for(uint32 x = 0; x < texture->GetSize().x; ++x)
+			for(uint32 y = 0; y < texture->GetSize().y; ++y)
+			{
+				auto color = source->GetPixel(uvec2(x,y));
+				color = vec4(vec3(color.xyz().length() / sqrt(3.0f)),color.w);
+				texture->SetPixel(uvec2(x,y),color);
+			}
 		}
-
-		((OutputData*)buttonConnectorOut->GetUserData())->texture = texture;
-
-		panelImage->SetImage(texture);
-
-		buttonConnectorOut->RefreshObservers();
+		panelFieldImage->SetImage(texture);
+		((OutputData*)buttonOutput->GetUserData())->data = texture;
+		buttonOutput->RefreshObservers();
+	}
+	else
+	{
+		panelFieldImage->SetImage(nullptr);
+		((OutputData*)buttonOutput->GetUserData())->data = nullptr;
+		buttonOutput->RefreshObservers();
 	}
 }
-
-
-// Tool::Viewer::Default
-void										TexProject::Tool::Viewer::Default::funcWindowInit(Window::Render* window)
+TexProject::Texture::D2*					TexProject::Tools::Filter::Correction::Grayscale::GetInput()
 {
-	auto tool = (Tool::Viewer::Default*)window->GetUserData();
-
-	tool->oMousePos = MousePos();
-
-	tool->renderGLShader = new OpenGL::Shader(window);
-	tool->renderGLShader->Load("Media/Shaders/GLSL/3D/Material/Texture/1.vs","","","","Media/Shaders/GLSL/3D/Material/Texture/1.ps");
-	tool->renderGLShader->Use();
-	tool->renderGLShader->SetInt("TextureDiffuse",0);
-	/*tool->renderGLShader->SetInt("TextureNormal",1);
-	tool->renderGLShader->SetInt("TextureMaterial",2);
-	tool->renderGLShader->SetInt("TextureEnvironment",3);*/
-	tool->renderGLShader->Unuse();
-
-	/*tool->skyGLShader = new OpenGL::Shader(window);
-	tool->skyGLShader->Load
-	(
-		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.vs",
-		"",
-		"",
-		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.gs",
-		"Media/Shaders/GLSL/Screen Quad/Skybox/V1/1.ps"
-	);
-	tool->skyGLShader->Use();
-	tool->skyGLShader->SetInt("Texture",3);*/
-
-	tool->currentPrimitiveType = PrimitiveType::Box;
-	auto m = new Geometry::Mesh();
-	m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
-
-	tool->renderGLModel = new OpenGL::Model(window);
-	tool->renderGLModel->Create(m,tool->renderGLShader);
-
-	delete m;
-
-	tool->mMat.SetPos(vec3(0.0f));
-	tool->mMat.SetAng(vec3(0.0f));
-	tool->mMat.SetScale(vec3(1.0f));
-
-	/*{
-		auto t = new Texture::D2;
-
-		t->Load("Media/Images/Brick1_D.png");
-		tool->renderGLTextureDiffuse = new OpenGL::Texture(window);
-		*tool->renderGLTextureDiffuse = *t;
-
-		t->Load("Media/Images/Brick1_N.png");
-		tool->renderGLTextureNormals = new OpenGL::Texture(window);
-		*tool->renderGLTextureNormals = *t;
-
-		t->Load("Media/Images/Brick1_M.png");
-		tool->renderGLTextureMaterial = new OpenGL::Texture(window);
-		*tool->renderGLTextureMaterial = *t;
-	}*/
-	/*{
-		auto t = new Texture::Cube;
-		t->Load("Media/Images/Cubemap1.DDS");
-
-		tool->renderGLTextureEnvironment = new OpenGL::Texture(window);
-		*tool->renderGLTextureEnvironment = *t;
-	}*/
+	auto t = buttonInput->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
 }
-void										TexProject::Tool::Viewer::Default::funcWindowFree(Window::Render* window)
+#pragma endregion
+#pragma region Blur
+TexProject::Tools::Filter::Correction::Blur::Blur(ToolSet* toolSet_):
+	Tool(toolSet_)
 {
-	auto tool = (Tool::Viewer::Default*)window->GetUserData();
-
-	if(tool->renderGLShader)
+	panelFieldTitle->SetText("Blur Filter");
+	buttonInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		delete tool->renderGLShader;
-		tool->renderGLShader = nullptr;
+		buttonInput->SetRecipient();
+		buttonInput->SetUserData(this);
+		buttonInput->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Blur*)item->GetUserData())->Refresh();
+			}
+		);
+		buttonInput->DisableDragging();
+		buttonInput->SetSize(vec2(8.0f));
+		buttonInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonInput->GetSize().y)*0.5f));
+		buttonInput->direction = vec2(-100.0f,0.0f);
 	}
-	if(tool->skyGLShader)
+	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		delete tool->skyGLShader;
-		tool->skyGLShader = nullptr;
+		buttonOutput->SetUserData
+		(
+			new OutputData
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
+		);
+		buttonOutput->DisableDragging();
+		buttonOutput->SetSize(vec2(8.0f));
+		buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f, (panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
+		buttonOutput->direction = vec2(100.0f,0.0f);
 	}
-	if(tool->renderGLModel)
+	buttonFieldRefresh->SetUserData(this);
 	{
-		delete tool->renderGLModel;
-		tool->renderGLModel = nullptr;
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Blur*)item->GetUserData())->Refresh();
+			}
+		);
 	}
 }
-void										TexProject::Tool::Viewer::Default::funcWindowLoop(Window::Render* window)
+TexProject::Tools::Filter::Correction::Blur::~Blur()
 {
-	auto tool = (Tool::Viewer::Default*)window->GetUserData();
-	
-	if(tool->currentPrimitiveType != tool->primitiveType)
+
+}
+void										TexProject::Tools::Filter::Correction::Blur::Refresh()
+{
+	auto source = GetInput();
+
+	if(source)
 	{
-		tool->currentPrimitiveType = tool->primitiveType;
-
-		auto m = new Geometry::Mesh();
-		switch(tool->currentPrimitiveType)
+		texture->Create(source->GetSize());
 		{
-		case TexProject::Tool::Viewer::Default::PrimitiveType::Box:
-			m->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
-		break;
-		case TexProject::Tool::Viewer::Default::PrimitiveType::Sphere:
-			m->CreateSphere(0.5f,vec2(1.0f),uvec2(32));
-		break;
-		case TexProject::Tool::Viewer::Default::PrimitiveType::Cylinder:
-			m->CreateCylinder(0.25f,1.0f,vec2(2.0f,1.0f),vec2(1.0f),uvec2(32,1),0);
-		break;
+			float32 radius = 5.0f;
+
+			for(int32 x = 0; x < int32(texture->GetSize().x); ++x)
+			for(int32 y = 0; y < int32(texture->GetSize().y); ++y)
+			{
+				vec4 color = source->GetPixel(uvec2(x,y));
+				float32 count = 1.0f;
+				for(int32 tx = 1; tx < int32(radius); ++tx)
+				for(int32 ty = 1; ty < int32(radius); ++ty)
+				{
+					float32 d = vec2(float32(tx),float32(ty)).length();
+					if(d < radius)
+					{
+						if(x + tx < int32(source->GetSize().x))
+						{
+							float32 t = 1.0f / float32(d);
+							color += source->GetPixel(uvec2(x + tx,y)) * t;
+							count += t;
+						}
+						if(x - tx >= 0)
+						{
+							float32 t = 1.0f / float32(d);
+							color += source->GetPixel(uvec2(x - tx,y)) * t;
+							count += t;
+						}
+						if(y + ty < int32(source->GetSize().y))
+						{
+							float32 t = 1.0f / float32(d);
+							color += source->GetPixel(uvec2(x,y + ty)) * t;
+							count += t;
+						}
+						if(y - ty >= 0)
+						{
+							float32 t = 1.0f / float32(d);
+							color += source->GetPixel(uvec2(x,y - ty)) * t;
+							count += t;
+						}
+					}
+				}
+
+				color /= count;
+				texture->SetPixel(uvec2(x,y),color);
+			}
 		}
+		panelFieldImage->SetImage(texture);
+		((OutputData*)buttonOutput->GetUserData())->data = texture;
+		buttonOutput->RefreshObservers();
+	}
+	else
+	{
+		panelFieldImage->SetImage(nullptr);
+		((OutputData*)buttonOutput->GetUserData())->data = nullptr;
+		buttonOutput->RefreshObservers();
+	}
+}
+TexProject::Texture::D2*					TexProject::Tools::Filter::Correction::Blur::GetInput()
+{
+	auto t = buttonInput->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+#pragma endregion
+#pragma endregion
+#pragma region Physics
+#pragma region HeightToNormal
+TexProject::Tools::Filter::Physics::HeightToNormal::HeightToNormal(ToolSet* toolSet_):
+Tool(toolSet_)
+{
+	panelFieldTitle->SetText("Height To Normal");
+	buttonInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonInput->SetRecipient();
+		buttonInput->SetUserData(this);
+		buttonInput->SetAction
+			(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+		{
+			((Tools::Filter::Physics::HeightToNormal*)item->GetUserData())->Refresh();
+		}
+		);
+		buttonInput->DisableDragging();
+		buttonInput->SetSize(vec2(8.0f));
+		buttonInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonInput->GetSize().y)*0.5f));
+		buttonInput->direction = vec2(-100.0f,0.0f);
+	}
+	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonOutput->SetUserData
+			(
+			new OutputData
+		{
+			OutputData::Type::Texture2D,
+			nullptr
+		},
+		true
+		);
+			buttonOutput->DisableDragging();
+			buttonOutput->SetSize(vec2(8.0f));
+			buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
+			buttonOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+			(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+		{
+			((Tools::Filter::Physics::HeightToNormal*)item->GetUserData())->Refresh();
+		}
+		);
+	}
+}
+TexProject::Tools::Filter::Physics::HeightToNormal::~HeightToNormal()
+{
 
-		tool->renderGLModel->Create(m,tool->renderGLShader);
+}
+void										TexProject::Tools::Filter::Physics::HeightToNormal::Refresh()
+{
+	auto source = GetInput();
 
-		delete m;
+	if(source)
+	{
+		texture->Create(source->GetSize());
+		{
+			for(uint32 i = 0; i < source->GetSize().x; ++i)
+			for(uint32 j = 0; j < source->GetSize().y; ++j)
+			{
+				vec3 a;
+				if(i != 0)
+				{
+					if(i != source->GetSize().x - 1)
+						a.x = source->GetPixel(uvec2(i - 1,j)).x - source->GetPixel(uvec2(i + 1,j)).x;
+					else
+						a.x = source->GetPixel(uvec2(i - 1,j)).x - source->GetPixel(uvec2(i,j)).x;
+				}
+				else
+					a.x = source->GetPixel(uvec2(i,j)).x - source->GetPixel(uvec2(i + 1,j)).x;
+
+				if(j != 0)
+				{
+					if(j != source->GetSize().y - 1)
+						a.y = source->GetPixel(uvec2(i,j - 1)).x - source->GetPixel(uvec2(i,j + 1)).x;
+					else
+						a.y = source->GetPixel(uvec2(i,j - 1)).x - source->GetPixel(uvec2(i,j)).x;
+				}
+				else
+					a.y = source->GetPixel(uvec2(i,j)).x - source->GetPixel(uvec2(i,j + 1)).x;
+				a.z = 0.1f;
+				a.normalize();
+				a += vec3(1.0f);
+				a *= vec3(0.5f);
+				texture->SetPixel(uvec2(i,j),vec4(a,1.0f));
+			}
+		}
+		panelFieldImage->SetImage(texture);
+		((OutputData*)buttonOutput->GetUserData())->data = texture;
+		buttonOutput->RefreshObservers();
+	}
+	else
+	{
+		panelFieldImage->SetImage(nullptr);
+		((OutputData*)buttonOutput->GetUserData())->data = nullptr;
+		buttonOutput->RefreshObservers();
+	}
+}
+TexProject::Texture::D2*					TexProject::Tools::Filter::Physics::HeightToNormal::GetInput()
+{
+	auto t = buttonInput->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+#pragma endregion
+#pragma endregion
+#pragma endregion
+#pragma region Viewer
+#pragma region Simple
+void										TexProject::Tools::Viewer::Simple::FuncWindowInit(Window* window)
+{
+	auto tool = (Tools::Viewer::Simple*)window->GetUserData();
+
+	tool->mesh->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
+
+	tool->oglShader = new OpenGL::Shader(window);
+	{
+		tool->oglShader->Load("Media/Shaders/GLSL/3D/Material/Basic/1.","vs","","","","ps");
+		tool->oglShader->Use();
+		tool->oglShader->SetInt("TextureDiffuse",0);
 	}
 
-	auto nMousePos = MousePos();
-	if(window->IsActive() && tool->oWindowActive)
+	tool->oglMesh = new OpenGL::Mesh(window);
 	{
-		/*{
-			float32 speed = 0.1f;
-			vec3 move(0.0f);
-			if(KeyState(Keys::W)) move.z += speed;
-			if(KeyState(Keys::S)) move.z -= speed;
-			if(KeyState(Keys::D)) move.x += speed;
-			if(KeyState(Keys::A)) move.x -= speed;
-			if(KeyState(Keys::SPACE)) move.y += speed;
-			if(KeyState(Keys::L_CTRL)) move.y -= speed;
-			tool->vMat.Move(move);
-		}
-		{
-			float32 speed = 1.0f;
-			vec3 rotate(0.0f);
-			if(KeyState(Keys::E)) rotate.z += speed;
-			if(KeyState(Keys::Q)) rotate.z -= speed;
-			if(KeyState(Keys::UP)) rotate.x += speed;
-			if(KeyState(Keys::DOWN)) rotate.x -= speed;
-			if(KeyState(Keys::RIGHT)) rotate.y += speed;
-			if(KeyState(Keys::LEFT)) rotate.y -= speed;
-			tool->vMat.Rotate(rotate);
-		}*/
-
-		if(MouseLState())
-		{
-			vec2 d;
-			d.x = float32(nMousePos.y - tool->oMousePos.y);
-			d.y = float32(nMousePos.x - tool->oMousePos.x);
-			tool->viewAng.x -= d.x*0.25f;
-			tool->viewAng.y += d.y*0.25f;
-		}
-		if(MouseRState())
-		{
-			tool->viewDist += (nMousePos.x - tool->oMousePos.x)*0.04f;
-			tool->viewDist = block(tool->viewDist,1.5f,10.0f);
-		}
-
-		tool->mMat.SetPos(vec3(0.0f));
-		tool->mMat.SetScale(vec3(1.0f));
-		tool->mMat.SetAng(tool->mMat.GetAng() + vec3(0.0f,1.0f,0.0f));
-		//tool->mMat.Rotate(vec3(0.0f,1.0f,0.0f));
-
-		tool->vMat.SetPos(mat3::rotateZXY(tool->viewAng) * vec3(0.0f,0.0f,-tool->viewDist));
-		tool->vMat.SetAng(tool->viewAng);
+		tool->oglMesh->Create(tool->mesh,tool->oglShader);
 	}
-	tool->oMousePos = nMousePos;
-	tool->oWindowActive = window->IsActive();
+
+	tool->oglTexture = new OpenGL::Texture(window);
+	{
+		*tool->oglTexture = *tool->texture;
+	}
+}
+void										TexProject::Tools::Viewer::Simple::FuncWindowFree(Window* window)
+{
+	auto tool = (Tools::Viewer::Simple*)window->GetUserData();
+
+	if(tool->oglTexture) { delete tool->oglTexture; tool->oglTexture = nullptr; }
+	if(tool->oglMesh) { delete tool->oglMesh; tool->oglMesh = nullptr; }
+	if(tool->oglShader) { delete tool->oglShader; tool->oglShader = nullptr; }
+}
+void										TexProject::Tools::Viewer::Simple::FuncWindowLoop(Window* window)
+{
+	auto tool = (Tools::Viewer::Simple*)window->GetUserData();
+
+	glViewport(0,0,window->GetSize().x,window->GetSize().y);
 
 	glClearColor(0.16f,0.16f,0.16f,1.0f);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-	/*glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-
-	tool->skyGLShader->Use();
-	tool->skyGLShader->SetMat4("ViewProjectionInverseMatrix",tool->vMat.GetPIMat() * mat4::scale(vec3(1,1,-1)) * mat4(tool->vMat.GetRMat()));
-
-	tool->renderGLTextureEnvironment->Use(3);
-
-	glDrawArrays(GL_POINTS,0,1);*/
-
-
 	glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LESS);
 	glDisable(GL_BLEND);
-	glEnable(GL_CULL_FACE);	//glDisable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE);
 
-	//if(MouseLState()) glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	//else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	tool->mMat.Rotate(vec3(0.0f,1.0f,0.0f));
 
-	if(tool->renderGLTextureDiffuse) tool->renderGLTextureDiffuse->Use(0);
-	/*tool->renderGLTextureNormals->Use(1);
-	tool->renderGLTextureMaterial->Use(2);*/
-	tool->renderGLShader->Use();
-	tool->renderGLShader->SetVec3("lightPos",vec3(0.0f,10.0f,-20.0f) - tool->vMat.GetPos());
-	tool->renderGLShader->SetMat3("RotateMatrix",tool->mMat.GetRMat());
-	tool->renderGLShader->SetMat4("ModelMatrix",tool->mMat.GetMMat() * mat4::move(-tool->vMat.GetPos()));
-	tool->renderGLShader->SetMat4("ModelViewProjectionMatrix",tool->mMat.GetMMat() * tool->vMat.GetVPMat());
+	tool->vpMat.SetPos(mat3::rotateZXY(vec3(30.0f,0.0,0.0f)) * vec3(0.0,0.0f,-2.0f));
+	tool->vpMat.SetAng(vec3(30.0f,0.0,0.0f));
+	tool->vpMat.SetPerspective(90.0f,tool->windowRender->GetAspect(),0.1f,100.0f);
 
-	tool->renderGLModel->Draw();
-}
-
-TexProject::Tool::Viewer::Default::Default(Window::Render* window_):
-	Tool::Basic(window_)
-{
-	panelBase = (Interface::Panel::Default*)window->AddPanel(Interface::PanelTypes::Default);
-	panelBase->SetColor(vec4(0.64f,0.64f,0.64f,1.0f));
-	panelBase->SetSize(vec2(200.0f));
-	panelBase->SetUserData(this);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			Tool::SetFocus( (Tool::Filter::D2::Correction::Color*)item->GetUserData() );
-		}
-	);
-	panelBase->SetAction
-	(
-		Interface::Item::ActionTypes::Destruction,
-		[](Interface::Item* item)
-		{
-			((Tool::Filter::D2::Correction::Color*)item->GetUserData())->destruction = true;
-		}
-	);
-
-	panelTitle = (Interface::Panel::Text*)panelBase->AddPanel(Interface::PanelTypes::Text);
-	panelTitle->SetSize(vec2(160.0f,14.0f));
-	panelTitle->SetPos(vec2(panelBase->GetSize().x*0.5f -  panelTitle->GetSize().x*0.5f,panelBase->GetSize().y - panelTitle->GetSize().y));
-	panelTitle->SetText("Viewer");
-	panelTitle->SetAlignment(Interface::Panel::Text::Alignment::CenterTop);
-
-	panelImage = (Interface::Panel::Image*)panelBase->AddPanel(Interface::PanelTypes::Image);
-	panelImage->SetSize(vec2(128.0f));
-	panelImage->SetPos( (panelBase->GetSize().x-panelImage->GetSize())*0.5f );
-
-	buttonRefresh = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonType::Default);
-	buttonRefresh->SetSize(vec2(64.0f,16.0f));
-	buttonRefresh->SetPos(vec2((panelBase->GetSize().x-buttonRefresh->GetSize().x)*0.5f,4.0f));
-	buttonRefresh->SetUserData(this);
-	buttonRefresh->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			((Tool::Viewer::Default*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonConnectorIn = (Interface::Button::Connector*)panelBase->AddButton(Interface::ButtonType::InputConnector);
-	buttonConnectorIn->SetSize(vec2(8.0f));
-	buttonConnectorIn->SetPos(vec2(4.0f,(panelBase->GetSize().y - buttonConnectorIn->GetSize().y)*0.5f));
-	buttonConnectorIn->connectDirection = vec2(-64.0f,0.0f);
-	buttonConnectorIn->SetUserData(this);
-	buttonConnectorIn->SetAction
-	(
-		Interface::Item::ActionTypes::Refresh,
-		[](Interface::Item* item)
-		{
-			((Tool::Viewer::Default*)item->GetUserData())->Refresh();
-		}
-	);
-
-	buttonClose = (Interface::Button::Default*)panelBase->AddButton(Interface::ButtonTypes::Close);
-	buttonClose->SetPos(panelBase->GetSize() - vec2(20.0f));
-	buttonClose->SetSize(vec2(16.0f));
-
-	renderWindow = new Window::Render();
-	renderWindow->SetUserData(this);
-	renderWindow->SetFunc(Window::Render::FuncTypes::Init,funcWindowInit);
-	renderWindow->SetFunc(Window::Render::FuncTypes::Free,funcWindowFree);
-	renderWindow->SetFunc(Window::Render::FuncTypes::Loop,funcWindowLoop);
-
-	vMat.SetPos(vec3(0.0f,0.0f,-10.0f));
-	vMat.SetAng(vec3(0.0f));
-	vMat.SetPerspective(Helper::Transform::D3::Projection::Params::Perspective(60.0f,window->GetAspect(),0.1f,1000.0f));
-
-	mMat.SetPos(vec3(0.0f));
-	mMat.SetAng(vec3(0.0f));
-	mMat.SetScale(vec3(1.0f));
-}
-TexProject::Tool::Viewer::Default::~Default()
-{
-	if(renderWindow)
+	if(tool->oglShader)
 	{
-		renderWindow->Delete();
-		delete renderWindow;
-		renderWindow = nullptr;
+		tool->oglShader->Use();
+		{
+			tool->oglShader->SetMat4("ModelMatrix",tool->mMat.GetMMat());
+			tool->oglShader->SetMat4("ModelViewProjectionMatrix",tool->mMat.GetMMat() * tool->vpMat.GetVPMat());
+		}
+
+		tool->oglTexture->Use(0);
+
+		tool->oglMesh->DrawIndex();
 	}
 }
-TexProject::Texture::D2*					TexProject::Tool::Viewer::Default::GetInput()
+TexProject::Tools::Viewer::Simple::Simple(ToolSet* toolSet_):
+	Tool(toolSet_),
+	vpMat(vec3(0.0f,0.0f,-2.0f),vec3(0.0f),Helper::PParams::Perspective(80.0f,1.0f,0.1f,1000.0f)),
+	mMat(vec3(0.0f),vec3(0.0f),vec3(1.0f))
 {
-	if(buttonConnectorIn)
+	panelFieldTitle->SetText("Viewer");
+	buttonInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		auto t = ((Interface::Button::Connector*)buttonConnectorIn)->GetTarget();
-		if(t)
-		{
-			auto data_ = (OutputData*)t->GetUserData();
-			if(data_->textureType == Texture::Type::D2)
+		buttonInput->SetRecipient();
+		buttonInput->SetUserData(this);
+		buttonInput->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
 			{
-				return (Texture::D2*)data_->texture;
+				((Tools::Viewer::Simple*)item->GetUserData())->Refresh();
 			}
-		}
+		);
+		buttonInput->DisableDragging();
+		buttonInput->SetSize(vec2(8.0f));
+		buttonInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonInput->GetSize().y)*0.5f));
+		buttonInput->direction = vec2(-100.0f,0.0f);
 	}
-	return nullptr;
-}
-void										TexProject::Tool::Viewer::Default::Loop()
-{
-	Basic::Loop();
-
-	if(panelBase)
+	buttonFieldRefresh->SetUserData(this);
 	{
-		panelBase->SetAnchor(Tool::GetAnchor());
-	}  
-}
-void										TexProject::Tool::Viewer::Default::Refresh()
-{
-	if(!renderWindow->IsRunning())
-	{
-		renderWindow->Create("Viewer");
-		renderWindow->SetSize(uvec2(600,400));
-		renderWindow->SetRenderContext(Window::RenderContext::Type::OpenGL);
-	}
-
-	{
-		if(renderGLTextureDiffuse) { delete renderGLTextureDiffuse; renderGLTextureDiffuse = nullptr; }
-
-		auto source = GetInput();
-		if(source)
-		{
-			renderGLTextureDiffuse = new OpenGL::Texture(renderWindow);
-			*renderGLTextureDiffuse = *source;
-		}
-	}
-}
-void										TexProject::Tool::Viewer::Default::InitFocus(Interface::Panel::Default* panel)
-{
-	focusPanel = (Interface::Panel::Default*)panel->AddPanel(Interface::PanelTypes::Default);
-	focusPanel->SetColor(vec4(vec3(0.32f),1.0f));
-	focusPanel->SetSize(vec2(panel->GetSize().x - 8.0f,300.0f));
-	focusPanel->SetPos(vec2(4.0f,panel->GetSize().y - focusPanel->GetSize().y - 4.0f));
-
-	auto size_ = focusPanel->GetSize();
-
-	focusButtonPrimitiveSwitcher = (Interface::Button::Switcher*)focusPanel->AddButton(Interface::ButtonTypes::Switcher);
-	focusButtonPrimitiveSwitcher->SetMaxState(3);
-	focusButtonPrimitiveSwitcher->SetSize(vec2(28.0f,28.0f*focusButtonPrimitiveSwitcher->GetMaxState()));
-	focusButtonPrimitiveSwitcher->SetPos(vec2(4.0f,focusPanel->GetSize().y - focusButtonPrimitiveSwitcher->GetSize().y - 4.0f));
-	focusButtonPrimitiveSwitcher->SetUserData(this);
-	focusButtonPrimitiveSwitcher->SetAction
-	(
-		Interface::Item::ActionTypes::Click,
-		[](Interface::Item* item)
-		{
-			auto tool = (Tool::Viewer::Default*)item->GetUserData();
-			auto switcher = (Interface::Button::Switcher*)item;
-			auto type = tool->primitiveType;
-			switch(switcher->GetState())
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
 			{
-			case 0: tool->primitiveType = PrimitiveType::Box; break;
-			case 1: tool->primitiveType = PrimitiveType::Sphere; break;
-			case 2: tool->primitiveType = PrimitiveType::Cylinder; break;
+				((Tools::Viewer::Simple*)item->GetUserData())->Refresh();
 			}
-		}
-	);
-
-	for(uint32 i = 0; i < focusButtonPrimitiveSwitcher->GetMaxState(); ++i)
-	{
-		focusPanelPrimitiveText[i] = (Interface::Panel::Text*)focusPanel->AddPanel(Interface::PanelTypes::Text);
-		focusPanelPrimitiveText[i]->SetSize(vec2(80.0f,focusButtonPrimitiveSwitcher->GetSize().x));
-		focusPanelPrimitiveText[i]->SetPos(focusButtonPrimitiveSwitcher->GetLocalPos() + vec2(focusButtonPrimitiveSwitcher->GetSize().x + 4.0f,focusButtonPrimitiveSwitcher->GetSize().x*i));
-		focusPanelPrimitiveText[i]->SetAlignment(Interface::Panel::Text::Alignment::LeftCenter);
+		);
 	}
-	focusPanelPrimitiveText[0]->SetText("Box");
-	focusPanelPrimitiveText[1]->SetText("Sphere");
-	focusPanelPrimitiveText[2]->SetText("Cylinder");
+	windowRender->SetUserData(this);
+	{
+		windowRender->EnableVSync();
+		windowRender->SetFunc(Window::FuncType::Init,FuncWindowInit);
+		windowRender->SetFunc(Window::FuncType::Free,FuncWindowFree);
+		windowRender->SetFunc(Window::FuncType::Loop,FuncWindowLoop);
+	}
 }
-void										TexProject::Tool::Viewer::Default::FreeFocus(Interface::Panel::Default* panel)
+TexProject::Tools::Viewer::Simple::~Simple()
 {
-	if(focusPanel)
+	if(windowRender) delete windowRender;
+}
+void										TexProject::Tools::Viewer::Simple::Refresh()
+{
+	auto source = GetInput();
+
+	if(source)
 	{
-		panel->RemovePanel(focusPanel);
-		focusPanel = nullptr;
+		*texture = *source;
+	}
+
+	panelFieldImage->SetImage(nullptr);
+
+	if(windowRender)
+	{
+		windowRender->Create();
+		windowRender->SetSize(uvec2(512));
+		windowRender->SetRenderContext(RenderContext::Type::OpenGL);
+
+		auto tmpRC = new OpenGL::RenderContext(windowRender);
+		{
+			if(tmpRC->Use())
+			{
+				auto tmpGeometry = new Geometry::Mesh();
+				{
+					//tmpGeometry->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
+					tmpGeometry->CreateSphere(0.5f,vec2(1.0f),uvec2(32));
+				}
+				auto tmpShader = new OpenGL::Shader(tmpRC);
+				{
+					tmpShader->Load("Media/Shaders/GLSL/3D/material/Flat/1.","vs","","","","ps");
+					tmpShader->Use();
+					tmpShader->SetInt("Texture",0);
+				}
+				auto tmpInTexture = (OpenGL::Texture*)nullptr;
+				{
+					if(auto input = GetInput())
+					{
+						tmpInTexture = new OpenGL::Texture(tmpRC);
+						*tmpInTexture = *input;
+					}
+				}
+				auto tmpOutTexture = new OpenGL::Texture(tmpRC);
+				{
+					tmpOutTexture->Create
+					(
+						OpenGL::Texture::Type::D2,
+						OpenGL::Texture::IFormat::RGB8,
+						OpenGL::Texture::Format::RGB,
+						OpenGL::Texture::Component::UInt8,
+						OpenGL::Texture::Wrap::Clamp,
+						OpenGL::Texture::Filter::Off,
+						uvec3(128),
+						nullptr
+					);
+				}
+				auto tmpDepthTexture = new OpenGL::Texture(tmpRC);
+				{
+					tmpDepthTexture->Create
+					(
+						OpenGL::Texture::Type::D2,
+						OpenGL::Texture::IFormat::Depth16,
+						OpenGL::Texture::Format::Depth,
+						OpenGL::Texture::Component::UInt16,
+						OpenGL::Texture::Wrap::Clamp,
+						OpenGL::Texture::Filter::Off,
+						uvec3(128),
+						nullptr
+					);
+				}
+				auto tmpFBuffer = new OpenGL::Buffer::Frame(tmpRC);
+				{
+					tmpFBuffer->Create
+					(
+						{
+							tmpOutTexture
+						},
+						tmpDepthTexture,
+						nullptr
+					);
+				}
+				auto tmpMesh = new OpenGL::Mesh(tmpRC);
+				{
+					tmpMesh->Create(tmpGeometry,tmpShader);
+				}
+				tmpFBuffer->Use();
+				{
+					glClearColor(1.0f,0.5f,0.16f,1);
+					glClearDepth(1.0f);
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+					glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LESS);
+					glDisable(GL_BLEND);
+					glDisable(GL_CULL_FACE);
+
+					if(tmpInTexture) tmpInTexture->Use(0);
+
+					tmpShader->Use();
+					{
+						tmpShader->SetMat4("ModelViewProjectionMatrix",mat4::rotateYXZ(vec3(30.0f,-45.0f,0.0f)) * mat4::orthogonal(-1.0f,1.0f,-1.0f,1.0f,-10.0f,10.0f));
+					}
+
+					tmpMesh->DrawIndex();
+
+					glFlush();
+
+					tmpFBuffer->Unuse();
+				}
+				*texturePreview = *tmpOutTexture;
+				delete tmpFBuffer;
+				delete tmpOutTexture;
+				delete tmpMesh;
+				delete tmpShader;
+				delete tmpGeometry;
+
+				panelFieldImage->SetImage(texturePreview);
+			}
+			delete tmpRC;
+		}
 	}
 }
+TexProject::Texture::D2*					TexProject::Tools::Viewer::Simple::GetInput()
+{
+	auto t = buttonInput->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+#pragma endregion
+#pragma endregion
+#pragma endregion
+
+
+
+
+
+
+
+
 
 
 

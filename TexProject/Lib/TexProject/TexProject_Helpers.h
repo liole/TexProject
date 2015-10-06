@@ -1,16 +1,13 @@
-/*
-Всеможливі допоміжні типи
-*/
 #pragma once
+#pragma region TexProject Includes
 #include <TexProject/TexProject_Header.h>
-
-
-#include <TexProject/TexProject_Main.h>
 #include <TexProject/TexProject_Math.h>
-
-
+#include <TexProject/TexProject_Main.h>
+#pragma endregion
+#pragma region Includes
 #include <list>
 #include <iterator>
+#pragma endregion
 
 
 namespace TexProject
@@ -19,58 +16,15 @@ namespace TexProject
 	{
 		namespace Structure
 		{
-			template<typename T,bool autoAdd,bool autoRemove>
-			struct IndirectClassArray
+			template<typename T>
+			class ClassList
 			{
 			protected:
-				static const uint32			uninitID = 0xFFFFFFFF;
-
-				static T**					array_;
-				static uint32				count_;
-				static uint32				capacity_;
-
+				static std::list<T*>							list;
+				typename std::list<T*>::iterator				iter;
 			public:
-
-				/*Повертає кількість екземплярів класу*/
-				static inline uint32		GetCount();
-				/*Повертає вказівник на і-й екземпляр класу*/
-				static inline T*			Get(uint32 i);
-
-				static inline void			FreeArray();
-
-				uint32						id_;
-
-				IndirectClassArray();
-				~IndirectClassArray();
-
-				void						AddToArray();
-				void						RemoveFromArray();
-			};
-
-			template<typename T,bool autoAdd = false,bool autoRemove = true>
-			struct ListClassArray
-			{
-			private:
-				typedef typename std::list<T*>					List;
-				typedef typename List::iterator					Iter;
-
-				static List					list;
-				Iter						iter;
-
-			public:
-				inline						ListClassArray();
-				inline						ListClassArray(const ListClassArray&) = delete;
-				inline						ListClassArray(ListClassArray&&) = delete;
-				inline						~ListClassArray();
-
-				inline ListClassArray&		operator = (const ListClassArray&) = delete;
-				inline ListClassArray&		operator = (ListClassArray&&) = delete;
-
-				inline void					AddToArray();
-				inline void					RemoveFromArray();
-				inline Iter					EraseFromArray();
-				static inline Iter			Begin();
-				static inline Iter			End();
+				inline											ClassList();
+				inline											~ClassList();
 			};
 		}
 		namespace Logic
@@ -394,10 +348,6 @@ namespace TexProject
 					inline IRotateMatrix&	operator = (const IRotateMatrix&) = default;
 					inline IRotateMatrix&	operator = (IRotateMatrix&&) = delete;
 
-					//inline void				SetAng(const vec3& ang_);
-					//inline vec3				GetAng();
-					//inline void				AddAng(const vec3& add_);
-					//inline void				MulAng(const vec3& mul_);
 					inline void				Rotate(const vec3& val_);	// Relative rotation
 
 					inline mat3				GetRMat() const;
@@ -405,11 +355,11 @@ namespace TexProject
 				};
 				interface IViewMatrix:
 					public IPosition,
-					public IProjectionMatrix,
 					public IRotateMatrix
 				{
 				public:
 					inline					IViewMatrix() = default;
+					inline					IViewMatrix(const vec3& pos_,const vec3& ang_);
 					inline explicit			IViewMatrix(const IViewMatrix&) = default;
 					inline					IViewMatrix(IViewMatrix&&) = delete;
 					inline					~IViewMatrix() = default;
@@ -417,22 +367,50 @@ namespace TexProject
 					inline IViewMatrix&		operator = (const IViewMatrix&) = default;
 					inline IViewMatrix&		operator = (IViewMatrix&&) = delete;
 
-					//inline void				SetAng(const vec3& ang_);
-					//inline vec3				GetAng();
-					//inline void				AddAng(const vec3& add_);
-					//inline void				MulAng(const vec3& mul_);
-					//inline void				SetPos(const vec3& pos_);
-					//inline vec3				GetPos();
-					//inline void				AddPos(const vec3& add_);
-					//inline void				MulPos(const vec3& mul_);
-					//inline void				Rotate(const vec3& val_);	// Relative rotation
+					inline void				Move(const vec3& val_);		// Relative Move
+
+					inline mat4				GetVMat() const;
+					inline mat4				GetVIMat() const;
+				};
+				interface IViewProjectionMatrix :
+					public IViewMatrix,
+					public IProjectionMatrix
+				{
+				public:
+					inline					IViewProjectionMatrix() = default;
+					inline					IViewProjectionMatrix(const vec3& pos_, const vec3& ang_, const Projection::Params::Orthogonal proj_);
+					inline					IViewProjectionMatrix(const vec3& pos_, const vec3& ang_, const Projection::Params::Perspective proj_);
+					inline explicit			IViewProjectionMatrix(const IViewProjectionMatrix&) = default;
+					inline					IViewProjectionMatrix(IViewProjectionMatrix&&) = delete;
+					inline					~IViewProjectionMatrix() = default;
+
+					inline IViewProjectionMatrix&				operator = (const IViewProjectionMatrix&) = default;
+					inline IViewProjectionMatrix&				operator = (IViewProjectionMatrix&&) = delete;
+
+					inline mat4				GetVPMat() const;
+					inline mat4				GetVPIMat() const;
+				};
+				/*interface IViewProjectionMatrix:
+					public IPosition,
+					public IProjectionMatrix,
+					public IRotateMatrix
+				{
+				public:
+					inline					IViewProjectionMatrix() = default;
+					inline explicit			IViewProjectionMatrix(const IViewProjectionMatrix&) = default;
+					inline					IViewProjectionMatrix(IViewProjectionMatrix&&) = delete;
+					inline					~IViewProjectionMatrix() = default;
+
+					inline IViewProjectionMatrix&				operator = (const IViewProjectionMatrix&) = default;
+					inline IViewProjectionMatrix&				operator = (IViewProjectionMatrix&&) = delete;
+
 					inline void				Move(const vec3& val_);		// Relative Move
 
 					inline mat4				GetVMat() const;
 					inline mat4				GetVIMat() const;
 					inline mat4				GetVPMat() const;
 					inline mat4				GetVPIMat() const;
-				};
+				};*/
 				interface IModelMatrix:
 					public IPosition,
 					public IScale,
@@ -447,19 +425,6 @@ namespace TexProject
 					inline IModelMatrix&	operator = (const IModelMatrix&) = default;
 					inline IModelMatrix&	operator = (IModelMatrix&&) = delete;
 
-					//inline void				SetAng(const vec3& ang_);
-					//inline vec3				GetAng() const;
-					//inline void				AddAng(const vec3& add_);
-					//inline void				MulAng(const vec3& mul_);
-					//inline void				SetScale(const vec3& scl_);
-					//inline vec3				GetScale() const;
-					//inline void				AddScale(const vec3& add_);
-					//inline void				MulScale(const vec3& mul_);
-					//inline void				SetPos(const vec3& pos_);
-					//inline vec3				GetPos() const;
-					//inline void				AddPos(const vec3& add_);
-					//inline void				MulPos(const vec3& mul_);
-					//inline void				Rotate(const vec3& val_);	// Relative rotation
 					inline void				Move(const vec3& val_);		// Relative Move
 
 					inline mat4				GetMMat() const;
@@ -558,9 +523,9 @@ namespace TexProject
 					Projection::Params::Orthogonal				paramsOrthogonal;
 					Projection::Params::Perspective				paramsPerspective;
 					mutable bool			pRebuild = true,
-						piRebuild = true;
+											piRebuild = true;
 					mutable mat4			pMat,
-						piMat;
+											piMat;
 
 				public:
 					inline					ProjectionMatrix() = default;
@@ -581,6 +546,9 @@ namespace TexProject
 					inline void				SetPerspective(float32 fov_,float32 aspect_,float32 zNear_,float32 zFar_);
 					inline void				SetPerspective(const Projection::Params::Perspective& source = Projection::Params::Perspective(80.0f,1.0f,1.0f,100.0f));
 
+					inline Projection::Params::Orthogonal		GetOrthogonal() const;
+					inline Projection::Params::Perspective		GetPerspective() const;
+
 					inline mat4				GetPMat() const;
 					inline mat4				GetPIMat() const;
 				};
@@ -590,9 +558,9 @@ namespace TexProject
 				{
 				protected:
 					mutable bool			rRebuild = true,	// Flag to rebuild matrix on next 'get'
-						riRebuild = true;
+											riRebuild = true;
 					mutable mat3			rMat,				// rotate matrix storage
-						riMat;				// rotate inverse matrix storage
+											riMat;				// rotate inverse matrix storage
 
 				public:
 					inline					RotateMatrix() = default;
@@ -616,30 +584,22 @@ namespace TexProject
 				struct ViewMatrix:
 					public IViewMatrix,
 					public Position,
-					public ProjectionMatrix,
 					public RotateMatrix
 				{
 				protected:
 					mutable bool			vRebuild = true,	// Flag to rebuild matrix on next 'get'
-						viRebuild = true;
+											viRebuild = true;
 					mutable mat4			vMat,				// view matrix storage
-						viMat;				// view inverse matrix storage
-					//vpMat,				// view-projection matrix storage
-					//vpiMat;				// view-projection inverse matrix storage
-
+											viMat;				// view inverse matrix storage
 				public:
 					inline					ViewMatrix() = default;
-					inline explicit			ViewMatrix(const ViewMatrix&);
+					inline					ViewMatrix(const vec3& pos_, const vec3& ang_);
+					inline explicit			ViewMatrix(const ViewMatrix&) = default;
 					inline					ViewMatrix(ViewMatrix&&) = delete;
 					inline					~ViewMatrix() = default;
 
-					inline ViewMatrix&		operator = (const ViewMatrix&);
+					inline ViewMatrix&		operator = (const ViewMatrix&) = default;
 					inline ViewMatrix&		operator = (ViewMatrix&&) = delete;
-
-					inline void				SetOrthogonal(float32 left_,float32 right_,float32 bottom_,float32 top_,float32 zNear_,float32 zFar_);
-					inline void				SetOrthogonal(const Projection::Params::Orthogonal& source = Projection::Params::Orthogonal(-50,50,-50,50,0,100));
-					inline void				SetPerspective(float32 fov_,float32 aspect_,float32 zNear_,float32 zFar_);
-					inline void				SetPerspective(const Projection::Params::Perspective& source = Projection::Params::Perspective(80.0f,1.0f,1.0f,100.0f));
 
 					inline void				SetAng(const vec3& ang_);
 					inline void				AddAng(const vec3& add_);
@@ -653,16 +613,64 @@ namespace TexProject
 					inline vec3				GetPos() const;
 					inline void				Move(const vec3& val_);		// Relative Move
 
+					//inline void				SetOrthogonal(float32 left_,float32 right_,float32 bottom_,float32 top_,float32 zNear_,float32 zFar_);
+					//inline void				SetOrthogonal(const Projection::Params::Orthogonal& source = Projection::Params::Orthogonal(-50,50,-50,50,0,100));
+					//inline void				SetPerspective(float32 fov_,float32 aspect_,float32 zNear_,float32 zFar_);
+					//inline void				SetPerspective(const Projection::Params::Perspective& source = Projection::Params::Perspective(80.0f,1.0f,1.0f,100.0f));
+
 					inline mat3				GetRMat() const;
 					inline mat3				GetRIMat() const;
-					inline mat4				GetPMat() const;
-					inline mat4				GetPIMat() const;
 					inline mat4				GetVMat() const;
 					inline mat4				GetVIMat() const;
+				};
+				struct ViewProjectionMatrix:
+					public IViewProjectionMatrix,
+					public ViewMatrix,
+					public ProjectionMatrix
+				{
+				protected:
+					mutable bool			vpRebuild = true,
+											vpiRebuild = true;
+					mutable mat4			vpMat,
+											vpiMat;
+				public:
+					inline					ViewProjectionMatrix() = default;
+					inline					ViewProjectionMatrix(const vec3& pos_, const vec3& ang_, const Projection::Params::Orthogonal proj_);
+					inline					ViewProjectionMatrix(const vec3& pos_, const vec3& ang_, const Projection::Params::Perspective proj_);
+					inline explicit			ViewProjectionMatrix(const ViewProjectionMatrix&) = default;
+					inline					ViewProjectionMatrix(ViewProjectionMatrix&&) = delete;
+					inline					~ViewProjectionMatrix() = default;
+
+					inline ViewProjectionMatrix&				operator = (const ViewProjectionMatrix&) = default;
+					inline ViewProjectionMatrix&				operator = (ViewProjectionMatrix&&) = delete;
+
+					inline void				SetAng(const vec3& ang_);
+					inline void				AddAng(const vec3& add_);
+					inline void				MulAng(const vec3& mul_);
+					inline vec3				GetAng() const;
+					inline void				Rotate(const vec3& val_);	// Relative rotation
+
+					inline void				SetPos(const vec3& pos_);
+					inline void				AddPos(const vec3& add_);
+					inline void				MulPos(const vec3& mul_);
+					inline vec3				GetPos() const;
+					inline void				Move(const vec3& val_);		// Relative Move
+
+					inline void				SetOrthogonal(float32 left_,float32 right_,float32 bottom_,float32 top_,float32 zNear_,float32 zFar_);
+					inline void				SetOrthogonal(const Projection::Params::Orthogonal& source = Projection::Params::Orthogonal(-50,50,-50,50,0,100));
+					inline void				SetPerspective(float32 fov_,float32 aspect_,float32 zNear_,float32 zFar_);
+					inline void				SetPerspective(const Projection::Params::Perspective& source = Projection::Params::Perspective(80.0f,1.0f,1.0f,100.0f));
+
+					inline mat3				GetRMat() const;
+					inline mat3				GetRIMat() const;
+					inline mat4				GetVMat() const;
+					inline mat4				GetVIMat() const;
+					inline mat4				GetPMat() const;
+					inline mat4				GetPIMat() const;
 					inline mat4				GetVPMat() const;
 					inline mat4				GetVPIMat() const;
 				};
-				struct ModelMatrix:
+				struct ModelMatrix :
 					public IModelMatrix,
 					public Position,
 					public Scale,
@@ -731,165 +739,34 @@ namespace TexProject
 		typedef Transform::D3::ProjectionMatrix					PMat;
 		typedef Transform::D3::RotateMatrix						RMat;
 		typedef Transform::D3::ViewMatrix						VMat;
+		typedef Transform::D3::ViewProjectionMatrix				VPMat;
 		typedef Transform::D3::ModelMatrix						MMat;
 	}
 }
+#pragma region
+#pragma endregion
 
 
-// Structure::IndirectClassArray
-template<typename T,bool autoAdd,bool autoRemove>
-typename T**								TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::array_ = nullptr;
-template<typename T,bool autoAdd,bool autoRemove>
-TexProject::uint32							TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::count_ = 0;
-template<typename T,bool autoAdd,bool autoRemove>
-TexProject::uint32							TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::capacity_ = 0;
-
-template<typename T,bool autoAdd,bool autoRemove>
-inline void									TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::FreeArray()
+#pragma region Structure
+#pragma region ClassList
+template<typename T>
+std::list<T*>													TexProject::Helper::Structure::ClassList<T>::list;
+template<typename T>
+inline															TexProject::Helper::Structure::ClassList<T>::ClassList():
+	iter(list.insert(list.begin(),(T*)this))
 {
-	if(array_)
-	{
-		free(array_);
-	}
-	count_ = 0;
-	capacity_ = 0;
 }
-template<typename T,bool autoAdd,bool autoRemove>
-inline TexProject::uint32					TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::GetCount()
+template<typename T>
+inline															TexProject::Helper::Structure::ClassList<T>::~ClassList()
 {
-	return count_;
+	list.erase(iter);
 }
-template<typename T,bool autoAdd,bool autoRemove>
-inline typename T*							TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::Get(uint32 i)
-{
-#ifdef __TEXPROJECT_DEBUG__
-	if(i < count_)
-	{
-		return array_[i];
-	}
-	else
-	{
-		throw ErrorException("[TexProject::Helper::Structure::IndirectClassArray]\nOut of array.");
-	}
-#else
-	return array_[i];
-#endif
-}
-
-template<typename T,bool autoAdd,bool autoRemove>
-TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::IndirectClassArray():
-id_(uninitID)
-{
-	if(autoAdd) AddToArray();
-}
-template<typename T,bool autoAdd,bool autoRemove>
-TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::~IndirectClassArray()
-{
-	if(autoRemove) RemoveFromArray();
-}
-template<typename T,bool autoAdd,bool autoRemove>
-void										TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::AddToArray()
-{
-	if(id_ == uninitID)
-	{
-		if(count_ + 1 > capacity_)
-		{
-			capacity_ = std::max<uint32>(32,capacity_*2);
-			array_ = (T**)realloc(array_,sizeof(T*)*capacity_);
-		}
-		array_[count_] = (T*)this;
-		id_ = count_;
-		++count_;
-	}
-}
-template<typename T,bool autoAdd,bool autoRemove>
-void										TexProject::Helper::Structure::IndirectClassArray<T,autoAdd,autoRemove>::RemoveFromArray()
-{
-	if(id_ != uninitID)
-	{
-#ifdef __TEXPROJECT_DEBUG__
-		if(count_ == 0) Error("[TexProject::Helper::Structure::IndirectClassArray]\nRemoving element from empty array.");
-#endif
-		--count_;
-
-		if(id_ != count_)
-		{
-			array_[id_] = array_[count_];
-			array_[id_]->id_ = id_;
-		}
-
-		if(count_ >= 32 && count_ < capacity_/4)
-		{
-			capacity_ /= 2;
-			array_ = (T**)realloc(array_,sizeof(T*)*capacity_);
-		}
-	}
-}
-
-
-// Structure::ListClassArray
-template<typename T,bool autoAdd,bool autoRemove>
-std::list<T*>								TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::list;
-
-template<typename T,bool autoAdd,bool autoRemove>
-inline										TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::ListClassArray():
-iter(list.end())
-{
-	if(autoAdd) AddToArray();
-}
-template<typename T,bool autoAdd,bool autoRemove>
-inline										TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::~ListClassArray()
-{
-	if(autoRemove) RemoveFromArray();
-}
-template<typename T,bool autoAdd,bool autoRemove>
-inline void									TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::AddToArray()
-{
-	if(iter == list.end())
-	{
-		iter = list.insert(list.begin(),(T*)this);
-	}
-}
-template<typename T,bool autoAdd,bool autoRemove>
-inline void									TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::RemoveFromArray()
-{
-	if(iter != list.end())
-	{
-		list.erase(iter);
-		iter = list.end();
-	}
-}
-template<typename T,bool autoAdd,bool autoRemove>
-inline typename std::list<T*>::iterator		TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::EraseFromArray()
-{
-	if(iter != list.end)
-	{
-		auto res = list.erase(iter);
-		iter = list.end();
-		return res;
-	}
-	else
-	{
-		return list.end();
-	}
-}
-template<typename T,bool autoAdd,bool autoRemove>
-inline typename std::list<T*>::iterator		TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::Begin()
-{
-	return list.begin();
-}
-template<typename T,bool autoAdd,bool autoRemove>
-inline typename std::list<T*>::iterator		TexProject::Helper::Structure::ListClassArray<T,autoAdd,autoRemove>::End()
-{
-	return list.end();
-}
-
-
-
-
-// Logic::Priority
+#pragma endregion
+#pragma endregion
+#pragma region Logic
+#pragma region Priority
 inline TexProject::Helper::Logic::Priority::Priority(int32 priority_):
-priority(priority_)
+	priority(priority_)
 {
 }
 inline void									TexProject::Helper::Logic::Priority::SetPriority(int32 priority_)
@@ -900,9 +777,8 @@ inline TexProject::int32					TexProject::Helper::Logic::Priority::GetPriority() 
 {
 	return priority;
 }
-
-
-// Logic::Color4
+#pragma endregion
+#pragma region Color
 inline TexProject::Helper::Logic::Color4::Color4(const vec4& color_):
 	color(color_)
 {
@@ -915,11 +791,13 @@ inline void									TexProject::Helper::Logic::Color4::SetColor(const vec4& colo
 {
 	color = color_;
 }
-
-
-// Transform::D2::Position
+#pragma endregion
+#pragma endregion
+#pragma region Transform
+#pragma region D2
+#pragma region Position
 inline TexProject::Helper::Transform::D2::Position::Position(vec2 pos_):
-pos(pos_)
+	pos(pos_)
 {
 }
 inline void									TexProject::Helper::Transform::D2::Position::SetPos(const vec2& pos_)
@@ -938,11 +816,10 @@ inline void									TexProject::Helper::Transform::D2::Position::MulPos(const ve
 {
 	pos *= mul_;
 }
-
-
-// Transform::D2::Size
+#pragma endregion
+#pragma region Size
 inline TexProject::Helper::Transform::D2::Size::Size(vec2 size_):
-size(size_)
+	size(size_)
 {
 }
 inline void									TexProject::Helper::Transform::D2::Size::SetSize(const vec2& size_)
@@ -961,13 +838,12 @@ inline void									TexProject::Helper::Transform::D2::Size::MulSize(const vec2&
 {
 	size *= mul_;
 }
-
-
-
-
-// Transform::D3::Position
+#pragma endregion
+#pragma endregion
+#pragma region D3
+#pragma region Position
 inline TexProject::Helper::Transform::D3::Position::Position(vec3 pos_):
-pos(pos_)
+	pos(pos_)
 {
 }
 inline void									TexProject::Helper::Transform::D3::Position::SetPos(const vec3& pos_)
@@ -986,11 +862,10 @@ inline void									TexProject::Helper::Transform::D3::Position::MulPos(const ve
 {
 	pos *= mul_;
 }
-
-
-// Transform::D3::Angle
+#pragma endregion
+#pragma region Angle
 inline TexProject::Helper::Transform::D3::Angle::Angle(vec3 ang_):
-ang(ang_)
+	ang(ang_)
 {
 }
 inline void									TexProject::Helper::Transform::D3::Angle::SetAng(const vec3& ang_)
@@ -1009,11 +884,10 @@ inline void									TexProject::Helper::Transform::D3::Angle::MulAng(const vec3&
 {
 	ang *= mul_;
 }
-
-
-// Transform::D3::Scale
+#pragma endregion
+#pragma region Scale
 inline TexProject::Helper::Transform::D3::Scale::Scale(vec3 scl_):
-scale(scl_)
+	scale(scl_)
 {
 }
 inline void									TexProject::Helper::Transform::D3::Scale::SetScale(const vec3& scl_)
@@ -1032,11 +906,10 @@ inline void									TexProject::Helper::Transform::D3::Scale::MulScale(const vec
 {
 	scale *= mul_;
 }
-
-
-// Transform::D3::Size
+#pragma endregion
+#pragma region Size
 inline TexProject::Helper::Transform::D3::Size::Size(vec3 size_):
-size(size_)
+	size(size_)
 {
 }
 inline void									TexProject::Helper::Transform::D3::Size::SetSize(const vec3& size_)
@@ -1055,8 +928,8 @@ inline void									TexProject::Helper::Transform::D3::Size::MulSize(const vec3&
 {
 	size *= mul_;
 }
-
-
+#pragma endregion
+#pragma region ProjectionMatrix
 inline TexProject::Helper::Transform::D3::ProjectionMatrix::ProjectionMatrix(const Projection::Type& type_)
 {
 	type = type_;
@@ -1088,23 +961,23 @@ type(source.type)
 	{
 	case Projection::Type::Orthogonal:
 	{
-										 if(paramsOrthogonal != source.paramsOrthogonal)
-										 {
-											 pRebuild = true;
-											 piRebuild = true;
-											 paramsOrthogonal = source.paramsOrthogonal;
-										 }
-										 break;
+		if(paramsOrthogonal != source.paramsOrthogonal)
+		{
+			pRebuild = true;
+			piRebuild = true;
+			paramsOrthogonal = source.paramsOrthogonal;
+		}
+		break;
 	}
 	case Projection::Type::Perspective:
 	{
-										  if(paramsPerspective != source.paramsPerspective)
-										  {
-											  pRebuild = true;
-											  piRebuild = true;
-											  paramsPerspective = source.paramsPerspective;
-										  }
-										  break;
+		if(paramsPerspective != source.paramsPerspective)
+		{
+			pRebuild = true;
+			piRebuild = true;
+			paramsPerspective = source.paramsPerspective;
+		}
+		break;
 	}
 	default: throw Exception("Forbidden projection type.");
 	}
@@ -1115,13 +988,13 @@ inline TexProject::Helper::Transform::D3::ProjectionMatrix&	TexProject::Helper::
 	{
 	case Projection::Type::Orthogonal:
 	{
-										 SetOrthogonal(source.paramsOrthogonal);
-										 break;
+		SetOrthogonal(source.paramsOrthogonal);
+		break;
 	}
 	case Projection::Type::Perspective:
 	{
-										  SetPerspective(source.paramsPerspective);
-										  break;
+		SetPerspective(source.paramsPerspective);
+		break;
 	}
 	default: throw Exception("Forbidden projection type.");
 	}
@@ -1179,6 +1052,14 @@ inline void									TexProject::Helper::Transform::D3::ProjectionMatrix::SetPers
 		paramsPerspective = source;
 	}
 }
+inline TexProject::Helper::Transform::D3::Projection::Params::Orthogonal			TexProject::Helper::Transform::D3::ProjectionMatrix::GetOrthogonal() const
+{
+	return paramsOrthogonal;
+}
+inline TexProject::Helper::Transform::D3::Projection::Params::Perspective			TexProject::Helper::Transform::D3::ProjectionMatrix::GetPerspective() const
+{
+	return paramsPerspective;
+}
 inline TexProject::mat4						TexProject::Helper::Transform::D3::ProjectionMatrix::GetPMat() const
 {
 	if(pRebuild)
@@ -1219,15 +1100,14 @@ inline TexProject::mat4						TexProject::Helper::Transform::D3::ProjectionMatrix
 	}
 	return piMat;
 }
-
-
-// Transform::D3::RotateMatrix
+#pragma endregion
+#pragma region RotateMatrix
 inline TexProject::Helper::Transform::D3::RotateMatrix::RotateMatrix(const vec3& ang_):
-Angle(ang_)
+	Angle(ang_)
 {
 }
 inline TexProject::Helper::Transform::D3::RotateMatrix::RotateMatrix(const RotateMatrix& source):
-Angle(source.ang)
+	Angle(source.ang)
 {
 }
 inline TexProject::Helper::Transform::D3::RotateMatrix&	TexProject::Helper::Transform::D3::RotateMatrix::operator = (const RotateMatrix& source)
@@ -1271,7 +1151,7 @@ inline void									TexProject::Helper::Transform::D3::RotateMatrix::Rotate(cons
 {
 	if(val_.x != _0f || val_.y != _0f || val_.z != _0f)
 	{
-		rMat = mat3::rotateZXY(val_) * rMat;
+		rMat = mat3::rotateZXY(val_) * GetRMat();
 		ang = getAng(rMat);
 		riRebuild = true;
 	}
@@ -1298,16 +1178,14 @@ inline TexProject::mat3						TexProject::Helper::Transform::D3::RotateMatrix::Ge
 	}
 	return riMat;
 }
-
-
-// Transform::D3::ViewMatrix
-/*inline TexProject::Helper::Transform::D3::ViewMatrix::ViewMatrix(const ViewMatrix&)
+#pragma endregion
+#pragma region ViewMatrix
+inline										TexProject::Helper::Transform::D3::ViewMatrix::ViewMatrix(const vec3& pos_, const vec3& ang_):
+	Position(pos_),
+	RotateMatrix(ang_),
+	vRebuild(true), viRebuild(true)
 {
-}*/
-/*inline TexProject::Helper::Transform::D3::ViewMatrix& TexProject::Helper::Transform::D3::ViewMatrix::operator = (const ViewMatrix&)
-{
-return *this;
-}*/
+}
 inline void									TexProject::Helper::Transform::D3::ViewMatrix::SetAng(const vec3& ang_)
 {
 	if(ang.x != ang_.x || ang.y != ang_.y || ang.z != ang_.z)
@@ -1392,22 +1270,6 @@ inline TexProject::vec3						TexProject::Helper::Transform::D3::ViewMatrix::GetP
 {
 	return Position::GetPos();
 }
-inline void									TexProject::Helper::Transform::D3::ViewMatrix::SetOrthogonal(float32 left_,float32 right_,float32 bottom_,float32 top_,float32 back_,float32 front_)
-{
-	ProjectionMatrix::SetOrthogonal(left_,right_,bottom_,top_,back_,front_);
-}
-inline void									TexProject::Helper::Transform::D3::ViewMatrix::SetOrthogonal(const Projection::Params::Orthogonal& source)
-{
-	ProjectionMatrix::SetOrthogonal(source);
-}
-inline void									TexProject::Helper::Transform::D3::ViewMatrix::SetPerspective(float32 fov_,float32 aspect_,float32 zNear_,float32 zFar_)
-{
-	ProjectionMatrix::SetPerspective(fov_,aspect_,zNear_,zFar_);
-}
-inline void									TexProject::Helper::Transform::D3::ViewMatrix::SetPerspective(const Projection::Params::Perspective& source)
-{
-	ProjectionMatrix::SetPerspective(source);
-}
 inline TexProject::mat3						TexProject::Helper::Transform::D3::ViewMatrix::GetRMat() const
 {
 	return RotateMatrix::GetRMat();
@@ -1415,14 +1277,6 @@ inline TexProject::mat3						TexProject::Helper::Transform::D3::ViewMatrix::GetR
 inline TexProject::mat3						TexProject::Helper::Transform::D3::ViewMatrix::GetRIMat() const
 {
 	return RotateMatrix::GetRIMat();
-}
-inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetPMat() const
-{
-	return ProjectionMatrix::GetPMat();
-}
-inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetPIMat() const
-{
-	return ProjectionMatrix::GetPIMat();
 }
 inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetVMat() const
 {
@@ -1437,27 +1291,234 @@ inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetV
 {
 	if(viRebuild)
 	{
-		viMat = mat4::move(-pos) * mat4(GetRIMat());
+		//viMat = mat4::move(-pos) * mat4(GetRIMat());
+		viMat = mat4(GetRMat()) * mat4::move(pos);
 		viRebuild = false;
 	}
 	return viMat;
 }
-inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetVPMat() const
+#pragma endregion
+#pragma region ViewProjectionMatrix
+inline										TexProject::Helper::Transform::D3::ViewProjectionMatrix::ViewProjectionMatrix(const vec3& pos_, const vec3& ang_, const Projection::Params::Orthogonal proj_):
+	ViewMatrix(pos_,ang_),
+	ProjectionMatrix(proj_),
+	vpRebuild(true), vpiRebuild(true)
 {
-	return GetVMat() * mat4::scale(vec3(1.0f,1.0f,-1.0f)) * GetPMat();
 }
-inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewMatrix::GetVPIMat() const
+inline										TexProject::Helper::Transform::D3::ViewProjectionMatrix::ViewProjectionMatrix(const vec3& pos_, const vec3& ang_, const Projection::Params::Perspective proj_):
+	ViewMatrix(pos_,ang_),
+	ProjectionMatrix(proj_),
+	vpRebuild(true), vpiRebuild(true)
 {
-	//return GetPIMat() * mat4::scale(vec3(1.0f,1.0f,-1.0f)) * GetVMat();
-	return GetPIMat() * mat4::scale(vec3(1.0f,1.0f,-1.0f)) * mat4(GetRMat());
 }
-
-
-// Transform::D3::ModelMatrix
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::SetAng(const vec3& ang_)
+{
+	if (ang.x != ang_.x || ang.y != ang_.y || ang.z != ang_.z)
+	{
+		vRebuild = true;
+		viRebuild = true;
+		rRebuild = true;
+		riRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		ang = ang_;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::AddAng(const vec3& add_)
+{
+	if (add_.x != _0f || add_.y != _0f || add_.z != _0f)
+	{
+		vRebuild = true;
+		viRebuild = true;
+		rRebuild = true;
+		riRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		ang += add_;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::MulAng(const vec3& mul_)
+{
+	if (mul_.x != _1f || mul_.y != _1f || mul_.z != _1f)
+	{
+		vRebuild = true;
+		viRebuild = true;
+		rRebuild = true;
+		riRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		ang *= mul_;
+	}
+}
+inline TexProject::vec3						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetAng() const
+{
+	return ViewMatrix::GetAng();
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::SetPos(const vec3& pos_)
+{
+	if (pos.x != pos_.x || pos.y != pos_.y || pos.z != pos_.z)
+	{
+		vRebuild = true;
+		viRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		pos = pos_;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::AddPos(const vec3& add_)
+{
+	if (add_.x != _0f || add_.y != _0f || add_.z != _0f)
+	{
+		vRebuild = true;
+		viRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		pos += add_;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::MulPos(const vec3& mul_)
+{
+	if (mul_.x != _1f || mul_.y != _1f || mul_.z != _1f)
+	{
+		vRebuild = true;
+		viRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		pos *= mul_;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::Rotate(const vec3& val_)
+{
+	if (val_.x != _0f || val_.y != _0f || val_.z != _0f)
+	{
+		rMat = mat3::rotateZXY(val_) * rMat;
+		ang = getAng(rMat);
+		//rRebuild = true;
+		riRebuild = true;
+		vRebuild = true;
+		viRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::Move(const vec3& val_)
+{
+	AddPos(GetRMat() * val_);
+}
+inline TexProject::vec3						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetPos() const
+{
+	return Position::GetPos();
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::SetOrthogonal(float32 left_, float32 right_, float32 bottom_, float32 top_, float32 back_, float32 front_)
+{
+	//ProjectionMatrix::SetOrthogonal(left_, right_, bottom_, top_, back_, front_);
+	type = Projection::Type::Orthogonal;
+	if (paramsOrthogonal.left != left_ || paramsOrthogonal.right != right_ || paramsOrthogonal.bottom != bottom_ || paramsOrthogonal.top != top_ || paramsOrthogonal.back != back_ || paramsOrthogonal.front != front_)
+	{
+		pRebuild = true;
+		piRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		paramsOrthogonal.left = left_;
+		paramsOrthogonal.right = right_;
+		paramsOrthogonal.bottom = bottom_;
+		paramsOrthogonal.top = top_;
+		paramsOrthogonal.back = back_;
+		paramsOrthogonal.front = front_;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::SetOrthogonal(const Projection::Params::Orthogonal& source)
+{
+	//ProjectionMatrix::SetOrthogonal(source);
+	type = Projection::Type::Orthogonal;
+	if (paramsOrthogonal != source)
+	{
+		pRebuild = true;
+		piRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		paramsOrthogonal = source;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::SetPerspective(float32 fov_, float32 aspect_, float32 zNear_, float32 zFar_)
+{
+	//ProjectionMatrix::SetPerspective(fov_, aspect_, zNear_, zFar_);
+	type = Projection::Type::Perspective;
+	if (paramsPerspective.fov != fov_ || paramsPerspective.aspect != aspect_ || paramsPerspective.zNear != zNear_ || paramsPerspective.zFar != zFar_)
+	{
+		pRebuild = true;
+		piRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		paramsPerspective.fov = fov_;
+		paramsPerspective.aspect = aspect_;
+		paramsPerspective.zNear = zNear_;
+		paramsPerspective.zFar = zFar_;
+	}
+}
+inline void									TexProject::Helper::Transform::D3::ViewProjectionMatrix::SetPerspective(const Projection::Params::Perspective& source)
+{
+	//ProjectionMatrix::SetPerspective(source);
+	type = Projection::Type::Perspective;
+	if (paramsPerspective != source)
+	{
+		pRebuild = true;
+		piRebuild = true;
+		vpRebuild = true;
+		vpiRebuild = true;
+		paramsPerspective = source;
+	}
+}
+inline TexProject::mat3						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetRMat() const
+{
+	return ViewMatrix::GetRMat();
+}
+inline TexProject::mat3						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetRIMat() const
+{
+	return ViewMatrix::GetRIMat();
+}
+inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetVMat() const
+{
+	return ViewMatrix::GetVMat();
+}
+inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetVIMat() const
+{
+	return ViewMatrix::GetVIMat();
+}
+inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetPMat() const
+{
+	return ProjectionMatrix::GetPMat();
+}
+inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetPIMat() const
+{
+	return ProjectionMatrix::GetPIMat();
+}
+inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetVPMat() const
+{
+	if (vpRebuild)
+	{
+		vpRebuild = false;
+		vpMat = GetVMat() * mat4::scale(vec3(1.0f, 1.0f, -1.0f)) * GetPMat();
+	}
+	return vpMat;
+	//return GetVMat() * mat4::scale(vec3(1.0f, 1.0f, -1.0f)) * GetPMat();
+}
+inline TexProject::mat4						TexProject::Helper::Transform::D3::ViewProjectionMatrix::GetVPIMat() const
+{
+	if (vpiRebuild)
+	{
+		vpiRebuild = false;
+		vpiMat = GetPIMat() * mat4::scale(vec3(1.0f, 1.0f, -1.0f)) * GetVIMat();
+	}
+	return vpiMat;
+	//return GetPIMat() * mat4::scale(vec3(1.0f, 1.0f, -1.0f)) * GetVIMat();
+}
+#pragma endregion
+#pragma region ModelMatrix
 inline TexProject::Helper::Transform::D3::ModelMatrix::ModelMatrix(const vec3& pos_,const vec3& ang_,const vec3& scl_):
-RotateMatrix(ang_),
-Position(pos_),
-Scale(scl_)
+	RotateMatrix(ang_),
+	Position(pos_),
+	Scale(scl_)
 {
 }
 inline void									TexProject::Helper::Transform::D3::ModelMatrix::SetAng(const vec3& ang_)
@@ -1569,8 +1630,9 @@ inline void									TexProject::Helper::Transform::D3::ModelMatrix::Rotate(const
 {
 	if(val_.x != _0f || val_.y != _0f || val_.z != _0f)
 	{
-		rMat = mat3::rotateZXY(val_) * rMat;
+		rMat = mat3::rotateZXY(val_) * GetRMat();
 		ang = getAng(rMat);
+		rRebuild = true;
 		riRebuild = true;
 		mRebuild = true;
 		miRebuild = true;
@@ -1606,5 +1668,23 @@ inline TexProject::mat4						TexProject::Helper::Transform::D3::ModelMatrix::Get
 	}
 	return miMat;
 }
+#pragma endregion
+#pragma endregion
+#pragma endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
