@@ -353,6 +353,8 @@ void										TexProject::WinAPI::GUI::Panels::Text::_win_Paint()
 			FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));*/
 
 			{
+				CallAction(ActionType::Refresh);
+
 				wnd->_win_RectToWindow(rect,pos_,pos_ + size_);
 
 				SetTextColor(hDC,RGB(color.x * 255,color.y * 255,color.z * 255));
@@ -498,7 +500,7 @@ void										TexProject::WinAPI::GUI::Buttons::Slider::_win_Paint()
 		SetDCBrushColor(hDC,_win_RGB(color));
 		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
 
-		wnd->_win_RectToWindow(rect,vec2(bezier(pos_.x,pos_.x+size_.y-1.0f,value),pos_.y),vec2(bezier(pos_.x+1.0f,pos_.x+size_.y,value),pos_.y+size_.y));
+		wnd->_win_RectToWindow(rect,vec2(bezier(pos_.x,pos_.x+size_.x-1.0f,value),pos_.y),vec2(bezier(pos_.x+1.0f,pos_.x+size_.x,value),pos_.y+size_.y));
 		SetDCBrushColor(hDC,_win_RGB(vec4(1,0,0,1)));
 		FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
 	}
@@ -553,7 +555,7 @@ void										TexProject::WinAPI::GUI::Buttons::Connector::_win_Paint()
 			{
 				vec2 t1 = GetPos() + GetSize()*0.5f;
 				vec2 t3 = vec2(gui_->mouse.pos - wnd->GetPos());
-				vec2 t2 = t1 + direction * block(dist(t1,t3)/100.0f,0.0f,1.0f);
+				vec2 t2 = t1 + direction * clamp(dist(t1,t3) / 100.0f,0.0f,1.0f);
 
 				bezier
 				(
@@ -571,7 +573,7 @@ void										TexProject::WinAPI::GUI::Buttons::Connector::_win_Paint()
 		{
 			vec2 t1 = GetPos() + GetSize()*0.5f;
 			vec2 t4 = target->GetPos() + target->GetSize()*0.5f;
-			float32 t = block(dist(t1,t4)/100.0f,0.0f,1.0f);
+			float32 t = clamp(dist(t1,t4) / 100.0f,0.0f,1.0f);
 			vec2 t2 = t1 + direction*t;
 			vec2 t3 = t4 + target->direction*t;
 			bezier
@@ -591,7 +593,7 @@ void										TexProject::WinAPI::GUI::Buttons::Connector::_win_Paint()
 			{
 				vec2 t1 = GetPos() + GetSize()*0.5f;
 				vec2 t4 = i->GetPos() + i->GetSize()*0.5f;
-				float32 t = block(dist(t1,t4)/100.0f,0.0f,1.0f);
+				float32 t = clamp(dist(t1,t4) / 100.0f,0.0f,1.0f);
 				vec2 t2 = t1 + direction*t;
 				vec2 t3 = t4 + i->direction*t;
 

@@ -92,6 +92,7 @@ void										TexProject::GUI::Item::Loop()
 
 	if((properties & (uint32)PropertiesBit::ScrollX) == 0)
 	{
+		if(gui->GetRenderContext()->GetWindow()->IsActive())
 		if(gui->draggingSelection == this)
 		if(mouse.lstate && !mouse.olstate)
 		{
@@ -105,7 +106,10 @@ void										TexProject::GUI::Item::Loop()
 	{
 		if(mouse.lstate)
 		{
-			scrollingValue.x = block(p.x-t.x*0.5f,0.0f,size_.x - t.x)/(size_.x-t.x);
+			if(gui->GetRenderContext()->GetWindow()->IsActive())
+			{
+				scrollingValue.x = clamp(p.x - t.x*0.5f,0.0f,size_.x - t.x) / (size_.x - t.x);
+			}
 		}
 		else
 		{
@@ -115,6 +119,7 @@ void										TexProject::GUI::Item::Loop()
 
 	if((properties & (uint32)PropertiesBit::ScrollY) == 0)
 	{
+		if(gui->GetRenderContext()->GetWindow()->IsActive())
 		if(gui->draggingSelection == this)
 		if(mouse.lstate && !mouse.olstate)
 		{
@@ -128,7 +133,10 @@ void										TexProject::GUI::Item::Loop()
 	{
 		if(mouse.lstate)
 		{
-			scrollingValue.y = block(p.y-t.y*0.5f,0.0f,size_.y - t.y)/(size_.y-t.y);
+			if(gui->GetRenderContext()->GetWindow()->IsActive())
+			{
+				scrollingValue.y = clamp(p.y - t.y*0.5f,0.0f,size_.y - t.y) / (size_.y - t.y);
+			}
 		}
 		else
 		{
@@ -136,6 +144,7 @@ void										TexProject::GUI::Item::Loop()
 		}
 	}
 
+	if(gui->GetRenderContext()->GetWindow()->IsActive())
 	if(gui->draggingSelection == this && IsEnabled())
 	if(mouse.lstate && !mouse.olstate)
 	{
@@ -243,6 +252,38 @@ TexProject::GUI::Button*					TexProject::GraphicUserInterface::Panel::AddButton(
 {
 	throw Exception();
 }
+void										TexProject::GraphicUserInterface::Panel::AttachItem(Item* item_)
+{
+	if(item_)
+	{
+		if(item_->parent)
+		{
+			if(auto parent_ = dynamic_cast<Panel*>(item_->parent))
+			{
+				parent_->DetachItem(item_);
+			}
+			else
+			{
+				return;
+			}
+		}
+		else
+		{
+			item_->gui->item.remove(item_);
+		}
+
+		item.push_back(item_);
+		item_->DisableDragging();
+		item_->parent = this;
+	}
+}
+void										TexProject::GraphicUserInterface::Panel::DetachItem(Item* item_)
+{
+	if(item_ && item_->parent == this)
+	{
+		item.remove(item_);
+	}
+}
 #pragma endregion
 #pragma region Basic
 TexProject::GraphicUserInterface::Panel::~Panel()
@@ -263,6 +304,7 @@ void										TexProject::GraphicUserInterface::Panel::Loop()
 
 	if(IsClosable())
 	{
+		if(gui->GetRenderContext()->GetWindow()->IsActive())
 		if(gui->draggingSelection == this)
 		if(p.x > size_.x && p.x <= size_.x+border.x)
 		if(p.y > size_.y && p.y <= size_.y+border.y)
@@ -276,6 +318,7 @@ void										TexProject::GraphicUserInterface::Panel::Loop()
 	{
 		auto p = vec2(gui->mouse.locpos) - GetPos();
 
+		if(gui->GetRenderContext()->GetWindow()->IsActive())
 		if(gui->draggingSelection == this)
 		if(p.x >= -border.x && p.x < 0.0f)
 		if(p.y > size_.y && p.x <= size_.y+border.y)
@@ -451,7 +494,7 @@ void															TexProject::GUI::Buttons::Switcher::Loop()
 TexProject::GUI::Buttons::Slider::Slider(GUI* gui_,Item* parent_):
 	Button(gui_,parent_)
 {
-	properties &= (uint32)PropertiesBit::Lock;
+	properties &= ~(uint32)PropertiesBit::Lock;
 }
 TexProject::GUI::Buttons::Slider::Type							TexProject::GUI::Buttons::Slider::GetType() const
 {
@@ -473,14 +516,23 @@ void															TexProject::GUI::Buttons::Slider::Loop()
 	}
 	else
 	{
+		/*if((properties | (uint32)PropertiesBit::Lock) > 0)
+		{
+			CallAction(ActionType::Refresh);
+		}*/
 		properties &= ~(uint32)PropertiesBit::Lock; //lock = false;
 	}
 
 	//if(lock)
 	if((properties & (uint32)PropertiesBit::Lock) > 0)
 	{
+		auto oldValue = value;
 		float32 tSize = size.x;// - 2.0f*border.x;
-		value = block(float32(mouse.locpos.x - GetPos().x) / tSize,0.0f,1.0f);
+		value = clamp(float32(mouse.locpos.x - GetPos().x) / tSize,0.0f,1.0f);
+		if(oldValue != value)
+		{
+			CallAction(ActionType::Refresh);
+		}
 	}
 }
 #pragma endregion
@@ -488,6 +540,8 @@ void															TexProject::GUI::Buttons::Slider::Loop()
 TexProject::GUI::Buttons::Connector*							TexProject::GUI::Buttons::Connector::selected = nullptr;
 TexProject::GUI::Buttons::Connector*							TexProject::GUI::Buttons::Connector::binder = nullptr;
 TexProject::GUI::Buttons::Connector*							TexProject::GUI::Buttons::Connector::oBinder = nullptr;
+TexProject::GUI::Buttons::Connector*							TexProject::GUI::Buttons::Connector::checkConnector = nullptr;
+bool															TexProject::GUI::Buttons::Connector::checkValidate = nullptr;
 TexProject::GUI::Buttons::Connector::Connector(GUI* gui_,Item* parent_):
 	Button(gui_,parent_)
 {
@@ -538,7 +592,7 @@ void															TexProject::GUI::Buttons::Connector::Loop()
 					((Buttons::Connector*)gui->draggingSelection)->IsRecipient()
 				)
 				{
-					SetTarget(nullptr);
+					if(gui->GetRenderContext()->GetWindow()->IsActive()) SetTarget(nullptr);
 					binder = nullptr;
 				}
 			}
@@ -546,15 +600,15 @@ void															TexProject::GUI::Buttons::Connector::Loop()
 			{
 				if(binder && gui->draggingSelection == this)
 				{
-					//if(recipient && !binder->recipient)
 					if(IsRecipient() && !binder->IsRecipient())
 					{
-						SetTarget(binder); binder = nullptr;
+						if(gui->GetRenderContext()->GetWindow()->IsActive()) SetTarget(binder);
+						binder = nullptr;
 					}
-					//if(!recipient && binder->recipient)
 					if(!IsRecipient() && binder->IsRecipient())
 					{
-						binder->SetTarget(this); binder = nullptr;
+						if(gui->GetRenderContext()->GetWindow()->IsActive()) binder->SetTarget(this);
+						binder = nullptr;
 					}
 				}
 			}

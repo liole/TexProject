@@ -494,7 +494,7 @@ inline TexProject::vec4						TexProject::Texture::D1::GetPixelNearestClamp(float
 {
 	static uint32 t;
 
-	t = uint32(block(pos_,0.0f,1.0f)*float32(size));
+	t = uint32(clamp(pos_,0.0f,1.0f)*float32(size));
 
 	return data[t];
 }
@@ -503,7 +503,7 @@ inline TexProject::vec4						TexProject::Texture::D1::GetPixelLinearClamp(float3
 	static float32 t;
 	static uint32 nearPos,farPos;
 
-	t = block(pos_,0.0f,1.0f)*float32(size-1);
+	t = clamp(pos_,0.0f,1.0f)*float32(size - 1);
 
 	nearPos = uint32(std::floor(t));
 	farPos = uint32(std::ceil(t));
@@ -605,7 +605,7 @@ inline TexProject::vec4						TexProject::Texture::D2::GetPixelNearestClamp(const
 {
 	static uvec2 t;
 
-	t = block(pos_,vec2(0.0f),vec2(1.0f))*vec2(size);
+	t = clamp(pos_,vec2(0.0f),vec2(1.0f))*vec2(size);
 
 	return data[t.y*size.x + t.x];
 }
@@ -614,7 +614,7 @@ inline TexProject::vec4						TexProject::Texture::D2::GetPixelLinearClamp(const 
 	static vec2 t;
 	static uvec2 nearPos,farPos;
 
-	t = block(pos_,vec2(0.0f),vec2(1.0f))*vec2(size-1);
+	t = clamp(pos_,vec2(0.0f),vec2(1.0f))*vec2(size - 1);
 
 	nearPos = uvec2(uint32(std::floor(t.x)),uint32(std::floor(t.y)));
 	farPos = uvec2(uint32(std::ceil(t.x)),uint32(std::ceil(t.y)));
@@ -703,7 +703,7 @@ inline TexProject::vec4						TexProject::Texture::D3::GetPixelNearestClamp(const
 {
 	static uvec3 t;
 
-	t = uvec3(block(pos_,vec3(0.0f),vec3(1.0f))*vec3(size));
+	t = uvec3(clamp(pos_,vec3(0.0f),vec3(1.0f))*vec3(size));
 
 	return data[(t.z*size.y + t.y)*size.x + t.x];
 }
@@ -712,7 +712,7 @@ inline TexProject::vec4						TexProject::Texture::D3::GetPixelLinearClamp(const 
 	static vec3 t;
 	static uvec3 nearPos,farPos;
 
-	t = block(pos_,vec3(0.0f),vec3(1.0f))*vec3(size-1);
+	t = clamp(pos_,vec3(0.0f),vec3(1.0f))*vec3(size - 1);
 
 	nearPos = uvec3(uint32(std::floor(t.x)),uint32(std::floor(t.y)),uint32(std::floor(t.z)));
 	farPos = uvec3(uint32(std::ceil(t.x)),uint32(std::ceil(t.y)),uint32(std::ceil(t.z)));

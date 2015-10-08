@@ -141,6 +141,7 @@ namespace TexProject
 			vec2							scrollingValue = vec2(0.0f);
 			vec2							scrollingSize = vec2(0.0f);
 			vec2							border = vec2(8.0f);
+			string							tip = "";
 		protected:
 											Item(GUI* gui_,Item* parent_ = nullptr);
 											Item(const Item&) = delete;
@@ -190,6 +191,8 @@ namespace TexProject
 			inline vec2						GetAnchor() const;
 			inline void						SetUserData(void* data_,bool clearing_ = false);
 			inline void*					GetUserData() const;
+			inline void						SetTip(const string& tip_);
+			inline string					GetTip() const;
 #pragma endregion
 #pragma region Dragging
 			virtual Item*					GetSelection();
@@ -202,11 +205,12 @@ namespace TexProject
 			{
 				Click						= 0,
 				Refresh						= 1,
-				Destruction					= 2
+				Destruction					= 2,
+				Check						= 3
 			};
 			typedef void					(*Action)(Item*);
 		protected:
-			static const uint32				actionsCount = 3;
+			static const uint32				actionsCount = 4;
 			Action							action[actionsCount];
 			inline void						CallAction(ActionType type_);
 		public:
@@ -243,6 +247,8 @@ namespace TexProject
 		public:
 			virtual Panel*					AddPanel(PanelTypes type_);
 			virtual Button*					AddButton(ButtonTypes type_);
+			void							AttachItem(Item* item_);
+			void							DetachItem(Item* item_);
 			template<typename T>
 			inline T*						AddItem();
 			inline void						RemoveItem(Item* item_);
@@ -410,14 +416,16 @@ namespace TexProject
 					Recipient				= (uint32)Item::PropertiesBit::Reserved0
 				};
 			protected:
-				//bool						recipient = false;
-				Connector*					target = nullptr;
-				std::list<Connector*>		observers;
-
 				static Connector*			selected;
 				static Connector*			binder;
 				static Connector*			oBinder;
-
+			protected:
+				Connector*					target = nullptr;
+				std::list<Connector*>		observers;
+			public:
+				static Connector*			checkConnector;
+				static bool					checkValidate;
+			protected:
 											Connector(GUI* gui_,Item* parent_ = nullptr);
 				virtual						~Connector();
 				virtual void				Loop() override;
@@ -662,6 +670,14 @@ inline void*								TexProject::GUI::Item::GetUserData() const
 {
 	return userData;
 }
+inline void									TexProject::GUI::Item::SetTip(const string& tip_)
+{
+	tip = tip_;
+}
+inline TexProject::string					TexProject::GUI::Item::GetTip() const
+{
+	return tip;
+}
 #pragma endregion
 #pragma region Actions
 inline void									TexProject::GUI::Item::CallAction(ActionType type_)
@@ -801,7 +817,23 @@ inline void														TexProject::GUI::Buttons::Connector::SetTarget(Connecto
 {
 	SetRecipient();
 	if(target) target->observers.remove(this);
-	target = connector;
+	target = nullptr;
+	if(connector)
+	{
+		checkConnector = connector;
+		checkValidate = true;
+		CallAction(ActionType::Check);
+		if(checkValidate)
+		{
+			target = connector;
+		}
+		checkConnector = nullptr;
+		checkValidate = false;
+	}
+	else
+	{
+		target = connector;
+	}
 	if(target) target->observers.push_back(this);
 }
 inline void														TexProject::GUI::Buttons::Connector::UnsetTarget()
@@ -917,7 +949,7 @@ inline void									TexProject::GraphicUserInterface::DraggingProcess()
 
 	if(draggingPick)
 	{
-		if(mouse.lstate && draggingCan && draggingPick->IsDraggable() && draggingPick->GetBase()->IsDraggable())
+		if(renderContext->GetWindow()->IsActive() && mouse.lstate && draggingCan && draggingPick->IsDraggable() && draggingPick->GetBase()->IsDraggable())
 		{
 			draggingPick->GetBase()->AddPos(vec2(mouse.dpos));
 		}

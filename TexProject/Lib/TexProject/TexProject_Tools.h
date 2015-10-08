@@ -26,6 +26,7 @@ namespace TexProject
 	{
 		namespace Generator
 		{
+			class Empty;
 			namespace Noise
 			{
 				class Simple;
@@ -39,11 +40,15 @@ namespace TexProject
 				class Grayscale;
 				class Blur;
 			}
-			class HeightToNormal;
+			namespace Physics
+			{
+				class HeightToNormal;
+			}
 		}
 		namespace Viewer
 		{
 			class Simple;
+			class BumpMapping;
 		}
 	}
 #pragma endregion
@@ -52,6 +57,13 @@ namespace TexProject
 		public WindowBind
 	{
 		friend Tool;
+		friend Tools::Generator::Empty;
+		friend Tools::Generator::Noise::Simple;
+		friend Tools::Generator::Noise::Worley;
+		friend Tools::Filter::Correction::Grayscale;
+		friend Tools::Filter::Correction::Blur;
+		friend Tools::Filter::Physics::HeightToNormal;
+		friend Tools::Viewer::Simple;
 	protected:
 		Tool*								focus = nullptr;
 	protected:
@@ -109,6 +121,7 @@ namespace TexProject
 		GUI::Buttons::Default*				buttonFieldRefresh = nullptr;
 	protected:
 		GUI::Panels::Default*				panelConfigBase = nullptr;
+		GUI::Panels::Text*					panelConfigTitle = nullptr;
 	public:
 											Tool(ToolSet* toolSet_);
 		virtual								~Tool();
@@ -119,8 +132,31 @@ namespace TexProject
 	};
 	namespace Tools
 	{
+		struct SizerData
+		{
+			GUI::Panels::Default*	panelBase = nullptr;
+			GUI::Buttons::Slider*	buttonSlider = nullptr;
+			int32					minVal = 128;
+			int32					maxVal = 1024;
+			int32					val = 512;
+		};
+		GUI::Item*							CreateSizer(GUI* gui);
+
 		namespace Generator
 		{
+			class Empty:
+				public Tool
+			{
+			protected:
+				GUI::Buttons::Connector*					buttonOutput = nullptr;
+			protected:
+				Texture::D2*								texture = new Texture::D2();
+			public:
+															Empty(ToolSet* toolSet_);
+				virtual										~Empty() override;
+			protected:
+				void										Refresh();
+			};
 			namespace Noise
 			{
 				class Simple:
@@ -129,10 +165,18 @@ namespace TexProject
 				protected:
 					GUI::Buttons::Connector*					buttonOutput = nullptr;
 				protected:
+					GUI::Buttons::Trigger*						buttonConfigMonochrome = nullptr;
+					GUI::Panels::Default*						panelConfigSizerX = nullptr;
+					GUI::Panels::Default*						panelConfigSizerY = nullptr;
+				protected:
 					Texture::D2*								texture = new Texture::D2();
+					bool										paramMonochrome = false;
+					uvec2										paramSize = uvec2(128);
 				public:
 																Simple(ToolSet* toolSet_);
 					virtual										~Simple() override;
+				public:
+					virtual void								FocusInit() override;
 				protected:
 					void										Refresh();
 				};
@@ -143,10 +187,16 @@ namespace TexProject
 					GUI::Buttons::Connector*					buttonOutput = nullptr;
 				protected:
 					Texture::D2*								texture = new Texture::D2();
-					uint32										generationDotsNumber = 64;
+				protected:
+					uint32										paramDotsCount = 64;
+					GUI::Panels::Default*						panelConfigSizerX = nullptr;
+					GUI::Panels::Default*						panelConfigSizerY = nullptr;
+					uvec2										paramSize = uvec2(128);
 				public:
 																Worley(ToolSet* toolSet_);
 					virtual										~Worley() override;
+				public:
+					virtual void								FocusInit() override;
 				protected:
 					void										Refresh();
 				};
@@ -237,6 +287,40 @@ namespace TexProject
 			protected:
 				void										Refresh();
 				Texture::D2*								GetInput();
+			};
+			class BumpMapping:
+				public Tool
+			{
+			protected:
+				static void									FuncWindowInit(Window* window);
+				static void									FuncWindowFree(Window* window);
+				static void									FuncWindowLoop(Window* window);
+			protected:
+				GUI::Buttons::Connector*					buttonFieldInputDiffuse = nullptr;
+				GUI::Buttons::Connector*					buttonFieldInputNormals = nullptr;
+			protected:
+				Texture::D2*								textureDiffuse = new Texture::D2();
+				Texture::D2*								textureNormals = new Texture::D2();
+				Texture::D2*								texturePreview = new Texture::D2();
+			protected:
+				Helper::VPMat								vpMat;
+				Helper::MMat								mMat;
+			protected:
+				Window*										windowRender = new Window;
+			protected:
+				Geometry::Mesh*								mesh = new Geometry::Mesh;
+			protected:
+				OpenGL::Shader*								oglShader = nullptr;
+				OpenGL::Mesh*								oglMesh = nullptr;
+				OpenGL::Texture*							oglTextureDiffuse = nullptr;
+				OpenGL::Texture*							oglTextureNormals = nullptr;
+			public:
+															BumpMapping(ToolSet* toolSet_);
+				virtual										~BumpMapping() override;
+			protected:
+				void										Refresh();
+				Texture::D2*								GetInputDiffuse();
+				Texture::D2*								GetInputNormals();
 			};
 		}
 	}

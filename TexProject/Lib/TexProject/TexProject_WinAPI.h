@@ -290,6 +290,8 @@ inline void						TexProject::WinAPI::RenderContext::_win_BeginPaint()
 }
 inline void						TexProject::WinAPI::RenderContext::_win_EndPaint()
 {
+	//if()
+
 	BitBlt(oldDC,0,0,dbSize.x,dbSize.y,dbHDC,0,0,SRCCOPY);
 
 	SelectObject(dbHDC,oldBitmap);

@@ -49,6 +49,15 @@ namespace TexProject
 	void				Error(const string& text);
 	bool				Question(const string& text);
 
+	inline string		GetEXEPath()
+	{
+		HMODULE hModule = GetModuleHandleW(NULL);
+		char path[MAX_PATH];
+		GetModuleFileName(hModule,path,MAX_PATH);
+		string::size_type pos = string(path).find_last_of("\\/");
+		return string(path).substr(0,pos);
+	}
+
 	struct Exception
 	{
 	protected:

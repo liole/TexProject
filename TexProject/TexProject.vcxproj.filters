@@ -124,5 +124,7 @@
     <None Include="Media\Shaders\GLSL\3D\Material\Basic\1.vs" />
     <None Include="Media\Shaders\GLSL\3D\Material\Flat\1.ps" />
     <None Include="Media\Shaders\GLSL\3D\Material\Flat\1.vs" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Bump Mapping\1.ps" />
+    <None Include="Media\Shaders\GLSL\3D\Material\Bump Mapping\1.vs" />
   </ItemGroup>
 </Project>
