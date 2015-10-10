@@ -189,7 +189,6 @@ namespace TexProject
 			virtual void					_win_Paint() override;
 #endif
 #pragma endregion
-
 		};
 		class Texture:
 			public ContextBind
@@ -223,7 +222,12 @@ namespace TexProject
 
 inline COLORREF								TexProject::WinAPI::_win_RGB(const vec4& color_)
 {
-	return RGB(color_.x*255,color_.y*255,color_.z*255);
+	return RGB
+	(
+		clamp(uint32(color_.x * 255),0,255),
+		clamp(uint32(color_.y * 255),0,255),
+		clamp(uint32(color_.z * 255),0,255)
+	);
 }
 #pragma region ContextBind
 inline															TexProject::WinAPI::ContextBind::ContextBind(Window* window_):
@@ -290,8 +294,6 @@ inline void						TexProject::WinAPI::RenderContext::_win_BeginPaint()
 }
 inline void						TexProject::WinAPI::RenderContext::_win_EndPaint()
 {
-	//if()
-
 	BitBlt(oldDC,0,0,dbSize.x,dbSize.y,dbHDC,0,0,SRCCOPY);
 
 	SelectObject(dbHDC,oldBitmap);
@@ -350,10 +352,10 @@ inline bool									TexProject::WinAPI::Texture::Create(uvec2 size_,vec4* data_)
 		{
 			uint32 id1 = (y*bytesPerLine + x*4);
 			uint32 id2 = y*size_.x + x;
-			textureData[id1+0] = BYTE(data_[id2].z*255.0f);
-			textureData[id1+1] = BYTE(data_[id2].y*255.0f);
-			textureData[id1+2] = BYTE(data_[id2].x*255.0f);
-			textureData[id1+3] = BYTE(data_[id2].w*255.0f);
+			textureData[id1+0] = BYTE(clamp(int32(data_[id2].z*255.0f),0,255));
+			textureData[id1+1] = BYTE(clamp(int32(data_[id2].y*255.0f),0,255));
+			textureData[id1+2] = BYTE(clamp(int32(data_[id2].x*255.0f),0,255));
+			textureData[id1+3] = BYTE(clamp(int32(data_[id2].w*255.0f),0,255));
 		}
 	}
 

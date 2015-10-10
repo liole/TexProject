@@ -699,6 +699,11 @@ namespace TexProject
 		float32			x,y,z,w;
 	};
 
+	inline float32							sign(float32 val)
+	{
+		return val > 0 ? 1.0f : -1.0f;
+	}
+
 	/*Випадкове число в межах [0,1]*/
 	inline float32							rnd();
 	/*Випадкове число в межах [0,highLimit]*/
@@ -712,6 +717,8 @@ namespace TexProject
 	inline vec2								clamp(const vec2& val,const vec2& minVal,const vec2& maxVal);
 	inline vec3								clamp(const vec3& val,const vec3& minVal,const vec3& maxVal);
 	inline vec4								clamp(const vec4& val,const vec4& minVal,const vec4& maxVal);
+
+	inline float32							wrap(float32 val,float32 minVal,float32 maxVal);
 
 	/*Конвертує радіани в градуси*/
 	inline float32							degrees(const float32 rads);
@@ -782,6 +789,7 @@ namespace TexProject
 	inline vec2								bezier(const vec2& t1,const vec2& t2,float32 t);
 	inline vec3								bezier(const vec3& t1,const vec3& t2,float32 t);
 	inline vec4								bezier(const vec4& t1,const vec4& t2,float32 t);
+	inline vec4								bezier(const vec4& t1,const vec4& t2,const vec4& t);
 	/*Функція Безьє порядку 3*/
 	inline float32							bezier(float32 t1,float32 t2,float32 t3,float32 t);
 	inline vec2								bezier(const vec2& t1,const vec2& t2,const vec2& t3,float32 t);
@@ -3875,6 +3883,11 @@ inline TexProject::vec4						TexProject::clamp(const vec4& val,const vec4& minVa
 	);
 }
 
+inline TexProject::float32					TexProject::wrap(float32 val,float32 minVal,float32 maxVal)
+{
+	return val - floor((val - minVal) / (maxVal - minVal))*(maxVal - minVal);
+}
+
 inline TexProject::float32					TexProject::degrees(const float32 rads)
 {
 	return rads * _180devPIf;
@@ -4057,6 +4070,10 @@ inline TexProject::vec3						TexProject::bezier(const vec3& t1,const vec3& t2,fl
 inline TexProject::vec4						TexProject::bezier(const vec4& t1,const vec4& t2,float32 t)
 {
 	return t1*(1.0f-t) + t2*t;
+}
+inline TexProject::vec4						TexProject::bezier(const vec4& t1,const vec4& t2,const vec4& t)
+{
+	return t1 + (t2 - t1)*t;
 }
 inline TexProject::float32					TexProject::bezier(float32 t1,float32 t2,float32 t3,float32 t)
 {

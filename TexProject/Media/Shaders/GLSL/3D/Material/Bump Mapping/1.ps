@@ -9,7 +9,7 @@ uniform samplerCube	TextureEnvironment;
 
 
 uniform vec3	lightDir;
-uniform float	lightAmbient = 0.1f;
+uniform float	lightAmbient = 0.2f;
 uniform float	emboss = 0.16f;
 
 
@@ -99,12 +99,14 @@ void main()
 
 	vec4 TexEnv = texture(TextureEnvironment,refVec);
 
-	float specInt = specularCookTorrance(Normal,lightDir,normalize(pPos),0.05f) * SpecularIntensity;
+	float specInt = specularCookTorrance(Normal,-lightDir,normalize(pPos),0.05f);
+	//float specInt = specularCookTorrance(Normal,lightDir,normalize(pPos),0.05f) * SpecularIntensity;
 	//float specInt = specularPhong(lightDir,refVec,SpecularPower) * SpecularIntensity;
 	//float specInt = specularPhong(Normal,lightDir,pPos,SpecularPower) * SpecularIntensity;
 	//float specInt = specularCookTorrance(Normal,-lightDir,pPos,0.1f);
 
-	pixelColor.xyz = DiffuseColor*diffInt + (vec3(1.0f)*specInt + TexEnv.xyz*1.0f)*SpecularIntensity;
+	pixelColor.xyz = DiffuseColor*diffInt + (vec3(1.0f)*specInt);
+	//pixelColor.xyz = DiffuseColor*diffInt + (vec3(1.0f)*specInt + TexEnv.xyz*1.0f)*SpecularIntensity;
 	//pixelColor.xyz = mix( DiffuseColor*rangeInt*diffInt, (vec3(1.0f)*specInt + TexEnv.xyz*1.0f),SpecularIntensity);
 	//pixelColor.xyz = mix( DiffuseColor*rangeInt*diffInt, vec3(1.0f),specInt);
 	//pixelColor.xyz = mix( DiffuseColor*rangeInt*diffInt, TexEnv.xyz,specInt);

@@ -10,6 +10,7 @@
 #include <TexProject/TexProject_OpenGL.h>
 #pragma endregion
 #pragma region Includes
+//#include <random>
 #pragma endregion
 
 
@@ -30,6 +31,7 @@ namespace TexProject
 			namespace Noise
 			{
 				class Simple;
+				class Perlin;
 				class Worley;
 			}
 		}
@@ -39,6 +41,8 @@ namespace TexProject
 			{
 				class Grayscale;
 				class Blur;
+				class Function;
+				class Mix;
 			}
 			namespace Physics
 			{
@@ -59,9 +63,12 @@ namespace TexProject
 		friend Tool;
 		friend Tools::Generator::Empty;
 		friend Tools::Generator::Noise::Simple;
+		friend Tools::Generator::Noise::Perlin;
 		friend Tools::Generator::Noise::Worley;
 		friend Tools::Filter::Correction::Grayscale;
 		friend Tools::Filter::Correction::Blur;
+		friend Tools::Filter::Correction::Function;
+		friend Tools::Filter::Correction::Mix;
 		friend Tools::Filter::Physics::HeightToNormal;
 		friend Tools::Viewer::Simple;
 	protected:
@@ -142,6 +149,16 @@ namespace TexProject
 		};
 		GUI::Item*							CreateSizer(GUI* gui);
 
+		struct SizerFloatData
+		{
+			GUI::Panels::Default*	panelBase = nullptr;
+			GUI::Buttons::Slider*	buttonSlider = nullptr;
+			float32					minVal = 128;
+			float32					maxVal = 1024;
+			float32					val = 512;
+		};
+		GUI::Item*							CreateFloatSizer(GUI* gui);
+
 		namespace Generator
 		{
 			class Empty:
@@ -180,17 +197,41 @@ namespace TexProject
 				protected:
 					void										Refresh();
 				};
-				class Worley:
+				class Perlin:
 					public Tool
 				{
 				protected:
 					GUI::Buttons::Connector*					buttonOutput = nullptr;
 				protected:
+					GUI::Panels::Default*						panelConfigSizerX = nullptr;
+					GUI::Panels::Default*						panelConfigSizerY = nullptr;
+					GUI::Panels::Default*						panelConfigBasisCount = nullptr;
+					GUI::Panels::Default*						panelConfigNoiseSize = nullptr;
+				protected:
+					Texture::D2*								texture = new Texture::D2();
+					uvec2										paramSize = uvec2(128);
+					uint32										paramBasisCount = 16;
+					float32										paramNoiseSize = 10.0f;
+				public:
+																Perlin(ToolSet* toolSet_);
+					virtual										~Perlin() override;
+				public:
+					virtual void								FocusInit() override;
+				protected:
+					void										Refresh();
+				};
+				class Worley:
+					public Tool
+				{
+				protected:
+					GUI::Buttons::Connector*					buttonOutput = nullptr;
+					GUI::Panels::Default*						panelConfigSizerX = nullptr;
+					GUI::Panels::Default*						panelConfigSizerY = nullptr;
+					GUI::Panels::Default*						panelConfigCount = nullptr;
+				protected:
 					Texture::D2*								texture = new Texture::D2();
 				protected:
 					uint32										paramDotsCount = 64;
-					GUI::Panels::Default*						panelConfigSizerX = nullptr;
-					GUI::Panels::Default*						panelConfigSizerY = nullptr;
 					uvec2										paramSize = uvec2(128);
 				public:
 																Worley(ToolSet* toolSet_);
@@ -225,31 +266,101 @@ namespace TexProject
 					public Tool
 				{
 				protected:
-					GUI::Buttons::Connector*					buttonInput = nullptr;
-					GUI::Buttons::Connector*					buttonOutput = nullptr;
+					GUI::Buttons::Connector*					buttonFieldInput = nullptr;
+					GUI::Buttons::Connector*					buttonFieldOutput = nullptr;
+					GUI::Panels::Default*						panelConfigSizer = nullptr;
 				protected:
 					Texture::D2*								texture = new Texture::D2();
+				protected:
+					float32										paramRadius = 5.0f;
 				public:
 																Blur(ToolSet* toolSet_);
 					virtual										~Blur() override;
+				public:
+					virtual void								FocusInit() override;
 				protected:
 					void										Refresh();
 					Texture::D2*								GetInput();
 				};
-			}			
+				class Function:
+					public Tool
+				{
+				protected:
+					GUI::Buttons::Connector*					buttonFieldInput = nullptr;
+					GUI::Buttons::Connector*					buttonFieldOutput = nullptr;
+					GUI::Panels::Default*						panelConfigAdd = nullptr;
+					GUI::Panels::Default*						panelConfigMul = nullptr;
+					GUI::Panels::Default*						panelConfigPow = nullptr;
+				protected:
+					Texture::D2*								texture = new Texture::D2();
+				protected:
+					float32										paramAdd = 0.0f;
+					float32										paramMul = 1.0f;
+					float32										paramPow = 1.0f;
+				public:
+																Function(ToolSet* toolSet_);
+					virtual										~Function() override;
+				public:
+					virtual void								FocusInit() override;
+				protected:
+					void										Refresh();
+					Texture::D2*								GetInput();
+				};
+				class Mix:
+					public Tool
+				{
+				protected:
+					GUI::Buttons::Connector*					buttonFieldInputA = nullptr;
+					GUI::Buttons::Connector*					buttonFieldInputB = nullptr;
+					GUI::Buttons::Connector*					buttonFieldInputMix = nullptr;
+					GUI::Buttons::Connector*					buttonFieldOutput = nullptr;
+				protected:
+					Texture::D2*								texture = new Texture::D2();
+				public:
+																Mix(ToolSet* toolSet_);
+					virtual										~Mix() override;
+				public:
+					virtual void								FocusInit() override;
+				protected:
+					void										Refresh();
+					Texture::D2*								GetInputA();
+					Texture::D2*								GetInputB();
+					Texture::D2*								GetInputMix();
+				};
+			}
 			namespace Physics
 			{
 				class HeightToNormal:
 					public Tool
 				{
 				protected:
-					GUI::Buttons::Connector*					buttonInput = nullptr;
-					GUI::Buttons::Connector*					buttonOutput = nullptr;
+					GUI::Buttons::Connector*					buttonFieldInput = nullptr;
+					GUI::Buttons::Connector*					buttonFieldOutput = nullptr;
+					GUI::Panels::Default*						panelConfigSizer = nullptr;
 				protected:
 					Texture::D2*								texture = new Texture::D2();
+				protected:
+					float32										paramScaleFactor = 128.0f;
 				public:
 																HeightToNormal(ToolSet* toolSet_);
 					virtual										~HeightToNormal() override;
+				public:
+					virtual void								FocusInit() override;
+				protected:
+					void										Refresh();
+					Texture::D2*								GetInput();
+				};
+				class NormalsToSlopeFactor:
+					public Tool
+				{
+				protected:
+					GUI::Buttons::Connector*					buttonFieldInput = nullptr;
+					GUI::Buttons::Connector*					buttonFieldOutput = nullptr;
+				protected:
+					Texture::D2*								texture = new Texture::D2();
+				public:
+																NormalsToSlopeFactor(ToolSet* toolSet_);
+					virtual										~NormalsToSlopeFactor() override;
 				protected:
 					void										Refresh();
 					Texture::D2*								GetInput();

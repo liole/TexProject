@@ -52,56 +52,6 @@ void															TexProject::WinAPI::RenderContext::Loop()
 	//SwapBuffers(wndDeviceContextHandle);
 	InvalidateRect(window->_win_windowHandle,NULL,TRUE);
 }
-/*void															TexProject::WinAPI::RenderContext::_win_Paint()
-{
-	if(dbSize != window->GetSize())
-	{
-		dbSize = window->GetSize();
-		if(dbBitmap)
-		{
-			DeleteObject(dbBitmap);
-			dbBitmap = NULL;
-		}
-		dbBitmap = CreateCompatibleBitmap(window->_win_windowDeviceContextHandle,int32(dbSize.x),int32(dbSize.y));
-		if(dbHDC)
-		{
-			DeleteDC(dbHDC);
-			dbHDC = NULL;
-		}
-		dbHDC = CreateCompatibleDC(window->_win_windowDeviceContextHandle);
-#if __TEXPROJECT_DEBUG__
-		Window::ErrorTest();
-#endif
-	}
-
-	SetROP2(window->_win_windowDeviceContextHandle,R2_COPYPEN);
-
-	auto hDC = BeginPaint(window->_win_windowHandle,&ps);
-
-	auto hOldBitmap = (HBITMAP)SelectObject(dbHDC,dbBitmap);
-
-	RECT rect;
-	rect.left = 0;
-	rect.top = 0;
-	rect.right = window->size.x;
-	rect.bottom = window->size.y;
-
-	SelectObject(dbHDC,WHITE_BRUSH);
-	FillRect(dbHDC,&rect,(HBRUSH)GetStockObject(GRAY_BRUSH));
-	
-	//if(window->renderContext)
-	//{
-	//	//window->renderContext->_win_WMPaint(window->_win_dbHDC);
-	//}
-
-	BitBlt(hDC,0,0,dbSize.x,dbSize.y,dbHDC,0,0,SRCCOPY);
-
-	SelectObject(dbHDC,hOldBitmap);
-
-	ValidateRect(window->_win_windowHandle,NULL);
-
-	EndPaint(window->_win_windowHandle,&ps);
-}*/
 #pragma endregion
 #pragma region GUI
 #pragma region Panels
@@ -658,6 +608,34 @@ void										TexProject::WinAPI::GraphicUserInterface::_win_Paint()
 	for(auto i: item)
 	{
 		i->_win_Paint();
+	}
+
+	if(draggingSelection)
+	{
+		auto tip = draggingSelection->GetTip();
+		if(tip.length() > 0)
+		{
+			auto hDC = rc->dbHDC;
+
+			SIZE size;
+			GetTextExtentPoint(hDC,tip.c_str(),tip.length(),&size);
+
+			RECT rect;
+			{
+				auto sy = renderContext->GetWindow()->GetSize().y;
+				rect.left = (LONG)(mouse.locpos.x);
+				rect.right = (LONG)(mouse.locpos.x + size.cx);
+				rect.top = (LONG)(sy - mouse.locpos.y - size.cy);
+				rect.bottom = (LONG)(sy - mouse.locpos.y);
+			}
+
+			SetDCBrushColor(hDC,RGB(0,0,0));
+			FillRect(hDC,&rect,(HBRUSH)GetStockObject(DC_BRUSH));
+
+			SetTextColor(hDC,RGB(255,255,255));
+			SetBkMode(hDC,TRANSPARENT);
+			DrawText(hDC,tip.c_str(),tip.length(),&rect,DT_LEFT | DT_NOPREFIX);
+		}
 	}
 
 	rc->_win_EndPaint();

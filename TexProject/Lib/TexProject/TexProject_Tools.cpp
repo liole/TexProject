@@ -26,11 +26,12 @@ TexProject::ToolSet::ToolSet(Window* window_):
 		panelTools->SetSize(vec2(window->GetSize().x - panelConfig->GetSize().x - 16.0f,40.0f));
 		panelTools->SetPos(vec2(panelConfig->GetSize().x + 8.0f,window->GetSize().y - panelTools->GetSize().y));
 		{
-			auto SummonButton = [this](GUI::Item::Action action)
+			auto SummonButton = [this](const string& tip, GUI::Item::Action action)
 			{
 				static uint32 pos = 0;
 				auto button = (GUI::Buttons::Default*)panelTools->AddButton(GUI::ButtonTypes::Default);
 				{
+					button->SetTip(tip);
 					button->SetUserData(this);
 					button->SetColor(vec4(0,1,0,1));
 					button->SetSize(vec2(32.0f));
@@ -41,14 +42,18 @@ TexProject::ToolSet::ToolSet(Window* window_):
 				return button;
 			};
 
-			SummonButton([](GUI::Item* item) { new Tools::Generator::Empty((ToolSet*)item->GetUserData()); });
-			SummonButton([](GUI::Item* item) { new Tools::Generator::Noise::Simple((ToolSet*)item->GetUserData()); });
-			SummonButton([](GUI::Item* item) { new Tools::Generator::Noise::Worley((ToolSet*)item->GetUserData()); });
-			SummonButton([](GUI::Item* item) { new Tools::Filter::Correction::Grayscale((ToolSet*)item->GetUserData()); });
-			SummonButton([](GUI::Item* item) { new Tools::Filter::Correction::Blur((ToolSet*)item->GetUserData()); });
-			SummonButton([](GUI::Item* item) { new Tools::Filter::Physics::HeightToNormal((ToolSet*)item->GetUserData()); });
-			SummonButton([](GUI::Item* item) { new Tools::Viewer::Simple((ToolSet*)item->GetUserData()); });
-			SummonButton([](GUI::Item* item) { new Tools::Viewer::BumpMapping((ToolSet*)item->GetUserData()); });
+			SummonButton("Empty", [](GUI::Item* item) { new Tools::Generator::Empty((ToolSet*)item->GetUserData()); });
+			SummonButton("Simple Noise", [](GUI::Item* item) { new Tools::Generator::Noise::Simple((ToolSet*)item->GetUserData()); });
+			SummonButton("Perlin Noise",[](GUI::Item* item) { new Tools::Generator::Noise::Perlin((ToolSet*)item->GetUserData()); });
+			SummonButton("Worley Noise",[](GUI::Item* item) { new Tools::Generator::Noise::Worley((ToolSet*)item->GetUserData()); });
+			SummonButton("Grayscale", [](GUI::Item* item) { new Tools::Filter::Correction::Grayscale((ToolSet*)item->GetUserData()); });
+			SummonButton("Blur", [](GUI::Item* item) { new Tools::Filter::Correction::Blur((ToolSet*)item->GetUserData()); });
+			SummonButton("Function", [](GUI::Item* item) { new Tools::Filter::Correction::Function((ToolSet*)item->GetUserData()); });
+			SummonButton("Mix", [](GUI::Item* item) { new Tools::Filter::Correction::Mix((ToolSet*)item->GetUserData()); });
+			SummonButton("Height To Normal", [](GUI::Item* item) { new Tools::Filter::Physics::HeightToNormal((ToolSet*)item->GetUserData()); });
+			SummonButton("Slope Factor", [](GUI::Item* item) { new Tools::Filter::Physics::NormalsToSlopeFactor((ToolSet*)item->GetUserData()); });
+			SummonButton("Viewer Simple", [](GUI::Item* item) { new Tools::Viewer::Simple((ToolSet*)item->GetUserData()); });
+			SummonButton("Viewer Bump", [](GUI::Item* item) { new Tools::Viewer::BumpMapping((ToolSet*)item->GetUserData()); });
 		}
 	}
 }
@@ -307,6 +312,91 @@ TexProject::GUI::Item*						TexProject::Tools::CreateSizer(GUI* gui)
 	}
 	return panelBase;
 }
+TexProject::GUI::Item*						TexProject::Tools::CreateFloatSizer(GUI* gui)
+{
+	auto panelBase = (GUI::Panels::Default*)gui->AddPanel(GUI::PanelTypes::Default);
+	{
+		auto data = new SizerFloatData;
+		{
+		}
+
+		panelBase->SetSize(vec2(160.0f,20.0f));
+		panelBase->SetColor(vec4(0,0,1,1));
+		panelBase->SetUserData(data,true);
+
+		auto panelText = (GUI::Panels::Text*)panelBase->AddPanel(GUI::PanelTypes::Text);
+		{
+			panelText->SetUserData(panelBase);
+			panelText->SetAction
+			(
+				GUI::Item::ActionType::Refresh,
+				[](GUI::Item* item)
+				{
+					auto data = (SizerFloatData*)((GUI::Panels::Default*)item->GetUserData())->GetUserData();
+					((GUI::Panels::Text*)item)->SetText(std::to_string(data->val).substr(0,4));
+				}
+			);
+			panelText->SetText("999");
+			panelText->SetSize(vec2(40.0f,20.0f));
+			panelText->SetPos(vec2(0.0f));
+		}
+
+		auto buttonInc = (GUI::Buttons::Default*)panelBase->AddButton(GUI::ButtonTypes::Default);
+		{
+			buttonInc->SetUserData(panelBase);
+			buttonInc->SetAction
+			(
+				GUI::Item::ActionType::Click,
+				[](GUI::Item* item)
+				{
+					auto data = (SizerFloatData*)((GUI::Buttons::Default*)item->GetUserData())->GetUserData();
+					if(data->val + 1 <= data->maxVal) ++data->val;
+					data->buttonSlider->SetValue((data->val - data->minVal) / (data->maxVal - data->minVal));
+				}
+			);
+			buttonInc->SetSize(vec2(16.0f,8.0f));
+			buttonInc->SetPos(vec2(panelText->GetSize().x,11.0f));
+		}
+		auto buttonDec = (GUI::Buttons::Default*)panelBase->AddButton(GUI::ButtonTypes::Default);
+		{
+			buttonDec->SetUserData(panelBase);
+			buttonDec->SetAction
+			(
+				GUI::Item::ActionType::Click,
+				[](GUI::Item* item)
+				{
+					auto data = (SizerFloatData*)((GUI::Buttons::Default*)item->GetUserData())->GetUserData();
+					if(data->val - 1 >= data->minVal) --data->val;
+					data->buttonSlider->SetValue((data->val - data->minVal) / (data->maxVal - data->minVal));
+				}
+			);
+			buttonDec->SetSize(vec2(16.0f,8.0f));
+			buttonDec->SetPos(vec2(panelText->GetSize().x,1.0f));
+		}
+
+		auto buttonSlider = (GUI::Buttons::Slider*)panelBase->AddButton(GUI::ButtonTypes::Slider);
+		{
+			buttonSlider->SetUserData(panelBase);
+			buttonSlider->SetAction
+			(
+				GUI::Item::ActionType::Refresh,
+				[](GUI::Item* item)
+				{
+					auto data = (SizerFloatData*)((GUI::Buttons::Default*)item->GetUserData())->GetUserData();
+					auto val = ((GUI::Buttons::Slider*)item)->GetValue();
+					data->val = clamp(float32(data->minVal + val * float32(data->maxVal - data->minVal)),data->minVal,data->maxVal);
+				}
+			);
+			buttonSlider->SetColor(vec4(0,1,0,1));
+			buttonSlider->SetSize(vec2(panelBase->GetSize().x - panelText->GetSize().x - 16.0f - 8.0f,16.0f));
+			buttonSlider->SetPos(vec2(panelBase->GetSize().x - buttonSlider->GetSize().x - 4.0f,2.0f));
+		}
+
+		data->panelBase = panelBase;
+		data->buttonSlider = buttonSlider;
+	}
+	return panelBase;
+}
 
 #pragma region Generator
 #pragma region Empty
@@ -497,6 +587,195 @@ void										TexProject::Tools::Generator::Noise::Simple::Refresh()
 	buttonOutput->RefreshObservers();
 }
 #pragma endregion
+#pragma region Simple
+TexProject::Tools::Generator::Noise::Perlin::Perlin(ToolSet* toolSet_):
+Tool(toolSet_)
+{
+	panelFieldTitle->SetText("Perlin Noise");
+	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonOutput->SetUserData
+		(
+			new OutputData
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
+		);
+		buttonOutput->DisableDragging();
+		buttonOutput->SetSize(vec2(8.0f));
+		buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
+		buttonOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				((Tools::Generator::Noise::Perlin*)item->GetUserData())->Refresh();
+			}
+		);
+	}
+}
+TexProject::Tools::Generator::Noise::Perlin::~Perlin()
+{
+	if(texture) delete texture;
+}
+void										TexProject::Tools::Generator::Noise::Perlin::FocusInit()
+{
+	panelConfigBase = (GUI::Panels::Default*)toolSet->panelConfig->AddPanel(GUI::PanelTypes::Default);
+	{
+		panelConfigBase->SetColor(vec4(vec3(0.16f),1));
+		panelConfigBase->SetSize(vec2(toolSet->panelConfig->GetSize().x - 8.0f,400.0f));
+		panelConfigBase->SetPos(vec2(4.0f,toolSet->panelConfig->GetSize().y - panelConfigBase->GetSize().y - 4.0f));
+	}
+	panelConfigTitle = (GUI::Panels::Text*)panelConfigBase->AddPanel(GUI::PanelTypes::Text);
+	{
+		panelConfigTitle->SetText("Perlin Noise");
+		panelConfigTitle->SetSize(vec2(160.0f,20.0f));
+		panelConfigTitle->SetPos(vec2((panelConfigBase->GetSize().x - panelConfigTitle->GetSize().x)*0.5f,panelConfigBase->GetSize().y - panelConfigTitle->GetSize().y));
+	}
+	panelConfigSizerX = (GUI::Panels::Default*)CreateSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigSizerX);
+		panelConfigSizerX->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 2));
+		((SizerData*)panelConfigSizerX->GetUserData())->val = paramSize.x;
+	}
+	panelConfigSizerY = (GUI::Panels::Default*)CreateSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigSizerY);
+		panelConfigSizerY->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 3));
+		((SizerData*)panelConfigSizerY->GetUserData())->val = paramSize.y;
+	}
+	panelConfigBasisCount = (GUI::Panels::Default*)CreateSizer(panelConfigBase->GetGUI());
+	{
+		auto data = (SizerData*)panelConfigBasisCount->GetUserData();
+		{
+			data->minVal = 4;
+			data->maxVal = 256;
+		}
+		panelConfigBase->AttachItem(panelConfigBasisCount);
+		panelConfigBasisCount->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 4));
+		((SizerData*)panelConfigBasisCount->GetUserData())->val = paramBasisCount;
+	}		
+	panelConfigNoiseSize = (GUI::Panels::Default*)CreateFloatSizer(panelConfigBase->GetGUI());
+	{
+		auto data = (SizerFloatData*)panelConfigNoiseSize->GetUserData();
+		{
+			data->minVal = 1.0f;
+			data->maxVal = 64.0f;
+			data->val = paramNoiseSize;
+		}
+		panelConfigBase->AttachItem(panelConfigNoiseSize);
+		panelConfigNoiseSize->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 5));
+	}
+}
+void										TexProject::Tools::Generator::Noise::Perlin::Refresh()
+{
+	if(panelConfigBase)
+	{
+		paramSize.x = uint32(((SizerData*)panelConfigSizerX->GetUserData())->val);
+		paramSize.y = uint32(((SizerData*)panelConfigSizerY->GetUserData())->val);
+		paramBasisCount = uint32(((SizerData*)panelConfigBasisCount->GetUserData())->val);
+		paramNoiseSize = ((SizerFloatData*)panelConfigNoiseSize->GetUserData())->val;
+	}
+
+	texture->Create(uvec2(paramSize));
+	{
+		uvec2 gridSize = uvec2(paramBasisCount);
+		vec2* grid = new vec2[gridSize.x*gridSize.y];
+		{
+			for(uint32 x = 0; x < gridSize.x; ++x)
+			for(uint32 y = 0; y < gridSize.y; ++y)
+			{
+				grid[x + y*gridSize.x] = normalize(vec2(rnd(),rnd())*2.0f-1.0f);
+			}
+		}
+		auto getGrid = [&grid,&gridSize](vec2 v) -> float32
+		{
+			auto getTile = [&gridSize](uvec2 t) -> uvec2
+			{
+				return uvec2
+				(
+					t.x >= gridSize.x ? 0 : t.x,
+					t.y >= gridSize.y ? 0 : t.y
+				);
+			};
+			auto getVal = [&grid,&gridSize](uvec2 t) -> vec2
+			{
+				return grid[t.x + t.y*gridSize.x];
+			};
+
+			v.x = wrap(v.x,0.0f,float32(gridSize.x));
+			v.y = wrap(v.y,0.0f,float32(gridSize.y));
+
+			uvec2 g00 = uvec2((uint32)floor(v.x),(uint32)floor(v.y));
+			uvec2 g10 = uvec2((uint32)ceil(v.x),(uint32)floor(v.y));
+			uvec2 g01 = uvec2((uint32)floor(v.x),(uint32)ceil(v.y));
+			uvec2 g11 = uvec2((uint32)ceil(v.x),(uint32)ceil(v.y));
+
+			v = vec2
+			(
+				v.x - floor(v.x),
+				v.y - floor(v.y)
+			);
+
+			vec2 v00 = vec2(0.0f,0.0f) - v;
+			vec2 v10 = vec2(1.0f,0.0f) - v;
+			vec2 v01 = vec2(0.0f,1.0f) - v;
+			vec2 v11 = vec2(1.0f,1.0f) - v;
+
+			vec2 p00 = getVal(getTile(g00));
+			vec2 p10 = getVal(getTile(g10));
+			vec2 p01 = getVal(getTile(g01));
+			vec2 p11 = getVal(getTile(g11));
+
+			float32 q00 = dot(p00,v00);
+			float32 q10 = dot(p10,v10);
+			float32 q01 = dot(p01,v01);
+			float32 q11 = dot(p11,v11);
+
+			vec2 i = vec2
+			(
+				sinDg((v.x*2.0f - 1.0f)*90.0f),
+				sinDg((v.y*2.0f - 1.0f)*90.0f)
+			)*0.5f + 0.5f;
+
+			return bezier
+			(
+				bezier(q00,q01,i.y),
+				bezier(q10,q11,i.y),
+				i.x
+			);
+		};
+
+		for(uint32 x = 0; x < texture->GetSize().x; ++x)
+		for(uint32 y = 0; y < texture->GetSize().y; ++y)
+		{
+			texture->SetPixel
+			(
+				uvec2(x,y),
+				vec4
+				(
+					vec3
+					(
+						getGrid(vec2(float32(x),float32(y)) / vec2(paramSize) * paramNoiseSize)*0.5f + 0.5f
+					),
+					1.0f
+				)
+			);
+		}
+
+		delete grid;
+	}
+	panelFieldImage->SetImage(texture);
+	((OutputData*)buttonOutput->GetUserData())->data = texture;
+	buttonOutput->RefreshObservers();
+}
+#pragma endregion
 #pragma region Worley
 TexProject::Tools::Generator::Noise::Worley::Worley(ToolSet* toolSet_):
 Tool(toolSet_)
@@ -505,13 +784,13 @@ Tool(toolSet_)
 	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
 		buttonOutput->SetUserData
-			(
+		(
 			new OutputData
-		{
-			OutputData::Type::Texture2D,
-			nullptr
-		},
-		true
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
 		);
 			buttonOutput->DisableDragging();
 			buttonOutput->SetSize(vec2(8.0f));
@@ -560,6 +839,15 @@ void										TexProject::Tools::Generator::Noise::Worley::FocusInit()
 		panelConfigSizerY->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 2));
 		((SizerData*)panelConfigSizerY->GetUserData())->val = paramSize.y;
 	}
+	panelConfigCount = (GUI::Panels::Default*)CreateSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigCount);
+		panelConfigCount->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 3));
+		auto data = (SizerData*)panelConfigCount->GetUserData();
+		data->val = paramDotsCount;
+		data->minVal = 1;
+		data->maxVal = 200;
+	}	
 }
 void										TexProject::Tools::Generator::Noise::Worley::Refresh()
 {
@@ -567,6 +855,7 @@ void										TexProject::Tools::Generator::Noise::Worley::Refresh()
 	{
 		paramSize.x = uint32(((SizerData*)panelConfigSizerX->GetUserData())->val);
 		paramSize.y = uint32(((SizerData*)panelConfigSizerY->GetUserData())->val);
+		paramDotsCount = uint32(((SizerData*)panelConfigCount->GetUserData())->val);
 	}
 
 	texture->Create(uvec2(paramSize));
@@ -726,11 +1015,11 @@ TexProject::Tools::Filter::Correction::Blur::Blur(ToolSet* toolSet_):
 	Tool(toolSet_)
 {
 	panelFieldTitle->SetText("Blur Filter");
-	buttonInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	buttonFieldInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		buttonInput->SetRecipient();
-		buttonInput->SetUserData(this);
-		buttonInput->SetAction
+		buttonFieldInput->SetRecipient();
+		buttonFieldInput->SetUserData(this);
+		buttonFieldInput->SetAction
 		(
 			GUI::Item::ActionType::Refresh,
 			[](GUI::Item* item)
@@ -738,14 +1027,14 @@ TexProject::Tools::Filter::Correction::Blur::Blur(ToolSet* toolSet_):
 				((Tools::Filter::Correction::Blur*)item->GetUserData())->Refresh();
 			}
 		);
-		buttonInput->DisableDragging();
-		buttonInput->SetSize(vec2(8.0f));
-		buttonInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonInput->GetSize().y)*0.5f));
-		buttonInput->direction = vec2(-100.0f,0.0f);
+		buttonFieldInput->DisableDragging();
+		buttonFieldInput->SetSize(vec2(8.0f));
+		buttonFieldInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonFieldInput->GetSize().y)*0.5f));
+		buttonFieldInput->direction = vec2(-100.0f,0.0f);
 	}
-	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	buttonFieldOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		buttonOutput->SetUserData
+		buttonFieldOutput->SetUserData
 		(
 			new OutputData
 			{
@@ -754,10 +1043,10 @@ TexProject::Tools::Filter::Correction::Blur::Blur(ToolSet* toolSet_):
 			},
 			true
 		);
-		buttonOutput->DisableDragging();
-		buttonOutput->SetSize(vec2(8.0f));
-		buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f, (panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
-		buttonOutput->direction = vec2(100.0f,0.0f);
+		buttonFieldOutput->DisableDragging();
+		buttonFieldOutput->SetSize(vec2(8.0f));
+		buttonFieldOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonFieldOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonFieldOutput->GetSize().y)*0.5f));
+		buttonFieldOutput->direction = vec2(100.0f,0.0f);
 	}
 	buttonFieldRefresh->SetUserData(this);
 	{
@@ -775,27 +1064,62 @@ TexProject::Tools::Filter::Correction::Blur::~Blur()
 {
 
 }
+void										TexProject::Tools::Filter::Correction::Blur::FocusInit()
+{
+	panelConfigBase = (GUI::Panels::Default*)toolSet->panelConfig->AddPanel(GUI::PanelTypes::Default);
+	{
+		panelConfigBase->SetColor(vec4(vec3(0.16f),1));
+		panelConfigBase->SetSize(vec2(toolSet->panelConfig->GetSize().x - 8.0f,400.0f));
+		panelConfigBase->SetPos(vec2(4.0f,toolSet->panelConfig->GetSize().y - panelConfigBase->GetSize().y - 4.0f));
+	}
+	panelConfigTitle = (GUI::Panels::Text*)panelConfigBase->AddPanel(GUI::PanelTypes::Text);
+	{
+		panelConfigTitle->SetText("Blur");
+		panelConfigTitle->SetSize(vec2(160.0f,20.0f));
+		panelConfigTitle->SetPos(vec2((panelConfigBase->GetSize().x - panelConfigTitle->GetSize().x)*0.5f,panelConfigBase->GetSize().y - panelConfigTitle->GetSize().y));
+	}
+	panelConfigSizer = (GUI::Panels::Default*)CreateFloatSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigSizer);
+		panelConfigSizer->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 1));
+		auto data = (SizerFloatData*)panelConfigSizer->GetUserData();
+		data->val = float32(paramRadius);
+		data->minVal = 1.0f;
+		data->maxVal = 100.0f;
+	}
+}
 void										TexProject::Tools::Filter::Correction::Blur::Refresh()
 {
 	auto source = GetInput();
+
+	if(panelConfigBase)
+	{
+		paramRadius = float32(((SizerFloatData*)panelConfigSizer->GetUserData())->val);
+	}
 
 	if(source)
 	{
 		texture->Create(source->GetSize());
 		{
-			float32 radius = 5.0f;
-
 			for(int32 x = 0; x < int32(texture->GetSize().x); ++x)
 			for(int32 y = 0; y < int32(texture->GetSize().y); ++y)
 			{
 				vec4 color = source->GetPixel(uvec2(x,y));
 				float32 count = 1.0f;
-				for(int32 tx = 1; tx < int32(radius); ++tx)
-				for(int32 ty = 1; ty < int32(radius); ++ty)
+				for(int32 tx = -int32(paramRadius); tx < int32(paramRadius); ++tx)
+				for(int32 ty = -int32(paramRadius); ty < int32(paramRadius); ++ty)
+				if(x != tx || y != ty)
 				{
 					float32 d = vec2(float32(tx),float32(ty)).length();
-					if(d < radius)
+					if(d < paramRadius)
 					{
+						if(x + tx >= 0 && x + tx < int32(source->GetSize().x) && y + ty >= 0 && y + ty < int32(source->GetSize().y))
+						{
+							float32 t = 1.0f;// / float32(d);
+							color += source->GetPixel(uvec2(x + tx,y + ty)) * t;
+							count += t;
+						}
+						/*
 						if(x + tx < int32(source->GetSize().x))
 						{
 							float32 t = 1.0f / float32(d);
@@ -820,6 +1144,7 @@ void										TexProject::Tools::Filter::Correction::Blur::Refresh()
 							color += source->GetPixel(uvec2(x,y - ty)) * t;
 							count += t;
 						}
+						*/
 					}
 				}
 
@@ -828,19 +1153,316 @@ void										TexProject::Tools::Filter::Correction::Blur::Refresh()
 			}
 		}
 		panelFieldImage->SetImage(texture);
-		((OutputData*)buttonOutput->GetUserData())->data = texture;
-		buttonOutput->RefreshObservers();
+		((OutputData*)buttonFieldOutput->GetUserData())->data = texture;
+		buttonFieldOutput->RefreshObservers();
 	}
 	else
 	{
 		panelFieldImage->SetImage(nullptr);
-		((OutputData*)buttonOutput->GetUserData())->data = nullptr;
-		buttonOutput->RefreshObservers();
+		((OutputData*)buttonFieldOutput->GetUserData())->data = nullptr;
+		buttonFieldOutput->RefreshObservers();
 	}
 }
 TexProject::Texture::D2*					TexProject::Tools::Filter::Correction::Blur::GetInput()
 {
-	auto t = buttonInput->GetTarget();
+	auto t = buttonFieldInput->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+#pragma endregion
+#pragma region Function
+TexProject::Tools::Filter::Correction::Function::Function(ToolSet* toolSet_):
+	Tool(toolSet_)
+{
+	panelFieldTitle->SetText("Function");
+	buttonFieldInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldInput->SetRecipient();
+		buttonFieldInput->SetUserData(this);
+		buttonFieldInput->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Function*)item->GetUserData())->Refresh();
+			}
+		);
+		buttonFieldInput->DisableDragging();
+		buttonFieldInput->SetSize(vec2(8.0f));
+		buttonFieldInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonFieldInput->GetSize().y)*0.5f));
+		buttonFieldInput->direction = vec2(-100.0f,0.0f);
+	}
+	buttonFieldOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldOutput->SetUserData
+		(
+			new OutputData
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
+		);
+		buttonFieldOutput->DisableDragging();
+		buttonFieldOutput->SetSize(vec2(8.0f));
+		buttonFieldOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonFieldOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonFieldOutput->GetSize().y)*0.5f));
+		buttonFieldOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Function*)item->GetUserData())->Refresh();
+			}
+		);
+	}
+}
+TexProject::Tools::Filter::Correction::Function::~Function()
+{
+
+}
+void										TexProject::Tools::Filter::Correction::Function::FocusInit()
+{
+	panelConfigBase = (GUI::Panels::Default*)toolSet->panelConfig->AddPanel(GUI::PanelTypes::Default);
+	{
+		panelConfigBase->SetColor(vec4(vec3(0.16f),1));
+		panelConfigBase->SetSize(vec2(toolSet->panelConfig->GetSize().x - 8.0f,400.0f));
+		panelConfigBase->SetPos(vec2(4.0f,toolSet->panelConfig->GetSize().y - panelConfigBase->GetSize().y - 4.0f));
+	}
+	panelConfigTitle = (GUI::Panels::Text*)panelConfigBase->AddPanel(GUI::PanelTypes::Text);
+	{
+		panelConfigTitle->SetText("Function");
+		panelConfigTitle->SetSize(vec2(160.0f,20.0f));
+		panelConfigTitle->SetPos(vec2((panelConfigBase->GetSize().x - panelConfigTitle->GetSize().x)*0.5f,panelConfigBase->GetSize().y - panelConfigTitle->GetSize().y));
+	}
+	panelConfigAdd = (GUI::Panels::Default*)CreateFloatSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigAdd);
+		panelConfigAdd->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 1));
+		auto data = (SizerFloatData*)panelConfigAdd->GetUserData();
+		data->val = float32(paramAdd);
+		data->minVal = -1.0f;
+		data->maxVal = 1.0f;
+	}
+	panelConfigMul = (GUI::Panels::Default*)CreateFloatSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigMul);
+		panelConfigMul->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 2));
+		auto data = (SizerFloatData*)panelConfigMul->GetUserData();
+		data->val = float32(paramMul);
+		data->minVal = -2.0f;
+		data->maxVal = 2.0f;
+	}
+	panelConfigPow = (GUI::Panels::Default*)CreateFloatSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigPow);
+		panelConfigPow->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 3));
+		auto data = (SizerFloatData*)panelConfigPow->GetUserData();
+		data->val = float32(paramPow);
+		data->minVal = -1.0f;
+		data->maxVal = 10.0f;
+	}
+}
+void										TexProject::Tools::Filter::Correction::Function::Refresh()
+{
+	auto source = GetInput();
+
+	if(panelConfigBase)
+	{
+		paramAdd = float32(((SizerFloatData*)panelConfigAdd->GetUserData())->val);
+		paramMul = float32(((SizerFloatData*)panelConfigMul->GetUserData())->val);
+		paramPow = float32(((SizerFloatData*)panelConfigPow->GetUserData())->val);
+	}
+
+	if(source)
+	{
+		texture->Create(source->GetSize());
+		{
+			for(int32 x = 0; x < int32(texture->GetSize().x); ++x)
+			for(int32 y = 0; y < int32(texture->GetSize().y); ++y)
+			{
+				vec4 color = source->GetPixel(uvec2(x,y));
+				color = paramAdd + paramMul * vec4
+				(
+					sign(color.x) * pow(abs(color.x),paramPow),
+					sign(color.y) * pow(abs(color.y),paramPow),
+					sign(color.z) * pow(abs(color.z),paramPow),
+					sign(color.w) * pow(abs(color.w),paramPow)
+				);
+				texture->SetPixel(uvec2(x,y),color);
+			}
+		}
+		panelFieldImage->SetImage(texture);
+		((OutputData*)buttonFieldOutput->GetUserData())->data = texture;
+		buttonFieldOutput->RefreshObservers();
+	}
+	else
+	{
+		panelFieldImage->SetImage(nullptr);
+		((OutputData*)buttonFieldOutput->GetUserData())->data = nullptr;
+		buttonFieldOutput->RefreshObservers();
+	}
+}
+TexProject::Texture::D2*					TexProject::Tools::Filter::Correction::Function::GetInput()
+{
+	auto t = buttonFieldInput->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+#pragma endregion
+#pragma region Mix
+TexProject::Tools::Filter::Correction::Mix::Mix(ToolSet* toolSet_):
+	Tool(toolSet_)
+{
+	panelFieldTitle->SetText("Mix");
+	buttonFieldInputA = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldInputA->SetRecipient();
+		buttonFieldInputA->SetUserData(this);
+		buttonFieldInputA->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Mix*)item->GetUserData())->Refresh();
+			}
+		);
+		buttonFieldInputA->DisableDragging();
+		buttonFieldInputA->SetSize(vec2(8.0f));
+		buttonFieldInputA->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonFieldInputA->GetSize().y)*0.5f + 16.0f));
+		buttonFieldInputA->direction = vec2(-100.0f,0.0f);
+	}
+	buttonFieldInputB = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldInputB->SetRecipient();
+		buttonFieldInputB->SetUserData(this);
+		buttonFieldInputB->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Mix*)item->GetUserData())->Refresh();
+			}
+		);
+		buttonFieldInputB->DisableDragging();
+		buttonFieldInputB->SetSize(vec2(8.0f));
+		buttonFieldInputB->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonFieldInputB->GetSize().y)*0.5f + 0.0f));
+		buttonFieldInputB->direction = vec2(-100.0f,0.0f);
+	}
+	buttonFieldInputMix = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldInputMix->SetRecipient();
+		buttonFieldInputMix->SetUserData(this);
+		buttonFieldInputMix->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Mix*)item->GetUserData())->Refresh();
+			}
+		);
+		buttonFieldInputMix->DisableDragging();
+		buttonFieldInputMix->SetSize(vec2(8.0f));
+		buttonFieldInputMix->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonFieldInputMix->GetSize().y)*0.5f - 16.0f));
+		buttonFieldInputMix->direction = vec2(-100.0f,0.0f);
+	}
+
+	buttonFieldOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldOutput->SetUserData
+		(
+			new OutputData
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
+		);
+		buttonFieldOutput->DisableDragging();
+		buttonFieldOutput->SetSize(vec2(8.0f));
+		buttonFieldOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonFieldOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonFieldOutput->GetSize().y)*0.5f));
+		buttonFieldOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Correction::Mix*)item->GetUserData())->Refresh();
+			}
+		);
+	}
+}
+TexProject::Tools::Filter::Correction::Mix::~Mix()
+{
+
+}
+void										TexProject::Tools::Filter::Correction::Mix::FocusInit()
+{
+	panelConfigBase = (GUI::Panels::Default*)toolSet->panelConfig->AddPanel(GUI::PanelTypes::Default);
+	{
+		panelConfigBase->SetColor(vec4(vec3(0.16f),1));
+		panelConfigBase->SetSize(vec2(toolSet->panelConfig->GetSize().x - 8.0f,400.0f));
+		panelConfigBase->SetPos(vec2(4.0f,toolSet->panelConfig->GetSize().y - panelConfigBase->GetSize().y - 4.0f));
+	}
+	panelConfigTitle = (GUI::Panels::Text*)panelConfigBase->AddPanel(GUI::PanelTypes::Text);
+	{
+		panelConfigTitle->SetText("Mix");
+		panelConfigTitle->SetSize(vec2(160.0f,20.0f));
+		panelConfigTitle->SetPos(vec2((panelConfigBase->GetSize().x - panelConfigTitle->GetSize().x)*0.5f,panelConfigBase->GetSize().y - panelConfigTitle->GetSize().y));
+	}
+}
+void										TexProject::Tools::Filter::Correction::Mix::Refresh()
+{
+	auto sourceA = GetInputA();
+	auto sourceB = GetInputB();
+	auto sourceMix = GetInputMix();
+
+	if(sourceA && sourceB && sourceMix && sourceA->GetSize() == sourceB->GetSize() && sourceB->GetSize() == sourceMix->GetSize())
+	{
+		texture->Create(sourceA->GetSize());
+		{
+			for(int32 x = 0; x < int32(texture->GetSize().x); ++x)
+			for(int32 y = 0; y < int32(texture->GetSize().y); ++y)
+			{
+				vec4 colorA = sourceA->GetPixel(uvec2(x,y));
+				vec4 colorB = sourceB->GetPixel(uvec2(x,y));
+				vec4 colorMix = sourceMix->GetPixel(uvec2(x,y));
+				vec4 color = bezier(colorA,colorB,colorMix);
+				texture->SetPixel(uvec2(x,y),color);
+			}
+		}
+		panelFieldImage->SetImage(texture);
+		((OutputData*)buttonFieldOutput->GetUserData())->data = texture;
+		buttonFieldOutput->RefreshObservers();
+	}
+	else
+	{
+		panelFieldImage->SetImage(nullptr);
+		((OutputData*)buttonFieldOutput->GetUserData())->data = nullptr;
+		buttonFieldOutput->RefreshObservers();
+	}
+}
+TexProject::Texture::D2*					TexProject::Tools::Filter::Correction::Mix::GetInputA()
+{
+	auto t = buttonFieldInputA->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+TexProject::Texture::D2*					TexProject::Tools::Filter::Correction::Mix::GetInputB()
+{
+	auto t = buttonFieldInputB->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+TexProject::Texture::D2*					TexProject::Tools::Filter::Correction::Mix::GetInputMix()
+{
+	auto t = buttonFieldInputMix->GetTarget();
 	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
 	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
 }
@@ -852,38 +1474,38 @@ TexProject::Tools::Filter::Physics::HeightToNormal::HeightToNormal(ToolSet* tool
 Tool(toolSet_)
 {
 	panelFieldTitle->SetText("Height To Normal");
-	buttonInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	buttonFieldInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		buttonInput->SetRecipient();
-		buttonInput->SetUserData(this);
-		buttonInput->SetAction
-			(
+		buttonFieldInput->SetRecipient();
+		buttonFieldInput->SetUserData(this);
+		buttonFieldInput->SetAction
+		(
 			GUI::Item::ActionType::Refresh,
 			[](GUI::Item* item)
-		{
-			((Tools::Filter::Physics::HeightToNormal*)item->GetUserData())->Refresh();
-		}
+			{
+				((Tools::Filter::Physics::HeightToNormal*)item->GetUserData())->Refresh();
+			}
 		);
-		buttonInput->DisableDragging();
-		buttonInput->SetSize(vec2(8.0f));
-		buttonInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonInput->GetSize().y)*0.5f));
-		buttonInput->direction = vec2(-100.0f,0.0f);
+		buttonFieldInput->DisableDragging();
+		buttonFieldInput->SetSize(vec2(8.0f));
+		buttonFieldInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonFieldInput->GetSize().y)*0.5f));
+		buttonFieldInput->direction = vec2(-100.0f,0.0f);
 	}
-	buttonOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	buttonFieldOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
 	{
-		buttonOutput->SetUserData
-			(
+		buttonFieldOutput->SetUserData
+		(
 			new OutputData
-		{
-			OutputData::Type::Texture2D,
-			nullptr
-		},
-		true
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
 		);
-			buttonOutput->DisableDragging();
-			buttonOutput->SetSize(vec2(8.0f));
-			buttonOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonOutput->GetSize().y)*0.5f));
-			buttonOutput->direction = vec2(100.0f,0.0f);
+		buttonFieldOutput->DisableDragging();
+		buttonFieldOutput->SetSize(vec2(8.0f));
+		buttonFieldOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonFieldOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonFieldOutput->GetSize().y)*0.5f));
+		buttonFieldOutput->direction = vec2(100.0f,0.0f);
 	}
 	buttonFieldRefresh->SetUserData(this);
 	{
@@ -901,9 +1523,38 @@ TexProject::Tools::Filter::Physics::HeightToNormal::~HeightToNormal()
 {
 
 }
+void										TexProject::Tools::Filter::Physics::HeightToNormal::FocusInit()
+{
+	panelConfigBase = (GUI::Panels::Default*)toolSet->panelConfig->AddPanel(GUI::PanelTypes::Default);
+	{
+		panelConfigBase->SetColor(vec4(vec3(0.16f),1));
+		panelConfigBase->SetSize(vec2(toolSet->panelConfig->GetSize().x - 8.0f,400.0f));
+		panelConfigBase->SetPos(vec2(4.0f,toolSet->panelConfig->GetSize().y - panelConfigBase->GetSize().y - 4.0f));
+	}
+	panelConfigTitle = (GUI::Panels::Text*)panelConfigBase->AddPanel(GUI::PanelTypes::Text);
+	{
+		panelConfigTitle->SetText("Height To Normal");
+		panelConfigTitle->SetSize(vec2(160.0f,20.0f));
+		panelConfigTitle->SetPos(vec2((panelConfigBase->GetSize().x - panelConfigTitle->GetSize().x)*0.5f,panelConfigBase->GetSize().y - panelConfigTitle->GetSize().y));
+	}
+	panelConfigSizer = (GUI::Panels::Default*)CreateSizer(panelConfigBase->GetGUI());
+	{
+		panelConfigBase->AttachItem(panelConfigSizer);
+		panelConfigSizer->SetPos(vec2(4.0f,panelConfigBase->GetSize().y - 20.0f - 32.0f * 1));
+		auto data = (SizerData*)panelConfigSizer->GetUserData();
+		data->val = int32(paramScaleFactor);
+		data->minVal = 1;
+		data->maxVal = 255;
+	}
+}
 void										TexProject::Tools::Filter::Physics::HeightToNormal::Refresh()
 {
 	auto source = GetInput();
+
+	if(panelConfigBase)
+	{
+		paramScaleFactor = float32(((SizerData*)panelConfigSizer->GetUserData())->val);
+	}
 
 	if(source)
 	{
@@ -932,7 +1583,7 @@ void										TexProject::Tools::Filter::Physics::HeightToNormal::Refresh()
 				}
 				else
 					a.y = source->GetPixel(uvec2(i,j)).x - source->GetPixel(uvec2(i,j + 1)).x;
-				a.z = 0.1f;
+				a.z = 2.0f / paramScaleFactor;
 				a.normalize();
 				a += vec3(1.0f);
 				a *= vec3(0.5f);
@@ -940,19 +1591,108 @@ void										TexProject::Tools::Filter::Physics::HeightToNormal::Refresh()
 			}
 		}
 		panelFieldImage->SetImage(texture);
-		((OutputData*)buttonOutput->GetUserData())->data = texture;
-		buttonOutput->RefreshObservers();
+		((OutputData*)buttonFieldOutput->GetUserData())->data = texture;
+		buttonFieldOutput->RefreshObservers();
 	}
 	else
 	{
 		panelFieldImage->SetImage(nullptr);
-		((OutputData*)buttonOutput->GetUserData())->data = nullptr;
-		buttonOutput->RefreshObservers();
+		((OutputData*)buttonFieldOutput->GetUserData())->data = nullptr;
+		buttonFieldOutput->RefreshObservers();
 	}
 }
 TexProject::Texture::D2*					TexProject::Tools::Filter::Physics::HeightToNormal::GetInput()
 {
-	auto t = buttonInput->GetTarget();
+	auto t = buttonFieldInput->GetTarget();
+	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
+	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
+}
+#pragma endregion
+#pragma region NormalsToSlopeFactor
+TexProject::Tools::Filter::Physics::NormalsToSlopeFactor::NormalsToSlopeFactor(ToolSet* toolSet_):
+	Tool(toolSet_)
+{
+	panelFieldTitle->SetText("Slope Factor");
+	buttonFieldInput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldInput->SetRecipient();
+		buttonFieldInput->SetUserData(this);
+		buttonFieldInput->SetAction
+		(
+			GUI::Item::ActionType::Refresh,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Physics::NormalsToSlopeFactor*)item->GetUserData())->Refresh();
+			}
+		);
+		buttonFieldInput->DisableDragging();
+		buttonFieldInput->SetSize(vec2(8.0f));
+		buttonFieldInput->SetPos(vec2(4.0f,(panelFieldBase->GetSize().y - buttonFieldInput->GetSize().y)*0.5f));
+		buttonFieldInput->direction = vec2(-100.0f,0.0f);
+	}
+	buttonFieldOutput = (GUI::Buttons::Connector*)panelFieldBase->AddButton(GUI::ButtonTypes::Connector);
+	{
+		buttonFieldOutput->SetUserData
+		(
+			new OutputData
+			{
+				OutputData::Type::Texture2D,
+				nullptr
+			},
+			true
+		);
+		buttonFieldOutput->DisableDragging();
+		buttonFieldOutput->SetSize(vec2(8.0f));
+		buttonFieldOutput->SetPos(vec2(panelFieldBase->GetSize().x - buttonFieldOutput->GetSize().x - 4.0f,(panelFieldBase->GetSize().y - buttonFieldOutput->GetSize().y)*0.5f));
+		buttonFieldOutput->direction = vec2(100.0f,0.0f);
+	}
+	buttonFieldRefresh->SetUserData(this);
+	{
+		buttonFieldRefresh->SetAction
+		(
+			GUI::Item::ActionType::Click,
+			[](GUI::Item* item)
+			{
+				((Tools::Filter::Physics::NormalsToSlopeFactor*)item->GetUserData())->Refresh();
+			}
+		);
+	}
+}
+TexProject::Tools::Filter::Physics::NormalsToSlopeFactor::~NormalsToSlopeFactor()
+{
+
+}
+void										TexProject::Tools::Filter::Physics::NormalsToSlopeFactor::Refresh()
+{
+	auto source = GetInput();
+
+	if(source)
+	{
+		texture->Create(source->GetSize());
+		{
+			for(uint32 x = 0; x < source->GetSize().x; ++x)
+			for(uint32 y = 0; y < source->GetSize().y; ++y)
+			{
+				vec3 normal = normalize(source->GetPixel(uvec2(x,y)).xyz() * 2.0f - 1.0f);
+				float32 slope = dot(normal,vec3(0.0f,0.0f,1.0f));
+				slope = 1.0f - pow(abs(acosDg(slope)/90.0f),2.0f);
+				texture->SetPixel(uvec2(x,y),vec4(vec3(slope),1.0f));
+			}
+		}
+		panelFieldImage->SetImage(texture);
+		((OutputData*)buttonFieldOutput->GetUserData())->data = texture;
+		buttonFieldOutput->RefreshObservers();
+	}
+	else
+	{
+		panelFieldImage->SetImage(nullptr);
+		((OutputData*)buttonFieldOutput->GetUserData())->data = nullptr;
+		buttonFieldOutput->RefreshObservers();
+	}
+}
+TexProject::Texture::D2*					TexProject::Tools::Filter::Physics::NormalsToSlopeFactor::GetInput()
+{
+	auto t = buttonFieldInput->GetTarget();
 	auto d = t ? (OutputData*)t->GetUserData() : nullptr;
 	return	d ? (d->type == OutputData::Type::Texture2D) ? (Texture::D2*)d->data : nullptr : nullptr;
 }
@@ -1181,6 +1921,7 @@ void										TexProject::Tools::Viewer::Simple::Refresh()
 				delete tmpFBuffer;
 				delete tmpOutTexture;
 				delete tmpMesh;
+				delete tmpInTexture;
 				delete tmpShader;
 				delete tmpGeometry;
 
@@ -1202,13 +1943,13 @@ void										TexProject::Tools::Viewer::BumpMapping::FuncWindowInit(Window* win
 {
 	auto tool = (Tools::Viewer::BumpMapping*)window->GetUserData();
 
-	//tool->mesh->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
-	tool->mesh->CreateSphere(0.5f,vec2(1.0f),uvec2(64));
+	tool->mesh->CreateBox(vec3(1.0f),vec3(1.0f),uvec3(1));
+	//tool->mesh->CreateSphere(0.5f,vec2(1.0f),uvec2(64));
 
 	tool->oglShader = new OpenGL::Shader(window);
 	{
-		//tool->oglShader->Load(GetEXEPath() + "/Media/Shaders/GLSL/3D/Material/Bump Mapping/1.","vs","","","","ps");
-		tool->oglShader->Load("Media/Shaders/GLSL/3D/Material/Bump Mapping/1.","vs","","","","ps");
+		tool->oglShader->Load(GetEXEPath() + "/Media/Shaders/GLSL/3D/Material/Bump Mapping/1.","vs","","","","ps");
+		//tool->oglShader->Load("Media/Shaders/GLSL/3D/Material/Bump Mapping/1.","vs","","","","ps");
 		tool->oglShader->Use();
 		tool->oglShader->SetInt("TextureDiffuse",0);
 		tool->oglShader->SetInt("TextureNormals",1);
@@ -1355,7 +2096,7 @@ void										TexProject::Tools::Viewer::BumpMapping::Refresh()
 		windowRender->SetSize(uvec2(512));
 		windowRender->SetRenderContext(RenderContext::Type::OpenGL);
 
-		/*auto tmpRC = new OpenGL::RenderContext(windowRender);
+		auto tmpRC = new OpenGL::RenderContext(windowRender);
 		{
 			if(tmpRC->Use())
 			{
@@ -1366,16 +2107,26 @@ void										TexProject::Tools::Viewer::BumpMapping::Refresh()
 				}
 				auto tmpShader = new OpenGL::Shader(tmpRC);
 				{
-					tmpShader->Load(GetEXEPath() + "/Media/Shaders/GLSL/3D/Material/Flat/1.","vs","","","","ps");
+					tmpShader->Load(GetEXEPath() + "/Media/Shaders/GLSL/3D/Material/Bump Mapping/1.","vs","","","","ps");
+					//tmpShader->Load("Media/Shaders/GLSL/3D/Material/Bump Mapping/1.","vs","","","","ps");
 					tmpShader->Use();
-					tmpShader->SetInt("Texture",0);
+					tmpShader->SetInt("TextureDiffuse",0);
+					tmpShader->SetInt("TextureNormals",1);
 				}
-				auto tmpInTexture = (OpenGL::Texture*)nullptr;
+				auto tmpInTextureDiffuse = (OpenGL::Texture*)nullptr;
 				{
-					if(auto input = GetInput())
+					if(auto input = GetInputDiffuse())
 					{
-						tmpInTexture = new OpenGL::Texture(tmpRC);
-						*tmpInTexture = *input;
+						tmpInTextureDiffuse = new OpenGL::Texture(tmpRC);
+						*tmpInTextureDiffuse = *input;
+					}
+				}
+				auto tmpInTextureNormals = (OpenGL::Texture*)nullptr;
+				{
+					if(auto input = GetInputNormals())
+					{
+						tmpInTextureNormals = new OpenGL::Texture(tmpRC);
+						*tmpInTextureNormals = *input;
 					}
 				}
 				auto tmpOutTexture = new OpenGL::Texture(tmpRC);
@@ -1431,10 +2182,14 @@ void										TexProject::Tools::Viewer::BumpMapping::Refresh()
 					glDisable(GL_BLEND);
 					glDisable(GL_CULL_FACE);
 
-					if(tmpInTexture) tmpInTexture->Use(0);
+					if(tmpInTextureDiffuse) tmpInTextureDiffuse->Use(0);
+					if(tmpInTextureNormals) tmpInTextureNormals->Use(1);
 
 					tmpShader->Use();
 					{
+						tmpShader->SetVec3("lightDir",normalize(vec3(0.0f,-2.0f,-1.0f)));
+						tmpShader->SetMat3("RotateMatrix",mat3::one());
+						tmpShader->SetMat4("ModelMatrix",mat4::one());
 						tmpShader->SetMat4("ModelViewProjectionMatrix",mat4::rotateYXZ(vec3(30.0f,-45.0f,0.0f)) * mat4::orthogonal(-1.0f,1.0f,-1.0f,1.0f,-10.0f,10.0f));
 					}
 
@@ -1448,13 +2203,15 @@ void										TexProject::Tools::Viewer::BumpMapping::Refresh()
 				delete tmpFBuffer;
 				delete tmpOutTexture;
 				delete tmpMesh;
+				delete tmpInTextureDiffuse;
+				delete tmpInTextureNormals;
 				delete tmpShader;
 				delete tmpGeometry;
 
 				panelFieldImage->SetImage(texturePreview);
 			}
 			delete tmpRC;
-		}*/
+		}
 	}
 }
 TexProject::Texture::D2*					TexProject::Tools::Viewer::BumpMapping::GetInputDiffuse()
